@@ -34,6 +34,16 @@ const userSchema = new mongoose.Schema({
     cryptocurrency: String,
     address: String
   }],
+  // DGD non-custodial escrow signing identity. A seller MUST set these to sell in
+  // DGD (they become a key in the multisig); a buyer may set them to prefill checkout.
+  dgdPubkey: {
+    type: String,
+    trim: true
+  },
+  dgdPayoutAddress: {
+    type: String,
+    trim: true
+  },
   preferredCurrency: {
     type: String,
     default: 'USD',

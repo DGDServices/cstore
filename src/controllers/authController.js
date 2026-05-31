@@ -121,7 +121,7 @@ const getMe = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateProfile = asyncHandler(async (req, res, next) => {
-  const { name, email, preferredCurrency, preferredLanguage, country } = req.body;
+  const { name, email, preferredCurrency, preferredLanguage, country, dgdPubkey, dgdPayoutAddress } = req.body;
 
   const user = await User.findById(req.user.id);
 
@@ -137,6 +137,9 @@ const updateProfile = asyncHandler(async (req, res, next) => {
   if (preferredCurrency) user.preferredCurrency = preferredCurrency.toUpperCase();
   if (preferredLanguage) user.preferredLanguage = preferredLanguage.toLowerCase();
   if (country) user.country = country.toUpperCase();
+  // DGD escrow signing identity (set undefined to leave unchanged; empty string clears)
+  if (dgdPubkey !== undefined) user.dgdPubkey = dgdPubkey.trim() || undefined;
+  if (dgdPayoutAddress !== undefined) user.dgdPayoutAddress = dgdPayoutAddress.trim() || undefined;
 
   await user.save();
 
@@ -150,7 +153,9 @@ const updateProfile = asyncHandler(async (req, res, next) => {
         role: user.role,
         preferredCurrency: user.preferredCurrency,
         preferredLanguage: user.preferredLanguage,
-        country: user.country
+        country: user.country,
+        dgdPubkey: user.dgdPubkey,
+        dgdPayoutAddress: user.dgdPayoutAddress
       }
     }
   });

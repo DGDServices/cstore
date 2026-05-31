@@ -10,6 +10,19 @@ module.exports = {
   DGD_CONFIRMATIONS: Number(process.env.DGD_CONFIRMATIONS || 1),
   SETTLEMENT_ASSET: 'DGD',
 
+  // Independent arbitrator key → escrows open 2-of-3 (mediatable on dispute).
+  // Unset → 2-of-2 (no dispute path; cancel-refund only).
+  DGD_ARBITRATOR_PUBKEY: process.env.DGD_ARBITRATOR_PUBKEY || undefined,
+  DGD_ARBITRATOR_PAYOUT_ADDRESS: process.env.DGD_ARBITRATOR_PAYOUT_ADDRESS || undefined,
+
+  /** Convert a decimal-coin amount (number|string) to an integer-sats string (8dp). */
+  toSats(decimalAmount) {
+    const [whole, frac = ''] = String(decimalAmount).split('.');
+    const fracPadded = (frac + '00000000').slice(0, 8);
+    const sats = BigInt(whole || '0') * 100000000n + BigInt(fracPadded || '0');
+    return sats.toString();
+  },
+
   /**
    * Thesis guard (white paper section 9): refuse any non-DGD settlement so the
    * crypto->fiat conversion path can never silently re-enable.
