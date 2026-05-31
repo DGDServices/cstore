@@ -45,6 +45,7 @@ const webhookRoutes = require('./routes/webhookRoutes');
 const printifyRoutes = require('./routes/printifyRoutes');
 const escrowRoutes = require('./routes/escrowRoutes');
 const cfvRoutes = require('./routes/cfvRoutes');
+const dgdEscrowRoutes = require('./routes/dgdEscrowRoutes');
 const { getCryptocurrencies } = require('./controllers/orderController');
 
 // v3.0 Marketplace routes
@@ -163,6 +164,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/printify', printifyRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/cfv', cfvRoutes);
+app.use('/api/dgd-escrow', dgdEscrowRoutes);
 app.get('/api/cryptocurrencies', getCryptocurrencies);
 
 // v3.0 Marketplace routes
