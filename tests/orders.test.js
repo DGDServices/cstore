@@ -13,7 +13,9 @@ describe('Orders API', () => {
   let regularUser;
   let testProduct;
 
-  beforeAll(async () => {
+  // Re-seed before EVERY test: the global afterEach (tests/setup.js) wipes all
+  // collections after each test, so beforeAll fixtures would vanish after test 1.
+  beforeEach(async () => {
     // Only run if database is connected
     if (!global.isConnected()) {
       return;
@@ -106,7 +108,9 @@ describe('Orders API', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Authentication required');
+      // `protect` rejects before the controller runs, so the message is the
+      // auth middleware's, not the controller's.
+      expect(res.body.message).toMatch(/Not authorized to access this route|Authentication required/i);
 
       const orderCountAfter = await Order.countDocuments();
       const escrowCountAfter = await Escrow.countDocuments();
@@ -126,6 +130,7 @@ describe('Orders API', () => {
 
       const res = await request(app)
         .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
         .send(orderData);
 
       expect(res.status).toBe(400);
@@ -145,6 +150,7 @@ describe('Orders API', () => {
 
       const res = await request(app)
         .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
         .send(orderData);
 
       expect(res.status).toBe(404);
@@ -164,6 +170,7 @@ describe('Orders API', () => {
 
       const res = await request(app)
         .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
         .send(orderData);
 
       expect(res.status).toBe(400);
@@ -175,6 +182,7 @@ describe('Orders API', () => {
 
       const res = await request(app)
         .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
         .send({});
 
       expect(res.status).toBe(400);
