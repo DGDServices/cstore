@@ -96,7 +96,24 @@ const orderSchema = new mongoose.Schema({
     enum: ['On-chain', 'Lightning Network'],
     default: 'On-chain'
   },
-  paidAt: Date
+  paidAt: Date,
+
+  // DGD non-custodial escrow fields (set when the order settles through dgd-core)
+  dgdEscrowId: {
+    type: String,  // orderId key used in dgd-core (defaults to order._id.toString())
+    index: true
+  },
+  dgdEscrowAddress: {
+    type: String   // multisig address the buyer funds
+  },
+  dgdExpectedSats: {
+    type: String   // expected DGD in sats (string to preserve precision)
+  },
+  dgdEscrowState: {
+    type: String,
+    enum: ['created', 'funded', 'released', 'disputed', 'resolved', 'refunded', 'expired', null],
+    default: null
+  }
 }, {
   timestamps: true
 });
