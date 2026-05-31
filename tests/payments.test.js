@@ -15,7 +15,7 @@ describe('Payments API', () => {
   let testProduct;
   let testOrder;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     if (!global.isConnected()) return;
 
     // Create admin user
