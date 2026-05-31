@@ -14,7 +14,7 @@ describe('Printify POD Integration', () => {
   let testPodProduct;
   let testOrder;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     // Create admin user
     const adminRes = await request(app)
       .post('/api/auth/register')
