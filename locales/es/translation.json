@@ -1,0 +1,132 @@
+{
+  "common": {
+    "success": "Éxito",
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "app": {
+    "name": "CStore",
+    "tagline": "Mercado de Criptomonedas",
+    "description": "Compra productos con Bitcoin, Ethereum y USDT"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "register": "Registrarse",
+    "welcome": "Bienvenido",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "name": "Nombre",
+    "confirmPassword": "Confirmar Contraseña",
+    "forgotPassword": "¿Olvidó su Contraseña?",
+    "resetPassword": "Restablecer Contraseña",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "logoutSuccess": "Cierre de sesión exitoso",
+    "registerSuccess": "Registro exitoso"
+  },
+  "product": {
+    "products": "Productos",
+    "product": "Producto",
+    "name": "Nombre del Producto",
+    "description": "Descripción",
+    "price": "Precio",
+    "stock": "Inventario",
+    "category": "Categoría",
+    "addToCart": "Agregar al Carrito",
+    "buyNow": "Comprar Ahora",
+    "outOfStock": "Agotado",
+    "inStock": "En Stock",
+    "featured": "Productos Destacados",
+    "viewDetails": "Ver Detalles"
+  },
+  "order": {
+    "order": "Pedido",
+    "orders": "Pedidos",
+    "myOrders": "Mis Pedidos",
+    "orderNumber": "Número de Pedido",
+    "orderDate": "Fecha del Pedido",
+    "orderStatus": "Estado del Pedido",
+    "orderTotal": "Total del Pedido",
+    "orderDetails": "Detalles del Pedido",
+    "placeOrder": "Realizar Pedido",
+    "confirmOrder": "Confirmar Pedido",
+    "cancelOrder": "Cancelar Pedido",
+    "trackOrder": "Rastrear Pedido",
+    "status": {
+      "pending": "Pendiente",
+      "paid": "Pagado",
+      "processing": "Procesando",
+      "shipped": "Enviado",
+      "delivered": "Entregado",
+      "cancelled": "Cancelado"
+    }
+  },
+  "payment": {
+    "payment": "Pago",
+    "paymentMethod": "Método de Pago",
+    "cryptocurrency": "Criptomoneda",
+    "paymentAddress": "Dirección de Pago",
+    "amount": "Cantidad",
+    "transactionHash": "Hash de Transacción",
+    "paymentStatus": "Estado del Pago",
+    "paymentConfirmation": "Confirmación de Pago",
+    "sendPayment": "Enviar Pago",
+    "verifyPayment": "Verificar Pago"
+  },
+  "cart": {
+    "cart": "Carrito de Compras",
+    "addToCart": "Agregar al Carrito",
+    "removeFromCart": "Eliminar del Carrito",
+    "updateCart": "Actualizar Carrito",
+    "clearCart": "Vaciar Carrito",
+    "cartEmpty": "Tu carrito está vacío",
+    "cartTotal": "Total del Carrito",
+    "checkout": "Finalizar Compra",
+    "quantity": "Cantidad",
+    "subtotal": "Subtotal"
+  },
+  "user": {
+    "profile": "Perfil",
+    "account": "Cuenta",
+    "settings": "Configuración",
+    "myAccount": "Mi Cuenta",
+    "editProfile": "Editar Perfil",
+    "changePassword": "Cambiar Contraseña"
+  },
+  "admin": {
+    "dashboard": "Panel de Administración",
+    "users": "Usuarios",
+    "products": "Productos",
+    "orders": "Pedidos",
+    "categories": "Categorías",
+    "settings": "Configuración",
+    "analytics": "Análisis",
+    "reports": "Informes"
+  },
+  "message": {
+    "serverRunning": "El servidor está funcionando",
+    "welcomeMessage": "Bienvenido a CStore",
+    "thankYou": "Gracias por su compra",
+    "orderPlaced": "Pedido realizado con éxito",
+    "paymentReceived": "Pago recibido con éxito",
+    "orderShipped": "Su pedido ha sido enviado",
+    "ratesUpdated": "Tipos de cambio actualizados con éxito",
+    "rateSet": "Tipo de cambio manual establecido con éxito",
+    "paymentMethodCreated": "Método de pago creado con éxito",
+    "paymentMethodUpdated": "Método de pago actualizado con éxito",
+    "paymentMethodDeleted": "Método de pago eliminado con éxito"
+  }
+}

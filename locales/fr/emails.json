@@ -1,0 +1,76 @@
+{
+  "welcome": {
+    "subject": "Bienvenue sur CStore !",
+    "title": "Bienvenue sur CStore",
+    "greeting": "Bonjour {{name}} !",
+    "body": "Merci de rejoindre CStore, le marché de cryptomonnaie.",
+    "description": "Vous pouvez maintenant parcourir les produits et effectuer des achats en utilisant Bitcoin, Ethereum ou USDT.",
+    "button": "Parcourir les produits",
+    "footer": "Si vous avez des questions, n'hésitez pas à contacter notre équipe de support.",
+    "closing": "Bons achats !"
+  },
+  "verification": {
+    "subject": "Vérifiez votre email - CStore",
+    "title": "Vérifiez votre email",
+    "greeting": "Bonjour {{name}} !",
+    "body": "Veuillez vérifier votre adresse email pour terminer votre inscription.",
+    "button": "Vérifier l'email",
+    "linkText": "Ou copiez et collez ce lien dans votre navigateur :",
+    "expiry": "Ce lien expirera dans 24 heures.",
+    "ignore": "Si vous n'avez pas créé de compte, vous pouvez ignorer cet email en toute sécurité."
+  },
+  "passwordReset": {
+    "subject": "Demande de réinitialisation de mot de passe - CStore",
+    "title": "Réinitialisation du mot de passe",
+    "greeting": "Bonjour {{name}} !",
+    "body": "Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe :",
+    "button": "Réinitialiser le mot de passe",
+    "linkText": "Ou copiez et collez ce lien dans votre navigateur :",
+    "expiry": "Ce lien expirera dans 1 heure.",
+    "ignore": "Si vous n'avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet email en toute sécurité."
+  },
+  "orderConfirmation": {
+    "subject": "Confirmation de commande #{{orderNumber}}",
+    "title": "Confirmation de commande",
+    "orderNumber": "Commande #{{orderNumber}}",
+    "thankYou": "Merci pour votre commande ! Voici les détails :",
+    "productHeader": "Produit",
+    "quantityHeader": "Quantité",
+    "priceHeader": "Prix",
+    "totalLabel": "Total",
+    "paymentDetailsTitle": "Détails du paiement",
+    "cryptocurrency": "Cryptomonnaie",
+    "amount": "Montant",
+    "paymentAddress": "Adresse de paiement",
+    "instruction": "Veuillez envoyer le montant exact à l'adresse ci-dessus pour terminer votre commande.",
+    "status": "Statut"
+  },
+  "paymentConfirmation": {
+    "subject": "Paiement reçu - Commande #{{orderNumber}}",
+    "title": "Paiement reçu",
+    "orderNumber": "Commande #{{orderNumber}}",
+    "body": "Bonne nouvelle ! Nous avons reçu votre paiement.",
+    "paymentDetailsTitle": "Détails du paiement",
+    "transactionHash": "Hash de transaction",
+    "amount": "Montant",
+    "status": "Statut",
+    "processing": "Votre commande est maintenant en cours de traitement et sera expédiée bientôt.",
+    "notification": "Vous recevrez un autre email lorsque votre commande aura été expédiée."
+  },
+  "shippingNotification": {
+    "subject": "Votre commande a été expédiée - Commande #{{orderNumber}}",
+    "title": "Commande expédiée",
+    "orderNumber": "Commande #{{orderNumber}}",
+    "body": "Bonne nouvelle ! Votre commande a été expédiée.",
+    "trackingTitle": "Informations de suivi",
+    "trackingNumber": "Numéro de suivi",
+    "delivery": "Votre commande devrait arriver dans 5 à 7 jours ouvrables.",
+    "closing": "Merci d'avoir fait vos achats avec CStore !"
+  },
+  "adminAlert": {
+    "subject": "[Alerte CStore] {{subject}}",
+    "title": "Alerte Admin",
+    "additionalData": "Données supplémentaires :",
+    "timestamp": "Généré à : {{timestamp}}"
+  }
+}

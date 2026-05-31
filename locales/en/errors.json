@@ -1,0 +1,42 @@
+{
+  "general": {
+    "somethingWentWrong": "Something went wrong",
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "badRequest": "Bad request",
+    "serverError": "Internal server error"
+  },
+  "auth": {
+    "invalidCredentials": "Invalid email or password",
+    "userExists": "User already exists with this email",
+    "userNotFound": "User not found",
+    "invalidToken": "Invalid token. Please log in again.",
+    "tokenExpired": "Your token has expired. Please log in again.",
+    "noToken": "No token provided. Please log in."
+  },
+  "product": {
+    "notFound": "Product not found",
+    "outOfStock": "Product is out of stock",
+    "insufficientStock": "Insufficient stock available"
+  },
+  "order": {
+    "notFound": "Order not found",
+    "cannotCancel": "Order cannot be cancelled",
+    "invalidStatus": "Invalid order status"
+  },
+  "payment": {
+    "failed": "Payment failed",
+    "notVerified": "Payment not verified",
+    "invalidTransaction": "Invalid transaction",
+    "unsupportedCrypto": "Unsupported cryptocurrency"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "invalid": "{{field}} is invalid",
+    "tooShort": "{{field}} is too short",
+    "tooLong": "{{field}} is too long",
+    "invalidEmail": "Invalid email address",
+    "invalidPassword": "Password must be at least 6 characters"
+  }
+}

@@ -1,0 +1,25 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+logs/
+*.log
+coverage/
+.nyc_output/
+dist/
+build/
+*.tmp
+.tmp/
+tests/
+jest.config.js
+.github/
+crypto-shop-part1.zip
+Website Analysis Report_*

@@ -1,0 +1,42 @@
+{
+  "general": {
+    "somethingWentWrong": "Quelque chose s'est mal passé",
+    "notFound": "Ressource non trouvée",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Accès interdit",
+    "badRequest": "Mauvaise requête",
+    "serverError": "Erreur interne du serveur"
+  },
+  "auth": {
+    "invalidCredentials": "Email ou mot de passe invalide",
+    "userExists": "Un utilisateur existe déjà avec cet email",
+    "userNotFound": "Utilisateur non trouvé",
+    "invalidToken": "Token invalide. Veuillez vous reconnecter.",
+    "tokenExpired": "Votre token a expiré. Veuillez vous reconnecter.",
+    "noToken": "Aucun token fourni. Veuillez vous connecter."
+  },
+  "product": {
+    "notFound": "Produit non trouvé",
+    "outOfStock": "Produit en rupture de stock",
+    "insufficientStock": "Stock insuffisant disponible"
+  },
+  "order": {
+    "notFound": "Commande non trouvée",
+    "cannotCancel": "La commande ne peut pas être annulée",
+    "invalidStatus": "Statut de commande invalide"
+  },
+  "payment": {
+    "failed": "Paiement échoué",
+    "notVerified": "Paiement non vérifié",
+    "invalidTransaction": "Transaction invalide",
+    "unsupportedCrypto": "Cryptomonnaie non supportée"
+  },
+  "validation": {
+    "required": "{{field}} est requis",
+    "invalid": "{{field}} est invalide",
+    "tooShort": "{{field}} est trop court",
+    "tooLong": "{{field}} est trop long",
+    "invalidEmail": "Adresse email invalide",
+    "invalidPassword": "Le mot de passe doit contenir au moins 6 caractères"
+  }
+}

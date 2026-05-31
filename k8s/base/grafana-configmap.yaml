@@ -1,0 +1,327 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: cstore
+data:
+  datasource.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service:9090
+        isDefault: true
+        editable: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-config
+  namespace: cstore
+data:
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: 'CStore'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: cstore
+data:
+  cstore-app-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "CStore Application Metrics",
+        "tags": ["cstore", "application"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"cstore-api\"}[5m])",
+                "legendFormat": "{{method}} {{route}} - {{status_code}}"
+              }
+            ],
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "title": "Request Duration (p95)",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m]))",
+                "legendFormat": "{{method}} {{route}}"
+              }
+            ],
+            "yaxes": [{"format": "s"}, {"format": "short"}]
+          },
+          {
+            "title": "Error Rate",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"cstore-api\",status_code=~\"5..\"}[5m])",
+                "legendFormat": "{{method}} {{route}} - {{status_code}}"
+              }
+            ],
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "title": "Active Pods",
+            "type": "stat",
+            "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "count(up{job=\"cstore-api\"} == 1)"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"cstore-api-.*\"}",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "yaxes": [{"format": "bytes"}, {"format": "short"}]
+          },
+          {
+            "title": "CPU Usage",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"cstore-api-.*\"}[5m])",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "yaxes": [{"format": "percentunit"}, {"format": "short"}]
+          }
+        ]
+      }
+    }
+  redis-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Redis Cache Metrics",
+        "tags": ["cstore", "redis", "cache"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Cache Hit Rate",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))",
+                "legendFormat": "Hit Rate"
+              }
+            ],
+            "yaxes": [{"format": "percentunit", "max": 1, "min": 0}, {"format": "short"}]
+          },
+          {
+            "title": "Commands Per Second",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(redis_commands_processed_total[5m])",
+                "legendFormat": "Commands/sec"
+              }
+            ],
+            "yaxes": [{"format": "ops"}, {"format": "short"}]
+          },
+          {
+            "title": "Connected Clients",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "redis_connected_clients"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage",
+            "type": "gauge",
+            "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "redis_memory_used_bytes / redis_memory_max_bytes"
+              }
+            ],
+            "options": {
+              "minValue": 0,
+              "maxValue": 1
+            }
+          },
+          {
+            "title": "Evicted Keys",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(redis_evicted_keys_total[5m])",
+                "legendFormat": "Evicted Keys/sec"
+              }
+            ],
+            "yaxes": [{"format": "ops"}, {"format": "short"}]
+          },
+          {
+            "title": "Total Keys",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 12, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "sum(redis_db_keys)"
+              }
+            ]
+          },
+          {
+            "title": "Expired Keys",
+            "type": "graph",
+            "gridPos": {"x": 6, "y": 12, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(redis_expired_keys_total[5m])",
+                "legendFormat": "Expired Keys/sec"
+              }
+            ],
+            "yaxes": [{"format": "ops"}, {"format": "short"}]
+          }
+        ]
+      }
+    }
+  performance-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "CStore Performance Overview",
+        "tags": ["cstore", "performance"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Request Latency Distribution",
+            "type": "heatmap",
+            "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m])) by (le)",
+                "format": "heatmap",
+                "legendFormat": "{{le}}"
+              }
+            ]
+          },
+          {
+            "title": "Response Time by Endpoint (p50, p95, p99)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m]))",
+                "legendFormat": "p50 - {{route}}"
+              },
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m]))",
+                "legendFormat": "p95 - {{route}}"
+              },
+              {
+                "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m]))",
+                "legendFormat": "p99 - {{route}}"
+              }
+            ],
+            "yaxes": [{"format": "s"}, {"format": "short"}]
+          },
+          {
+            "title": "Throughput by Status Code",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{job=\"cstore-api\"}[5m])) by (status_code)",
+                "legendFormat": "{{status_code}}"
+              }
+            ],
+            "yaxes": [{"format": "reqps"}, {"format": "short"}]
+          },
+          {
+            "title": "Error Rate (%)",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 16, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "100 * sum(rate(http_requests_total{job=\"cstore-api\",status_code=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"cstore-api\"}[5m]))"
+              }
+            ],
+            "options": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"value": 0, "color": "green"},
+                  {"value": 1, "color": "yellow"},
+                  {"value": 5, "color": "red"}
+                ]
+              }
+            }
+          },
+          {
+            "title": "Average Response Time",
+            "type": "stat",
+            "gridPos": {"x": 6, "y": 16, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"cstore-api\"}[5m]))"
+              }
+            ],
+            "options": {
+              "unit": "s",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"value": 0, "color": "green"},
+                  {"value": 0.2, "color": "yellow"},
+                  {"value": 1, "color": "red"}
+                ]
+              }
+            }
+          },
+          {
+            "title": "Total Requests/min",
+            "type": "stat",
+            "gridPos": {"x": 12, "y": 16, "w": 6, "h": 4},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{job=\"cstore-api\"}[1m])) * 60"
+              }
+            ]
+          }
+        ]
+      }
+    }

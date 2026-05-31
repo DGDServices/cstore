@@ -1,0 +1,76 @@
+{
+  "welcome": {
+    "subject": "¡Bienvenido a CStore!",
+    "title": "Bienvenido a CStore",
+    "greeting": "¡Hola {{name}}!",
+    "body": "Gracias por unirte a CStore, el mercado de criptomonedas.",
+    "description": "Ahora puedes comenzar a explorar productos y realizar compras usando Bitcoin, Ethereum o USDT.",
+    "button": "Explorar Productos",
+    "footer": "Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte.",
+    "closing": "¡Felices compras!"
+  },
+  "verification": {
+    "subject": "Verifica tu Correo - CStore",
+    "title": "Verifica tu Correo",
+    "greeting": "¡Hola {{name}}!",
+    "body": "Por favor verifica tu dirección de correo electrónico para completar tu registro.",
+    "button": "Verificar Correo",
+    "linkText": "O copia y pega este enlace en tu navegador:",
+    "expiry": "Este enlace expirará en 24 horas.",
+    "ignore": "Si no creaste una cuenta, puedes ignorar este correo de forma segura."
+  },
+  "passwordReset": {
+    "subject": "Solicitud de Restablecimiento de Contraseña - CStore",
+    "title": "Restablecimiento de Contraseña",
+    "greeting": "¡Hola {{name}}!",
+    "body": "Has solicitado restablecer tu contraseña. Haz clic en el botón de abajo para crear una nueva contraseña:",
+    "button": "Restablecer Contraseña",
+    "linkText": "O copia y pega este enlace en tu navegador:",
+    "expiry": "Este enlace expirará en 1 hora.",
+    "ignore": "Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo de forma segura."
+  },
+  "orderConfirmation": {
+    "subject": "Confirmación de Pedido #{{orderNumber}}",
+    "title": "Confirmación de Pedido",
+    "orderNumber": "Pedido #{{orderNumber}}",
+    "thankYou": "¡Gracias por tu pedido! Aquí están los detalles:",
+    "productHeader": "Producto",
+    "quantityHeader": "Cantidad",
+    "priceHeader": "Precio",
+    "totalLabel": "Total",
+    "paymentDetailsTitle": "Detalles de Pago",
+    "cryptocurrency": "Criptomoneda",
+    "amount": "Cantidad",
+    "paymentAddress": "Dirección de Pago",
+    "instruction": "Por favor envía la cantidad exacta a la dirección de arriba para completar tu pedido.",
+    "status": "Estado"
+  },
+  "paymentConfirmation": {
+    "subject": "Pago Recibido - Pedido #{{orderNumber}}",
+    "title": "Pago Recibido",
+    "orderNumber": "Pedido #{{orderNumber}}",
+    "body": "¡Buenas noticias! Hemos recibido tu pago.",
+    "paymentDetailsTitle": "Detalles de Pago",
+    "transactionHash": "Hash de Transacción",
+    "amount": "Cantidad",
+    "status": "Estado",
+    "processing": "Tu pedido está siendo procesado y será enviado pronto.",
+    "notification": "Recibirás otro correo cuando tu pedido haya sido enviado."
+  },
+  "shippingNotification": {
+    "subject": "Tu Pedido Ha Sido Enviado - Pedido #{{orderNumber}}",
+    "title": "Pedido Enviado",
+    "orderNumber": "Pedido #{{orderNumber}}",
+    "body": "¡Buenas noticias! Tu pedido ha sido enviado.",
+    "trackingTitle": "Información de Seguimiento",
+    "trackingNumber": "Número de Seguimiento",
+    "delivery": "Tu pedido debería llegar dentro de 5-7 días hábiles.",
+    "closing": "¡Gracias por comprar con CStore!"
+  },
+  "adminAlert": {
+    "subject": "[Alerta CStore] {{subject}}",
+    "title": "Alerta de Administrador",
+    "additionalData": "Datos Adicionales:",
+    "timestamp": "Generado en: {{timestamp}}"
+  }
+}

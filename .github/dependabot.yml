@@ -1,0 +1,121 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot
+
+version: 2
+updates:
+  # Enable version updates for npm (main application)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "thewriterben"
+    assignees:
+      - "thewriterben"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group updates for better management
+    groups:
+      # Security updates - highest priority
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "security"
+      # Production dependencies
+      production-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "@types/*"
+          - "eslint*"
+          - "jest*"
+          - "prettier*"
+          - "supertest"
+      # Development dependencies
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "jest*"
+          - "prettier*"
+          - "supertest"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore specific dependencies
+    ignore:
+      # Ignore major version updates for critical packages (review manually)
+      - dependency-name: "express"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "mongoose"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsonwebtoken"
+        update-types: ["version-update:semver-major"]
+    # Allow both direct and indirect dependencies
+    versioning-strategy: "auto"
+
+  # Enable version updates for npm (admin dashboard)
+  - package-ecosystem: "npm"
+    directory: "/admin-dashboard"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "thewriterben"
+    commit-message:
+      prefix: "chore(admin-deps)"
+    labels:
+      - "dependencies"
+      - "admin-dashboard"
+      - "automated"
+
+  # Enable security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "thewriterben"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "ci"
+      - "github-actions"
+      - "automated"
+
+  # Enable security updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "thewriterben"
+    commit-message:
+      prefix: "chore(docker)"
+    labels:
+      - "docker"
+      - "infrastructure"
+      - "automated"

@@ -1,0 +1,132 @@
+{
+  "common": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "app": {
+    "name": "CStore",
+    "tagline": "Cryptocurrency Marketplace",
+    "description": "Buy products with Bitcoin, Ethereum, and USDT"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "welcome": "Welcome",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logout successful",
+    "registerSuccess": "Registration successful"
+  },
+  "product": {
+    "products": "Products",
+    "product": "Product",
+    "name": "Product Name",
+    "description": "Description",
+    "price": "Price",
+    "stock": "Stock",
+    "category": "Category",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "featured": "Featured Products",
+    "viewDetails": "View Details"
+  },
+  "order": {
+    "order": "Order",
+    "orders": "Orders",
+    "myOrders": "My Orders",
+    "orderNumber": "Order Number",
+    "orderDate": "Order Date",
+    "orderStatus": "Order Status",
+    "orderTotal": "Order Total",
+    "orderDetails": "Order Details",
+    "placeOrder": "Place Order",
+    "confirmOrder": "Confirm Order",
+    "cancelOrder": "Cancel Order",
+    "trackOrder": "Track Order",
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
+  },
+  "payment": {
+    "payment": "Payment",
+    "paymentMethod": "Payment Method",
+    "cryptocurrency": "Cryptocurrency",
+    "paymentAddress": "Payment Address",
+    "amount": "Amount",
+    "transactionHash": "Transaction Hash",
+    "paymentStatus": "Payment Status",
+    "paymentConfirmation": "Payment Confirmation",
+    "sendPayment": "Send Payment",
+    "verifyPayment": "Verify Payment"
+  },
+  "cart": {
+    "cart": "Shopping Cart",
+    "addToCart": "Add to Cart",
+    "removeFromCart": "Remove from Cart",
+    "updateCart": "Update Cart",
+    "clearCart": "Clear Cart",
+    "cartEmpty": "Your cart is empty",
+    "cartTotal": "Cart Total",
+    "checkout": "Checkout",
+    "quantity": "Quantity",
+    "subtotal": "Subtotal"
+  },
+  "user": {
+    "profile": "Profile",
+    "account": "Account",
+    "settings": "Settings",
+    "myAccount": "My Account",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password"
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "users": "Users",
+    "products": "Products",
+    "orders": "Orders",
+    "categories": "Categories",
+    "settings": "Settings",
+    "analytics": "Analytics",
+    "reports": "Reports"
+  },
+  "message": {
+    "serverRunning": "Server is running",
+    "welcomeMessage": "Welcome to CStore",
+    "thankYou": "Thank you for your purchase",
+    "orderPlaced": "Order placed successfully",
+    "paymentReceived": "Payment received successfully",
+    "orderShipped": "Your order has been shipped",
+    "ratesUpdated": "Exchange rates updated successfully",
+    "rateSet": "Manual exchange rate set successfully",
+    "paymentMethodCreated": "Payment method created successfully",
+    "paymentMethodUpdated": "Payment method updated successfully",
+    "paymentMethodDeleted": "Payment method deleted successfully"
+  }
+}

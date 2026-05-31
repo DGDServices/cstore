@@ -1,0 +1,76 @@
+{
+  "welcome": {
+    "subject": "欢迎来到CStore！",
+    "title": "欢迎来到CStore",
+    "greeting": "你好，{{name}}！",
+    "body": "感谢您加入CStore，加密货币市场。",
+    "description": "您现在可以开始浏览产品并使用比特币、以太坊或USDT进行购买。",
+    "button": "浏览产品",
+    "footer": "如果您有任何问题，请随时联系我们的支持团队。",
+    "closing": "购物愉快！"
+  },
+  "verification": {
+    "subject": "验证您的电子邮件 - CStore",
+    "title": "验证您的电子邮件",
+    "greeting": "你好，{{name}}！",
+    "body": "请验证您的电子邮件地址以完成注册。",
+    "button": "验证电子邮件",
+    "linkText": "或将此链接复制并粘贴到您的浏览器中：",
+    "expiry": "此链接将在24小时后过期。",
+    "ignore": "如果您没有创建帐户，可以安全地忽略此电子邮件。"
+  },
+  "passwordReset": {
+    "subject": "密码重置请求 - CStore",
+    "title": "密码重置",
+    "greeting": "你好，{{name}}！",
+    "body": "您请求重置密码。点击下面的按钮创建新密码：",
+    "button": "重置密码",
+    "linkText": "或将此链接复制并粘贴到您的浏览器中：",
+    "expiry": "此链接将在1小时后过期。",
+    "ignore": "如果您没有请求密码重置，可以安全地忽略此电子邮件。"
+  },
+  "orderConfirmation": {
+    "subject": "订单确认 #{{orderNumber}}",
+    "title": "订单确认",
+    "orderNumber": "订单 #{{orderNumber}}",
+    "thankYou": "感谢您的订单！以下是详细信息：",
+    "productHeader": "产品",
+    "quantityHeader": "数量",
+    "priceHeader": "价格",
+    "totalLabel": "总计",
+    "paymentDetailsTitle": "付款详情",
+    "cryptocurrency": "加密货币",
+    "amount": "金额",
+    "paymentAddress": "付款地址",
+    "instruction": "请将确切金额发送到上述地址以完成您的订单。",
+    "status": "状态"
+  },
+  "paymentConfirmation": {
+    "subject": "已收到付款 - 订单 #{{orderNumber}}",
+    "title": "已收到付款",
+    "orderNumber": "订单 #{{orderNumber}}",
+    "body": "好消息！我们已收到您的付款。",
+    "paymentDetailsTitle": "付款详情",
+    "transactionHash": "交易哈希",
+    "amount": "金额",
+    "status": "状态",
+    "processing": "您的订单正在处理中，很快就会发货。",
+    "notification": "您的订单发货后，您将收到另一封电子邮件。"
+  },
+  "shippingNotification": {
+    "subject": "您的订单已发货 - 订单 #{{orderNumber}}",
+    "title": "订单已发货",
+    "orderNumber": "订单 #{{orderNumber}}",
+    "body": "好消息！您的订单已发货。",
+    "trackingTitle": "追踪信息",
+    "trackingNumber": "追踪号码",
+    "delivery": "您的订单应在5-7个工作日内到达。",
+    "closing": "感谢您在CStore购物！"
+  },
+  "adminAlert": {
+    "subject": "[CStore警报] {{subject}}",
+    "title": "管理员警报",
+    "additionalData": "附加数据：",
+    "timestamp": "生成时间：{{timestamp}}"
+  }
+}

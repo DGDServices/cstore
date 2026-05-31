@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cstore
+
+resources:
+  # Namespace
+  - namespace.yaml
+  
+  # Core Application
+  - api-deployment.yaml
+  - configmap.yaml
+  - secret.yaml
+  
+  # Data Layer
+  - mongodb-statefulset.yaml
+  - redis-deployment.yaml
+  
+  # Monitoring Stack
+  - prometheus-rbac.yaml
+  - prometheus-configmap.yaml
+  - prometheus-deployment.yaml
+  - redis-exporter.yaml
+  - grafana-secret.yaml
+  - grafana-configmap.yaml
+  - grafana-deployment.yaml
+  
+  # CDN and Static Assets
+  - nginx-configmap.yaml
+  - nginx-deployment.yaml
+  
+  # Networking
+  - ingress.yaml
+  - network-policies.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: cstore
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: cstore
+    newTag: latest
+  - name: mongo
+    newTag: "7.0"
+  - name: redis
+    newTag: "7-alpine"
+  - name: prom/prometheus
+    newTag: "v2.48.0"
+  - name: grafana/grafana
+    newTag: "10.2.2"
+  - name: oliver006/redis_exporter
+    newTag: "v1.55.0-alpine"
+  - name: nginx
+    newTag: "1.25-alpine"
+
+configMapGenerator:
+  - name: deployment-metadata
+    literals:
+      - deployment.timestamp=$(date +%Y%m%d-%H%M%S)
+      - deployment.version=1.0.0
+
+generatorOptions:
+  disableNameSuffixHash: true

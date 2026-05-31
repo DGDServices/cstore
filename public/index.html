@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptons.com - Professional Cryptocurrency Trading Platform</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1>💎 Cryptons.com</h1>
+                    <p class="tagline">Professional Cryptocurrency Trading Platform</p>
+                </div>
+                <div class="language-selector">
+                    <label for="language-select">🌐</label>
+                    <select id="language-select">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="zh">中文</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="section-nav">
+            <button id="nav-products" class="btn nav-btn active">Products</button>
+            <button id="nav-cfv" class="btn nav-btn">CFV Fair Value</button>
+        </nav>
+
+        <section id="products-section">
+            <h2>Featured Products</h2>
+            <div id="products-grid" class="products-grid">
+                <!-- Products will be loaded here -->
+            </div>
+        </section>
+
+        <section id="cfv-section" class="hidden">
+            <h2>CFV Fair Value</h2>
+            <div id="cfv-content" class="cfv-content">
+                <!-- CFV data will be loaded here -->
+            </div>
+        </section>
+
+        <section id="order-section" class="hidden">
+            <h2>Complete Your Order</h2>
+            <div id="order-details" class="order-details">
+                <!-- Order details will be loaded here -->
+            </div>
+        </section>
+
+        <section id="payment-section" class="hidden">
+            <h2>Payment</h2>
+            <div id="payment-details" class="payment-details">
+                <!-- Payment details will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Cryptons.com - Professional Cryptocurrency Trading Platform. Demo purposes only.</p>
+        </div>
+    </footer>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body">
+                <!-- Product details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: '${SMTP_HOST}:${SMTP_PORT}'
+  smtp_from: '${SMTP_FROM_EMAIL}'
+  smtp_auth_username: '${SMTP_USER}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for notifications
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+
+    # Warning alerts - notify less frequently
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 4h
+
+# Receivers define where alerts are sent
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: '${ALERT_EMAIL}'
+        headers:
+          Subject: '[Cryptons] Alert: {{ .GroupLabels.alertname }}'
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: '${ALERT_EMAIL}'
+        headers:
+          Subject: '🚨 [CRITICAL] Cryptons Alert: {{ .GroupLabels.alertname }}'
+    webhook_configs:
+      - url: '${ALERT_WEBHOOK_URL}'
+        send_resolved: true
+
+  - name: 'warning-alerts'
+    email_configs:
+      - to: '${ALERT_EMAIL}'
+        headers:
+          Subject: '⚠️ [WARNING] Cryptons Alert: {{ .GroupLabels.alertname }}'
+
+# Inhibition rules to prevent alert storms
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']

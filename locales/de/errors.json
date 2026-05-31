@@ -1,0 +1,42 @@
+{
+  "general": {
+    "somethingWentWrong": "Etwas ist schief gelaufen",
+    "notFound": "Ressource nicht gefunden",
+    "unauthorized": "Unbefugter Zugriff",
+    "forbidden": "Zugriff verboten",
+    "badRequest": "Ungültige Anfrage",
+    "serverError": "Interner Serverfehler"
+  },
+  "auth": {
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "userExists": "Benutzer mit dieser E-Mail existiert bereits",
+    "userNotFound": "Benutzer nicht gefunden",
+    "invalidToken": "Ungültiges Token. Bitte melden Sie sich erneut an.",
+    "tokenExpired": "Ihr Token ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "noToken": "Kein Token bereitgestellt. Bitte melden Sie sich an."
+  },
+  "product": {
+    "notFound": "Produkt nicht gefunden",
+    "outOfStock": "Produkt ist ausverkauft",
+    "insufficientStock": "Nicht genügend Lagerbestand verfügbar"
+  },
+  "order": {
+    "notFound": "Bestellung nicht gefunden",
+    "cannotCancel": "Bestellung kann nicht storniert werden",
+    "invalidStatus": "Ungültiger Bestellstatus"
+  },
+  "payment": {
+    "failed": "Zahlung fehlgeschlagen",
+    "notVerified": "Zahlung nicht verifiziert",
+    "invalidTransaction": "Ungültige Transaktion",
+    "unsupportedCrypto": "Nicht unterstützte Kryptowährung"
+  },
+  "validation": {
+    "required": "{{field}} ist erforderlich",
+    "invalid": "{{field}} ist ungültig",
+    "tooShort": "{{field}} ist zu kurz",
+    "tooLong": "{{field}} ist zu lang",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidPassword": "Passwort muss mindestens 6 Zeichen lang sein"
+  }
+}

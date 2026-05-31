@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # MongoDB Primary Node
+  mongodb-primary:
+    image: mongo:7.0
+    container_name: cryptons-mongodb-primary
+    restart: unless-stopped
+    command: mongod --replSet cryptons-rs --bind_ip_all
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_primary_data:/data/db
+      - mongodb_primary_config:/data/configdb
+      - ../scripts/backup:/backups
+    networks:
+      - cryptons-database
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Secondary Node 1
+  mongodb-secondary1:
+    image: mongo:7.0
+    container_name: cryptons-mongodb-secondary1
+    restart: unless-stopped
+    command: mongod --replSet cryptons-rs --bind_ip_all
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_secondary1_data:/data/db
+      - mongodb_secondary1_config:/data/configdb
+    networks:
+      - cryptons-database
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Secondary Node 2
+  mongodb-secondary2:
+    image: mongo:7.0
+    container_name: cryptons-mongodb-secondary2
+    restart: unless-stopped
+    command: mongod --replSet cryptons-rs --bind_ip_all
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_secondary2_data:/data/db
+      - mongodb_secondary2_config:/data/configdb
+    networks:
+      - cryptons-database
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Replica Set Initialization
+  mongodb-rs-init:
+    image: mongo:7.0
+    container_name: cryptons-mongodb-rs-init
+    depends_on:
+      - mongodb-primary
+      - mongodb-secondary1
+      - mongodb-secondary2
+    volumes:
+      - ./init-replica-set.sh:/init-replica-set.sh:ro
+    entrypoint: /init-replica-set.sh
+    networks:
+      - cryptons-database
+
+  # Redis Master
+  redis-master:
+    image: redis:7-alpine
+    container_name: cryptons-redis-master
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_master_data:/data
+    networks:
+      - cryptons-database
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispass}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Redis Replica 1
+  redis-replica1:
+    image: redis:7-alpine
+    container_name: cryptons-redis-replica1
+    restart: unless-stopped
+    command: redis-server --appendonly yes --slaveof redis-master 6379 --masterauth ${REDIS_PASSWORD:-redispass} --requirepass ${REDIS_PASSWORD:-redispass}
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_replica1_data:/data
+    depends_on:
+      - redis-master
+    networks:
+      - cryptons-database
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispass}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Redis Sentinel (for automatic failover)
+  redis-sentinel:
+    image: redis:7-alpine
+    container_name: cryptons-redis-sentinel
+    restart: unless-stopped
+    command: redis-sentinel /etc/redis/sentinel.conf
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./redis-sentinel.conf:/etc/redis/sentinel.conf:ro
+      - redis_sentinel_data:/data
+    depends_on:
+      - redis-master
+      - redis-replica1
+    networks:
+      - cryptons-database
+
+networks:
+  cryptons-database:
+    driver: bridge
+
+volumes:
+  mongodb_primary_data:
+  mongodb_primary_config:
+  mongodb_secondary1_data:
+  mongodb_secondary1_config:
+  mongodb_secondary2_data:
+  mongodb_secondary2_config:
+  redis_master_data:
+  redis_replica1_data:
+  redis_sentinel_data:

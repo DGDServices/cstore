@@ -1,0 +1,27 @@
+# Code Owners for CStore Project
+# 
+# These owners will be automatically requested for review when someone opens a pull request.
+# More information: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @thewriterben
+
+# CI/CD and deployment configurations
+/.github/ @thewriterben
+/scripts/ @thewriterben
+/docker-compose.yml @thewriterben
+/Dockerfile @thewriterben
+
+# Configuration files
+/config/ @thewriterben
+/.env.example @thewriterben
+
+# Documentation
+/docs/ @thewriterben
+/README.md @thewriterben
+
+# Core application code
+/src/ @thewriterben
+
+# Tests
+/tests/ @thewriterben

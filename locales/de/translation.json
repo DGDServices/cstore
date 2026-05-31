@@ -1,0 +1,132 @@
+{
+  "common": {
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Information",
+    "loading": "Laden...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "update": "Aktualisieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "app": {
+    "name": "CStore",
+    "tagline": "Kryptowährungs-Marktplatz",
+    "description": "Kaufen Sie Produkte mit Bitcoin, Ethereum und USDT"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "welcome": "Willkommen",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "name": "Name",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "resetPassword": "Passwort zurücksetzen",
+    "loginSuccess": "Anmeldung erfolgreich",
+    "logoutSuccess": "Abmeldung erfolgreich",
+    "registerSuccess": "Registrierung erfolgreich"
+  },
+  "product": {
+    "products": "Produkte",
+    "product": "Produkt",
+    "name": "Produktname",
+    "description": "Beschreibung",
+    "price": "Preis",
+    "stock": "Lagerbestand",
+    "category": "Kategorie",
+    "addToCart": "In den Warenkorb",
+    "buyNow": "Jetzt kaufen",
+    "outOfStock": "Ausverkauft",
+    "inStock": "Auf Lager",
+    "featured": "Empfohlene Produkte",
+    "viewDetails": "Details anzeigen"
+  },
+  "order": {
+    "order": "Bestellung",
+    "orders": "Bestellungen",
+    "myOrders": "Meine Bestellungen",
+    "orderNumber": "Bestellnummer",
+    "orderDate": "Bestelldatum",
+    "orderStatus": "Bestellstatus",
+    "orderTotal": "Bestellsumme",
+    "orderDetails": "Bestelldetails",
+    "placeOrder": "Bestellung aufgeben",
+    "confirmOrder": "Bestellung bestätigen",
+    "cancelOrder": "Bestellung stornieren",
+    "trackOrder": "Bestellung verfolgen",
+    "status": {
+      "pending": "Ausstehend",
+      "paid": "Bezahlt",
+      "processing": "In Bearbeitung",
+      "shipped": "Versandt",
+      "delivered": "Geliefert",
+      "cancelled": "Storniert"
+    }
+  },
+  "payment": {
+    "payment": "Zahlung",
+    "paymentMethod": "Zahlungsmethode",
+    "cryptocurrency": "Kryptowährung",
+    "paymentAddress": "Zahlungsadresse",
+    "amount": "Betrag",
+    "transactionHash": "Transaktions-Hash",
+    "paymentStatus": "Zahlungsstatus",
+    "paymentConfirmation": "Zahlungsbestätigung",
+    "sendPayment": "Zahlung senden",
+    "verifyPayment": "Zahlung überprüfen"
+  },
+  "cart": {
+    "cart": "Warenkorb",
+    "addToCart": "In den Warenkorb",
+    "removeFromCart": "Aus dem Warenkorb entfernen",
+    "updateCart": "Warenkorb aktualisieren",
+    "clearCart": "Warenkorb leeren",
+    "cartEmpty": "Ihr Warenkorb ist leer",
+    "cartTotal": "Warenkorb-Summe",
+    "checkout": "Zur Kasse",
+    "quantity": "Menge",
+    "subtotal": "Zwischensumme"
+  },
+  "user": {
+    "profile": "Profil",
+    "account": "Konto",
+    "settings": "Einstellungen",
+    "myAccount": "Mein Konto",
+    "editProfile": "Profil bearbeiten",
+    "changePassword": "Passwort ändern"
+  },
+  "admin": {
+    "dashboard": "Admin-Dashboard",
+    "users": "Benutzer",
+    "products": "Produkte",
+    "orders": "Bestellungen",
+    "categories": "Kategorien",
+    "settings": "Einstellungen",
+    "analytics": "Analytik",
+    "reports": "Berichte"
+  },
+  "message": {
+    "serverRunning": "Server läuft",
+    "welcomeMessage": "Willkommen bei CStore",
+    "thankYou": "Vielen Dank für Ihren Einkauf",
+    "orderPlaced": "Bestellung erfolgreich aufgegeben",
+    "paymentReceived": "Zahlung erfolgreich empfangen",
+    "orderShipped": "Ihre Bestellung wurde versandt",
+    "ratesUpdated": "Wechselkurse erfolgreich aktualisiert",
+    "rateSet": "Manueller Wechselkurs erfolgreich festgelegt",
+    "paymentMethodCreated": "Zahlungsmethode erfolgreich erstellt",
+    "paymentMethodUpdated": "Zahlungsmethode erfolgreich aktualisiert",
+    "paymentMethodDeleted": "Zahlungsmethode erfolgreich gelöscht"
+  }
+}

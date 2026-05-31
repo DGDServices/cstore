@@ -1,0 +1,42 @@
+{
+  "general": {
+    "somethingWentWrong": "出错了",
+    "notFound": "未找到资源",
+    "unauthorized": "未授权访问",
+    "forbidden": "禁止访问",
+    "badRequest": "错误的请求",
+    "serverError": "服务器内部错误"
+  },
+  "auth": {
+    "invalidCredentials": "电子邮件或密码无效",
+    "userExists": "该电子邮件已存在用户",
+    "userNotFound": "未找到用户",
+    "invalidToken": "无效令牌。请重新登录。",
+    "tokenExpired": "您的令牌已过期。请重新登录。",
+    "noToken": "未提供令牌。请登录。"
+  },
+  "product": {
+    "notFound": "未找到产品",
+    "outOfStock": "产品缺货",
+    "insufficientStock": "库存不足"
+  },
+  "order": {
+    "notFound": "未找到订单",
+    "cannotCancel": "订单无法取消",
+    "invalidStatus": "无效的订单状态"
+  },
+  "payment": {
+    "failed": "付款失败",
+    "notVerified": "付款未验证",
+    "invalidTransaction": "无效交易",
+    "unsupportedCrypto": "不支持的加密货币"
+  },
+  "validation": {
+    "required": "{{field}}是必填项",
+    "invalid": "{{field}}无效",
+    "tooShort": "{{field}}太短",
+    "tooLong": "{{field}}太长",
+    "invalidEmail": "无效的电子邮件地址",
+    "invalidPassword": "密码至少需要6个字符"
+  }
+}

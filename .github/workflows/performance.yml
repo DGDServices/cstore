@@ -1,0 +1,143 @@
+name: Performance Testing
+
+on:
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      duration:
+        description: 'Test duration in seconds'
+        required: false
+        default: '300'
+
+jobs:
+  load-test:
+    name: Load Testing with K6
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup K6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run K6 load test
+      run: |
+        k6 run tests/performance/load-test.js \
+          --out json=performance-results.json \
+          --env ENVIRONMENT=${{ github.event.inputs.environment || 'staging' }} \
+          --env DURATION=${{ github.event.inputs.duration || '300' }}
+      continue-on-error: true
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results
+        path: performance-results.json
+        retention-days: 30
+
+    - name: Analyze results
+      run: |
+        echo "Analyzing performance results..."
+        # Add analysis logic here
+        # Check for performance regressions
+        # Compare with baseline metrics
+
+    - name: Comment on PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('performance-results.json', 'utf8'));
+          
+          const comment = `## Performance Test Results
+          
+          - **Average Response Time**: ${results.metrics.http_req_duration.avg}ms
+          - **95th Percentile**: ${results.metrics.http_req_duration['p(95)']}ms
+          - **Requests Per Second**: ${results.metrics.http_reqs.rate}
+          - **Failed Requests**: ${results.metrics.http_req_failed.rate * 100}%
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+      continue-on-error: true
+
+  stress-test:
+    name: Stress Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup K6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Run stress test
+      run: |
+        k6 run tests/performance/stress-test.js \
+          --out json=stress-results.json \
+          --env ENVIRONMENT=${{ github.event.inputs.environment || 'staging' }}
+      continue-on-error: true
+
+    - name: Upload stress test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: stress-results
+        path: stress-results.json
+        retention-days: 30
+
+  benchmark:
+    name: API Benchmarking
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run benchmarks
+      run: |
+        echo "Running API benchmarks..."
+        # Add benchmark tests
+        # Example: npm run benchmark
+      continue-on-error: true
+
+    - name: Compare with baseline
+      run: |
+        echo "Comparing with baseline performance..."
+        # Compare current results with stored baseline
+        # Alert on regressions
+      continue-on-error: true
