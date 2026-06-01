@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const currencyService = require('../services/currencyService');
 const escrowService = require('../services/escrowService');
 const { ALL_SUPPORTED_CRYPTOCURRENCIES } = require('../config/cryptocurrencies');
+const dgdConfig = require('../config/dgd');
 
 // Supported cryptocurrencies with addresses
 const cryptoAddressFallbacks = {
@@ -142,6 +143,9 @@ const createOrder = asyncHandler(async (req, res, next) => {
     exchangeRate,
     cryptocurrency,
     paymentAddress: depositAddress,
+    // For DGD orders, persist the expected amount in integer sats (8dp) so the
+    // escrow can be opened with the correct amount later (dgd-escrow signing flow).
+    dgdExpectedSats: cryptocurrency === 'DGD' ? dgdConfig.toSats(product.price * quantity) : undefined,
     shippingAddress,
     status: 'pending'
   });

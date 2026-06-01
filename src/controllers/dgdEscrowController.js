@@ -10,11 +10,16 @@
  */
 
 const Order = require('../models/Order');
+const Product = require('../models/Product');
+const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 const { DgdCoreClient } = require('../services/dgdCoreClient');
-const { DGD_CORE_URL, DGD_CORE_AUTH_TOKEN } = require('../config/dgd');
+const {
+  DGD_CORE_URL, DGD_CORE_AUTH_TOKEN,
+  DGD_ARBITRATOR_PUBKEY, DGD_ARBITRATOR_PAYOUT_ADDRESS,
+} = require('../config/dgd');
 
 // Single shared client (connection-agnostic, stateless)
 const dgd = new DgdCoreClient({ baseUrl: DGD_CORE_URL, authToken: DGD_CORE_AUTH_TOKEN });
@@ -36,36 +41,76 @@ const findOrderForUser = async (orderId, userId) => {
   return order;
 };
 
+/** Resolve the seller User id for an order from its first item's product. */
+const resolveSellerId = async (order) => {
+  const productId = order.items?.[0]?.product;
+  if (productId) {
+    const product = await Product.findById(productId).select('seller');
+    if (product?.seller) return product.seller;
+  }
+  if (process.env.DEFAULT_PLATFORM_SELLER_ID) return process.env.DEFAULT_PLATFORM_SELLER_ID;
+  const admin = await User.findOne({ role: 'admin' }).select('_id');
+  return admin?._id || null;
+};
+
 // ── endpoints ─────────────────────────────────────────────────────────────────
 
 /**
  * POST /api/dgd-escrow/:orderId/open
  * Open (or re-fetch) the dgd-core escrow for an order.
- * Body: { buyerPubkey, buyerPayoutAddress, sellerPubkey, sellerPayoutAddress,
- *         arbitratorPubkey?, arbitratorPayoutAddress?, buyerDepositSats?,
- *         sellerDepositSats?, platformFeeSats?, feeAddress?, networkFeeReserveSats? }
+ *
+ * Key resolution (request body overrides everything, for platform tooling / demo):
+ *   - buyer:      request body → buyer's own saved profile keys.
+ *   - seller:     request body → the product seller's saved profile keys.
+ *   - arbitrator: request body → platform config (DGD_ARBITRATOR_*); present → 2-of-3.
+ *
+ * Body (all optional): { buyerPubkey, buyerPayoutAddress, sellerPubkey,
+ *   sellerPayoutAddress, arbitratorPubkey, arbitratorPayoutAddress, buyerDepositSats,
+ *   sellerDepositSats, platformFeeSats, feeAddress, networkFeeReserveSats, amountSats }
  */
 exports.openEscrow = asyncHandler(async (req, res, next) => {
   const order = await findOrderForUser(req.params.orderId, req.user.id);
   const {
-    buyerPubkey, buyerPayoutAddress,
-    sellerPubkey, sellerPayoutAddress,
-    arbitratorPubkey, arbitratorPayoutAddress,
+    buyerPubkey: bPk, buyerPayoutAddress: bAddr,
+    sellerPubkey: sPk, sellerPayoutAddress: sAddr,
+    arbitratorPubkey: aPk, arbitratorPayoutAddress: aAddr,
     buyerDepositSats, sellerDepositSats,
     platformFeeSats, feeAddress, networkFeeReserveSats,
     amountSats
   } = req.body;
 
-  if (!buyerPubkey || !buyerPayoutAddress || !sellerPubkey || !sellerPayoutAddress) {
-    return next(new AppError('buyerPubkey, buyerPayoutAddress, sellerPubkey, sellerPayoutAddress are required', 400));
+  // Buyer keys: request body → buyer's saved profile.
+  const buyerUser = await User.findById(order.user).select('dgdPubkey dgdPayoutAddress');
+  const buyerPubkey        = bPk   || buyerUser?.dgdPubkey;
+  const buyerPayoutAddress = bAddr || buyerUser?.dgdPayoutAddress;
+  if (!buyerPubkey || !buyerPayoutAddress) {
+    return next(new AppError('Buyer DGD pubkey + payout address required (provide them or set them in your profile)', 400));
   }
+
+  // Seller keys: request body → product seller's saved profile.
+  let sellerPubkey = sPk;
+  let sellerPayoutAddress = sAddr;
+  if (!sellerPubkey || !sellerPayoutAddress) {
+    const sellerId = await resolveSellerId(order);
+    const sellerUser = sellerId ? await User.findById(sellerId).select('dgdPubkey dgdPayoutAddress') : null;
+    sellerPubkey        = sellerPubkey        || sellerUser?.dgdPubkey;
+    sellerPayoutAddress = sellerPayoutAddress || sellerUser?.dgdPayoutAddress;
+  }
+  if (!sellerPubkey || !sellerPayoutAddress) {
+    return next(new AppError('Seller has not configured DGD escrow keys; cannot open escrow', 409));
+  }
+
+  // Arbitrator: request body → platform config. Present → 2-of-3 (mediatable).
+  const arbitratorPubkey        = aPk   || DGD_ARBITRATOR_PUBKEY;
+  const arbitratorPayoutAddress = aAddr || DGD_ARBITRATOR_PAYOUT_ADDRESS;
+  const hasArbitrator = Boolean(arbitratorPubkey && arbitratorPayoutAddress);
 
   const orderId = escrowId(order);
   const escrow = await dgd.openEscrow({
     orderId,
     buyer:  { pubkey: buyerPubkey,  payoutAddress: buyerPayoutAddress },
     seller: { pubkey: sellerPubkey, payoutAddress: sellerPayoutAddress },
-    ...(arbitratorPubkey ? { arbitrator: { pubkey: arbitratorPubkey, payoutAddress: arbitratorPayoutAddress } } : {}),
+    ...(hasArbitrator ? { arbitrator: { pubkey: arbitratorPubkey, payoutAddress: arbitratorPayoutAddress } } : {}),
     amountSats:             String(amountSats || order.dgdExpectedSats || '0'),
     buyerDepositSats:       buyerDepositSats  ? String(buyerDepositSats)  : undefined,
     sellerDepositSats:      sellerDepositSats ? String(sellerDepositSats) : undefined,

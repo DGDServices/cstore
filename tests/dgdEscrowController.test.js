@@ -27,6 +27,7 @@ jest.mock('../src/models/Order', () => {
   const mockOrder = {
     _id: 'order-1',
     user: 'user-1',
+    items: [{ product: 'prod-1' }],
     dgdEscrowId: null,
     dgdEscrowAddress: null,
     dgdEscrowState: null,
@@ -40,16 +41,37 @@ jest.mock('../src/models/Order', () => {
   };
 });
 
+// Mock User: findById(id).select() resolves from an in-test store keyed by id.
+jest.mock('../src/models/User', () => {
+  const store = { byId: {} };
+  return {
+    __store: store,
+    findById: jest.fn((id) => ({ select: () => Promise.resolve(store.byId[id] || null) })),
+    findOne:  jest.fn(() => ({ select: () => Promise.resolve(null) })),
+  };
+});
+
+// Mock Product: findById(id).select() resolves from an in-test store keyed by id.
+jest.mock('../src/models/Product', () => {
+  const store = { byId: {} };
+  return {
+    __store: store,
+    findById: jest.fn((id) => ({ select: () => Promise.resolve(store.byId[id] || null) })),
+  };
+});
+
 // Mock auth middleware — always passes with user-1
 jest.mock('../src/middleware/auth', () => ({
   protect:   (req, _res, next) => { req.user = { id: 'user-1' }; next(); },
   authorize: () => (_req, _res, next) => next(),
 }));
 
-// Minimal mock for config (no real env needed)
+// Minimal mock for config (arbitrator left unset by default; a test sets it)
 jest.mock('../src/config/dgd', () => ({
   DGD_CORE_URL: 'http://dgd-core-mock',
   DGD_CORE_AUTH_TOKEN: 'mock-token',
+  DGD_ARBITRATOR_PUBKEY: undefined,
+  DGD_ARBITRATOR_PAYOUT_ADDRESS: undefined,
 }));
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -77,8 +99,15 @@ const auth = { Authorization: 'Bearer test' }; // middleware always passes
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
+const userStore = require('../src/models/User').__store;
+const productStore = require('../src/models/Product').__store;
+
 describe('DGD Escrow Signing API', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    userStore.byId = {};
+    productStore.byId = {};
+  });
 
   it('GET /api/dgd-escrow/:id returns the current escrow state', async () => {
     mockClient.getEscrow.mockResolvedValue({ state: 'funded', policy: { threshold: 2 } });
@@ -104,6 +133,55 @@ describe('DGD Escrow Signing API', () => {
     expect(mockClient.openEscrow).toHaveBeenCalledTimes(1);
     const call = mockClient.openEscrow.mock.calls[0][0];
     expect(call.buyer).toEqual({ pubkey: 'pkB', payoutAddress: 'addrB' });
+  });
+
+  it('open resolves seller keys from the product seller profile when not in the body', async () => {
+    productStore.byId['prod-1']   = { seller: 'seller-1' };
+    userStore.byId['seller-1']    = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/open')
+      .set(auth)
+      .send({ buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB' }); // no seller keys
+    expect(res.status).toBe(200);
+    const call = mockClient.openEscrow.mock.calls[0][0];
+    expect(call.seller).toEqual({ pubkey: 'spk', payoutAddress: 'saddr' });
+  });
+
+  it('open returns 409 when the seller has no DGD keys configured', async () => {
+    // productStore + userStore empty → no seller keys resolvable
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/open')
+      .set(auth)
+      .send({ buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB' });
+    expect(res.status).toBe(409);
+  });
+
+  it('open forwards an arbitrator (2-of-3) when one is provided', async () => {
+    productStore.byId['prod-1'] = { seller: 'seller-1' };
+    userStore.byId['seller-1']  = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/open')
+      .set(auth)
+      .send({
+        buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB',
+        arbitratorPubkey: 'apk', arbitratorPayoutAddress: 'aaddr',
+      });
+    expect(res.status).toBe(200);
+    const call = mockClient.openEscrow.mock.calls[0][0];
+    expect(call.arbitrator).toEqual({ pubkey: 'apk', payoutAddress: 'aaddr' });
+  });
+
+  it('open uses order.dgdExpectedSats as the amount when not provided', async () => {
+    productStore.byId['prod-1'] = { seller: 'seller-1' };
+    userStore.byId['seller-1']  = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
+    await request(app)
+      .post('/api/dgd-escrow/order-1/open')
+      .set(auth)
+      .send({ buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB' });
+    expect(mockClient.openEscrow.mock.calls[0][0].amountSats).toBe('100000000'); // _mockOrder.dgdExpectedSats
   });
 
   it('GET /api/dgd-escrow/:id/payout-psbt returns the unsigned PSBT', async () => {
