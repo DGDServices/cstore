@@ -18,6 +18,8 @@ jest.mock('../src/services/dgdCoreClient', () => {
     getPayoutPsbt:   jest.fn(),
     signPayout:      jest.fn(),
     openDispute:     jest.fn(),
+    proposeRefund:   jest.fn(),
+    proposeMediation: jest.fn(),
   };
   return { DgdCoreClient: jest.fn(() => mockClient), mockClient };
 });
@@ -61,8 +63,10 @@ jest.mock('../src/models/Product', () => {
 });
 
 // Mock auth middleware — always passes with user-1
+// protect sets a fixed user; an optional `x-test-role` header lets a test
+// promote that user (e.g. to 'admin' for arbitrator-only mediation).
 jest.mock('../src/middleware/auth', () => ({
-  protect:   (req, _res, next) => { req.user = { id: 'user-1' }; next(); },
+  protect:   (req, _res, next) => { req.user = { id: 'user-1', role: req.headers['x-test-role'] }; next(); },
   authorize: () => (_req, _res, next) => next(),
 }));
 
@@ -242,6 +246,57 @@ describe('DGD Escrow Signing API', () => {
       .send({ role: 'buyer', reason: 'item never arrived' });
     expect(res.status).toBe(200);
     expect(mockClient.openDispute).toHaveBeenCalledWith('order-1', 'buyer', 'item never arrived');
+  });
+
+  it('POST .../refund proposes a cancel-refund for the user role', async () => {
+    mockClient.proposeRefund.mockResolvedValue({ state: 'funded', proposal: { kind: 'refund', signatures: {} } });
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/refund')
+      .set(auth)
+      .send({ role: 'buyer' });
+    expect(res.status).toBe(200);
+    expect(mockClient.proposeRefund).toHaveBeenCalledWith('order-1', 'buyer');
+  });
+
+  it('POST .../refund returns 400 for an invalid role', async () => {
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/refund')
+      .set(auth)
+      .send({ role: 'arbitrator' }); // not buyer/seller
+    expect(res.status).toBe(400);
+    expect(mockClient.proposeRefund).not.toHaveBeenCalled();
+  });
+
+  it('POST .../mediate is forbidden (403) for a non-admin user', async () => {
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/mediate')
+      .set(auth) // no x-test-role → role undefined
+      .send({ outputs: [{ address: 'addrB', amount: '60000000' }] });
+    expect(res.status).toBe(403);
+    expect(mockClient.proposeMediation).not.toHaveBeenCalled();
+  });
+
+  it('POST .../mediate lets an admin arbitrator propose a payout split', async () => {
+    mockClient.proposeMediation.mockResolvedValue({ state: 'disputed', proposal: { kind: 'mediation', signatures: {} } });
+    const outputs = [
+      { address: 'addrB', amount: '60000000' },
+      { address: 'addrS', amount: '39990000' },
+    ];
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/mediate')
+      .set(auth).set('x-test-role', 'admin')
+      .send({ outputs, note: 'split 60/40 per evidence' });
+    expect(res.status).toBe(200);
+    expect(mockClient.proposeMediation).toHaveBeenCalledWith('order-1', outputs, 'split 60/40 per evidence');
+  });
+
+  it('POST .../mediate returns 400 when outputs are missing/empty', async () => {
+    const res = await request(app)
+      .post('/api/dgd-escrow/order-1/mediate')
+      .set(auth).set('x-test-role', 'admin')
+      .send({ note: 'no outputs' });
+    expect(res.status).toBe(400);
+    expect(mockClient.proposeMediation).not.toHaveBeenCalled();
   });
 
   it('returns 400 when buyer/seller pubkeys are missing on open', async () => {

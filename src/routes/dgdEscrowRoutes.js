@@ -19,5 +19,7 @@ router.post  ('/:orderId/propose-release',ctrl.proposeRelease);
 router.get   ('/:orderId/payout-psbt',    ctrl.getPayoutPsbt);
 router.post  ('/:orderId/sign-payout',    ctrl.signPayout);
 router.post  ('/:orderId/open-dispute',   ctrl.openDispute);
+router.post  ('/:orderId/refund',         ctrl.refund);
+router.post  ('/:orderId/mediate',        ctrl.mediate);
 
 module.exports = router;

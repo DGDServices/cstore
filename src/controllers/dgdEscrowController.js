@@ -202,6 +202,8 @@ exports.signPayout = asyncHandler(async (req, res, next) => {
     order.dgdEscrowState = escrow.state;
     if (escrow.state === 'released' || escrow.state === 'resolved') {
       order.status = 'delivered'; // escrow settled → order complete
+    } else if (escrow.state === 'refunded') {
+      order.status = 'refunded'; // cancel-refund settled → funds returned
     }
     await order.save();
   }
@@ -220,6 +222,59 @@ exports.openDispute = asyncHandler(async (req, res, next) => {
     return next(new AppError('role must be buyer or seller', 400));
   }
   const escrow = await dgd.openDispute(escrowId(order), role, reason);
+  if (escrow?.state) {
+    order.dgdEscrowState = escrow.state;
+    await order.save();
+  }
+  res.json({ ok: true, escrow });
+});
+
+/**
+ * POST /api/dgd-escrow/:orderId/refund
+ * Propose a cancel-refund (provider refund) — the agreed-cancel / pre-fund path.
+ * A buyer or seller proposes it; both then sign the refund PSBT via sign-payout.
+ * Body: { role: 'buyer'|'seller' }
+ */
+exports.refund = asyncHandler(async (req, res, next) => {
+  const order = await findOrderForUser(req.params.orderId, req.user.id);
+  const { role } = req.body;
+  if (!['buyer', 'seller'].includes(role)) {
+    return next(new AppError('role must be buyer or seller', 400));
+  }
+  const escrow = await dgd.proposeRefund(escrowId(order), role);
+  if (escrow?.state) {
+    order.dgdEscrowState = escrow.state;
+    await order.save();
+  }
+  res.json({ ok: true, escrow });
+});
+
+/**
+ * POST /api/dgd-escrow/:orderId/mediate
+ * Arbitrator proposes an explicit payout split on a DISPUTED 2-of-3 escrow.
+ * Platform-operated: only an admin (the vetted arbitrator) may mediate — the
+ * arbitrator is neither buyer nor seller, so the buyer/seller ownership check
+ * does not apply. The engine enforces the conservation invariant on the split.
+ * Body: { outputs: [{ address, amount }], note?: string }
+ */
+exports.mediate = asyncHandler(async (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return next(new AppError('Only a platform arbitrator (admin) may mediate a dispute', 403));
+  }
+  const order = await Order.findById(req.params.orderId);
+  if (!order) return next(new AppError('Order not found', 404));
+
+  const { outputs, note } = req.body;
+  if (!Array.isArray(outputs) || outputs.length === 0) {
+    return next(new AppError('outputs must be a non-empty array of { address, amount }', 400));
+  }
+  for (const o of outputs) {
+    if (!o || !o.address || o.amount == null) {
+      return next(new AppError('each output requires an address and amount', 400));
+    }
+  }
+
+  const escrow = await dgd.proposeMediation(escrowId(order), outputs, note);
   if (escrow?.state) {
     order.dgdEscrowState = escrow.state;
     await order.save();

@@ -11,7 +11,7 @@ Spec: `Client_Signing_UI_Spec.md` in the backend repo (`DGDServices/DEX_Mart`).
 | Layer | File | Role |
 |-------|------|------|
 | Bridge to dgd-core | `src/config/dgd.js`, `src/services/dgdCoreClient.js` | Bearer-authed calls to the dgd-core funds API; **`DGD_CORE_AUTH_TOKEN` stays server-side** |
-| REST endpoints | `src/controllers/dgdEscrowController.js`, `src/routes/dgdEscrowRoutes.js` | `/api/dgd-escrow/:orderId/*` — open, get, check-funding, propose-release, payout-psbt, sign-payout, open-dispute |
+| REST endpoints | `src/controllers/dgdEscrowController.js`, `src/routes/dgdEscrowRoutes.js` | `/api/dgd-escrow/:orderId/*` — open, get, check-funding, propose-release, payout-psbt, sign-payout, open-dispute, refund, mediate |
 | Order fields | `src/models/Order.js` | `dgdEscrowId`, `dgdEscrowAddress`, `dgdExpectedSats`, `dgdEscrowState` |
 | Signing panel | `public/js/dgd-signing-panel.js` | Reusable, zero-dependency `DgdSigningPanel`; state-driven UI |
 | Order-page wiring | `public/js/app.js` (`showDgdEscrowFlow`) | DGD orders branch to open-escrow → mount the panel |
@@ -19,9 +19,14 @@ Spec: `Client_Signing_UI_Spec.md` in the backend repo (`DGDServices/DEX_Mart`).
 ## Flow (buyer's session)
 ```
 order placed (cryptocurrency = DGD)
+  → dgdExpectedSats is set on the order at creation time (price × qty → sats)
   → showDgdEscrowFlow(): collect buyer DGD pubkey + payout address
-    (seller + arbitrator keys come from the seller profile / platform in production)
+    (seller key resolves server-side from the seller's profile — User.dgdPubkey /
+     dgdPayoutAddress; the arbitrator resolves from platform config DGD_ARBITRATOR_*.
+     A request body may override either, for platform tooling / demo.)
   → POST /api/dgd-escrow/:id/open  → escrow `created`, multisig address shown
+    (2-of-3 buyer/seller/arbitrator when an arbitrator is configured — the platform
+     default — otherwise 2-of-2 buyer/seller)
   → DgdSigningPanel.mount() drives the rest:
        created  → buyer funds the multisig address → "Check funding"
        funded   → "Propose release" / "Open dispute"
@@ -52,11 +57,26 @@ signing is a per-party authenticated action. The buyer/seller must be **logged i
 the panel and the open call attach `Authorization: Bearer <token>` from
 `getAuthToken()`. Without a session the routes return 401 and the UI says so.
 
+## Implemented since the first cut
+- **Server-side seller + arbitrator key resolution** — `openEscrow` resolves the
+  seller's DGD pubkey/payout from their profile (`User.dgdPubkey` /
+  `dgdPayoutAddress`) and the arbitrator from platform config (`DGD_ARBITRATOR_*`);
+  a request body still overrides either for tooling/demo. An arbitrator makes the
+  escrow **2-of-3** (the platform default); without one it falls back to 2-of-2.
+- **DGD amount on the order** — `dgdExpectedSats` is set when a DGD order is created
+  (`orderController` → `dgdConfig.toSats(price × qty)`), no longer defaulting to `'0'`.
+- **Dispute resolution routes** — both recovery paths are now surfaced:
+  - `POST /api/dgd-escrow/:orderId/refund` — a buyer/seller proposes a **cancel-refund**
+    (provider refund); both then sign the refund PSBT through the normal `sign-payout`
+    flow → escrow `refunded` → order `refunded`.
+  - `POST /api/dgd-escrow/:orderId/mediate` — the **arbitrator** proposes an explicit
+    payout split on a disputed 2-of-3 escrow (`{ outputs:[{address,amount}], note? }`).
+    Admin-only (the vetted arbitrator is neither buyer nor seller); the engine enforces
+    the conservation invariant. One party co-signs → 2-of-3 met → escrow `resolved`.
+
 ## Not yet wired (needs product decisions / live env)
-- **Seller + arbitrator key resolution** — entered in the demo form; in production
-  the seller's DGD pubkey/payout come from their seller profile and the arbitrator
-  from the platform's vetted list. Add those lookups server-side in `openEscrow`.
 - **Live dgd-core + DGD node** — `DGD_CORE_URL` / `DGD_CORE_AUTH_TOKEN` must point at
   a running dgd-core; end-to-end fund→sign→broadcast needs a real DGD node.
-- **DGD amount on the order** — `dgdExpectedSats` should be set when a DGD order is
-  created (currently defaults to `'0'` if unset at open time).
+- **Arbitrator identity / vetting** — `mediate` is gated on the `admin` role; a
+  dedicated vetted-arbitrator role + assignment per dispute is a product decision.
+- **Independent security audit** of the funds path — the standing pre-launch gate.
