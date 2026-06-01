@@ -1,8 +1,14 @@
 const { createObjectCsvWriter } = require('csv-writer');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const logger = require('../utils/logger');
+
+// Cross-platform temp dir. Hardcoding '/tmp' broke on Windows (resolved to
+// F:\tmp, which doesn't exist) → 500s on every export. os.tmpdir() is correct
+// on every platform.
+const TMP_DIR = os.tmpdir();
 
 /**
  * Export data to CSV
@@ -13,7 +19,7 @@ const logger = require('../utils/logger');
  */
 async function exportToCSV(data, headers, filename) {
   try {
-    const filePath = path.join('/tmp', filename);
+    const filePath = path.join(TMP_DIR, filename);
     
     const csvWriter = createObjectCsvWriter({
       path: filePath,
@@ -126,7 +132,7 @@ async function exportProductsToPDF(products) {
   return new Promise((resolve, reject) => {
     try {
       const filename = `products-${Date.now()}.pdf`;
-      const filePath = path.join('/tmp', filename);
+      const filePath = path.join(TMP_DIR, filename);
       const doc = new PDFDocument({ margin: 50 });
       const stream = fs.createWriteStream(filePath);
 
@@ -206,7 +212,7 @@ async function exportOrdersToPDF(orders) {
   return new Promise((resolve, reject) => {
     try {
       const filename = `orders-${Date.now()}.pdf`;
-      const filePath = path.join('/tmp', filename);
+      const filePath = path.join(TMP_DIR, filename);
       const doc = new PDFDocument({ margin: 50 });
       const stream = fs.createWriteStream(filePath);
 

@@ -160,8 +160,5 @@ describe('JWT Token Revocation', () => {
       const added = await tokenBlacklist.addToBlacklist(token);
       expect(typeof added).toBe('boolean');
     });
-
-
-    });
   });
 });
