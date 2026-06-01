@@ -13,23 +13,32 @@
 /* global QRCode */ // optional: included separately if available
 
 class DgdSigningPanel {
-  constructor({ orderId, role, containerId }) {
-    this.orderId     = orderId;
-    this.role        = role;                 // 'buyer' | 'seller'
-    this.container   = document.getElementById(containerId);
-    this._idemSeq    = 0;
-    this._pollTimer  = null;
+  constructor({ orderId, role, containerId, getAuthToken }) {
+    this.orderId      = orderId;
+    this.role         = role;                 // 'buyer' | 'seller'
+    this.container    = document.getElementById(containerId);
+    // The funds routes require an authenticated party session (Bearer JWT).
+    // getAuthToken() returns the current token (or falsy if not logged in).
+    this.getAuthToken = typeof getAuthToken === 'function' ? getAuthToken : () => null;
+    this._idemSeq     = 0;
+    this._pollTimer   = null;
     if (!this.container) throw new Error(`DgdSigningPanel: #${containerId} not found`);
   }
 
   // ── API calls (all via the Express server, which holds the dgd-core token) ──
 
   async _api(method, path, body) {
-    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    const headers = { 'Content-Type': 'application/json' };
+    const token = this.getAuthToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const opts = { method, headers };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`/api/dgd-escrow/${encodeURIComponent(this.orderId)}${path}`, opts);
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Your session has expired — please sign in again.');
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
     return data;
   }
 

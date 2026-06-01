@@ -225,11 +225,18 @@ async function createOrder() {
 function showPaymentSection() {
     // Hide products section
     document.getElementById('products-section').classList.add('hidden');
-    
+
     // Show payment section
     const paymentSection = document.getElementById('payment-section');
     paymentSection.classList.remove('hidden');
-    
+
+    // DGD orders settle through a non-custodial multisig escrow (the buyer never
+    // pays a platform-controlled address). Route them to the escrow signing flow.
+    if (currentOrder.cryptocurrency === 'DGD') {
+        showDgdEscrowFlow();
+        return;
+    }
+
     const paymentDetails = document.getElementById('payment-details');
     paymentDetails.innerHTML = `
         <div class="order-summary">
@@ -285,6 +292,126 @@ function showPaymentSection() {
         e.preventDefault();
         await confirmPayment();
     };
+}
+
+// ── DGD non-custodial escrow flow ──────────────────────────────────────────
+// For DGD orders the buyer funds a party-owned multisig escrow and both parties
+// release funds by signing a payout PSBT in their OWN wallet (DGD-QT). The app
+// never holds a key. The reusable DgdSigningPanel drives the created→funded→
+// sign→released lifecycle; this function just opens the escrow first.
+let dgdPanel = null;
+
+// The DGD funds routes require an authenticated party session (Bearer JWT).
+// Read the token from wherever the app stores it after login.
+function getDgdAuthToken() {
+    return localStorage.getItem('token') || localStorage.getItem('authToken') || null;
+}
+
+function showDgdEscrowFlow() {
+    const paymentDetails = document.getElementById('payment-details');
+    paymentDetails.innerHTML = `
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+            <div class="order-item"><span>Product:</span><strong>${currentOrder.productName}</strong></div>
+            <div class="order-item"><span>Quantity:</span><strong>${currentOrder.quantity}</strong></div>
+            <div class="order-item"><span>Payment:</span><strong>Digital Gold (DGD) — non-custodial escrow</strong></div>
+            <div class="order-item"><span>Total:</span><strong>${currentOrder.totalPrice} DGD (~$${currentOrder.totalPriceUSD})</strong></div>
+        </div>
+
+        <div class="payment-instructions">
+            <h3>Non-custodial escrow</h3>
+            <p>Your DGD goes into a multisig address controlled by you, the seller, and an
+               independent arbitrator — never the platform. Release requires signatures from
+               your own wallet (DGD-QT). To begin, open the escrow with your DGD keys.</p>
+        </div>
+
+        <form id="dgd-open-form">
+            <div class="form-group">
+                <label for="buyerPubkey">Your DGD public key</label>
+                <input type="text" id="buyerPubkey" placeholder="02ab… (from DGD-QT)" required>
+            </div>
+            <div class="form-group">
+                <label for="buyerPayoutAddress">Your DGD payout address (refund destination)</label>
+                <input type="text" id="buyerPayoutAddress" placeholder="dgd1…" required>
+            </div>
+            <!-- In production the seller + arbitrator keys are resolved server-side
+                 from the seller's profile and the platform's vetted arbitrator list.
+                 They are entered here only for the standalone demo. -->
+            <div class="form-group">
+                <label for="sellerPubkey">Seller DGD public key</label>
+                <input type="text" id="sellerPubkey" placeholder="02cd…" required>
+            </div>
+            <div class="form-group">
+                <label for="sellerPayoutAddress">Seller DGD payout address</label>
+                <input type="text" id="sellerPayoutAddress" placeholder="dgd1…" required>
+            </div>
+            <details class="form-group">
+                <summary>Add an arbitrator (recommended — enables dispute resolution)</summary>
+                <label for="arbitratorPubkey">Arbitrator DGD public key</label>
+                <input type="text" id="arbitratorPubkey" placeholder="02ef… (optional)">
+                <label for="arbitratorPayoutAddress">Arbitrator DGD payout address</label>
+                <input type="text" id="arbitratorPayoutAddress" placeholder="dgd1… (optional)">
+            </details>
+
+            <button type="submit" class="btn">Open escrow</button>
+            <button type="button" class="btn back-button" onclick="goBackToProducts()">Cancel Order</button>
+        </form>
+
+        <div id="dgd-escrow-panel" style="margin-top:1.5rem;"></div>
+    `;
+
+    document.getElementById('dgd-open-form').onsubmit = async (e) => {
+        e.preventDefault();
+        await openDgdEscrow();
+    };
+}
+
+async function openDgdEscrow() {
+    const body = {
+        buyerPubkey:             document.getElementById('buyerPubkey').value.trim(),
+        buyerPayoutAddress:      document.getElementById('buyerPayoutAddress').value.trim(),
+        sellerPubkey:            document.getElementById('sellerPubkey').value.trim(),
+        sellerPayoutAddress:     document.getElementById('sellerPayoutAddress').value.trim(),
+        arbitratorPubkey:        document.getElementById('arbitratorPubkey').value.trim() || undefined,
+        arbitratorPayoutAddress: document.getElementById('arbitratorPayoutAddress').value.trim() || undefined,
+    };
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = getDgdAuthToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(`${API_URL}/dgd-escrow/${encodeURIComponent(currentOrder.id)}/open`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showError(res.status === 401
+                ? 'You must be signed in to open an escrow.'
+                : (data.error || `Failed to open escrow (HTTP ${res.status})`));
+            return;
+        }
+        // Hide the open form; the panel takes over the lifecycle from here.
+        document.getElementById('dgd-open-form').style.display = 'none';
+        mountDgdPanel();
+    } catch (err) {
+        console.error('Error opening DGD escrow:', err);
+        showError('Failed to open escrow. Please try again.');
+    }
+}
+
+function mountDgdPanel() {
+    if (typeof DgdSigningPanel === 'undefined') {
+        showError('Signing panel failed to load.');
+        return;
+    }
+    dgdPanel = new DgdSigningPanel({
+        orderId: currentOrder.id,
+        role: 'buyer',             // the shopper is the buyer; the seller signs from their own session
+        containerId: 'dgd-escrow-panel',
+        getAuthToken: getDgdAuthToken,
+    });
+    dgdPanel.mount();
 }
 
 // Confirm payment
