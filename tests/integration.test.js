@@ -13,7 +13,7 @@ describe('Integration Tests - Complete Order Flow', () => {
   let adminUser;
   let testProduct;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     if (!global.isConnected()) return;
 
     // Create users

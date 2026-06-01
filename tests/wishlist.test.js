@@ -11,7 +11,7 @@ describe('Wishlist API Tests', () => {
   let testProduct;
   let adminToken;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     if (!global.isConnected()) return;
 
     // Create test user
