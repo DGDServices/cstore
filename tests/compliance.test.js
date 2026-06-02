@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require('mongoose'); // for mongoose.Types.ObjectId in test fixtures
 const KYCVerification = require('../src/models/KYCVerification');
 const AMLAlert = require('../src/models/AMLAlert');
 const SanctionsScreening = require('../src/models/SanctionsScreening');
@@ -13,8 +12,6 @@ const gdprService = require('../src/services/gdpr');
 const consentManagement = require('../src/services/consentManagement');
 const auditTrail = require('../src/services/auditTrail');
 
-let mongoServer;
-
 // Mock logger to avoid console output during tests
 jest.mock('../src/utils/logger', () => ({
   info: jest.fn(),
@@ -23,25 +20,12 @@ jest.mock('../src/utils/logger', () => ({
   debug: jest.fn()
 }));
 
+// DB connection + per-test collection cleanup are owned by the global
+// tests/setup.js. This suite formerly self-managed its own MongoMemoryServer +
+// mongoose.connect in beforeAll, which collided with the global connection
+// ("openUri on an active connection"). Use the shared connection; the global
+// afterEach already wipes collections between tests.
 describe('Compliance Services', () => {
-  beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
-  });
-
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
-  });
-
-  afterEach(async () => {
-    const collections = mongoose.connection.collections;
-    for (const key in collections) {
-      await collections[key].deleteMany({});
-    }
-  });
-
   describe('KYC Service', () => {
     let testUser;
 

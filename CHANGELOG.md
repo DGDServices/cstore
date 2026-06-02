@@ -5,6 +5,32 @@ All notable changes to the Cryptons.com platform will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added - DGD non-custodial escrow graft
+
+- DGD orders settle through a party-owned multisig escrow on the DGD platform
+  (`dgd-core` bridge); the marketplace holds **no key** and never signs payouts.
+- `/api/dgd-escrow/:orderId/*` routes (auth-guarded): open, get, check-funding,
+  propose-release, payout-PSBT, sign-payout, open-dispute, **refund** (buyer/seller
+  cancel-refund), and **mediate** (admin/arbitrator payout split on a disputed
+  2-of-3 escrow). The `dgd-core` bearer token (`DGD_CORE_AUTH_TOKEN`) is held
+  server-side and never reaches the browser.
+- Server-side resolution of the seller's DGD key (from the seller profile) and the
+  arbitrator key (from `DGD_ARBITRATOR_*` config); an arbitrator yields a **2-of-3**
+  escrow (platform default), otherwise 2-of-2.
+- `Order` fields `dgdEscrowId`, `dgdEscrowAddress`, `dgdExpectedSats`,
+  `dgdEscrowState`; `dgdExpectedSats` is computed (price × qty → sats) at order creation.
+- Reusable, zero-dependency `DgdSigningPanel` (`public/js/dgd-signing-panel.js`) that
+  drives funding → PSBT sign-in-own-wallet (DGD-QT) → release, with file/base64/QR
+  PSBT transports. Documented in [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md).
+
+### Known gaps
+
+- `mediate` is gated on the `admin` role; a dedicated vetted-arbitrator role and
+  per-dispute assignment is still a product decision. Live `dgd-core` + DGD node
+  wiring and an independent funds-path security audit remain pre-launch gates.
+
 ## [2.3.0] - 2025-10-14
 
 ### Added - Phase 3: Compliance Foundation

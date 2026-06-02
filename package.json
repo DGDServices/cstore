@@ -6,11 +6,11 @@
   "scripts": {
     "start": "node server-new.js",
     "start:legacy": "node server.js",
-    "dev": "NODE_ENV=development node server-new.js",
+    "dev": "cross-env NODE_ENV=development node server-new.js",
     "dev:legacy": "node server.js",
-    "test": "NODE_ENV=test jest --verbose --runInBand",
-    "test:watch": "NODE_ENV=test jest --watch",
-    "test:coverage": "NODE_ENV=test jest --coverage",
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
     "lint": "eslint src/**/*.js tests/**/*.js",
     "lint:fix": "eslint src/**/*.js tests/**/*.js --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
@@ -88,6 +88,7 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-node": "^11.1.0",

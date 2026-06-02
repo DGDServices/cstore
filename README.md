@@ -181,6 +181,7 @@ npm test
 | `/api/multisig` | Multi-signature wallet operations |
 | `/api/lightning` | Lightning Network payments and channels |
 | `/api/escrow` | Escrow service and disputes |
+| `/api/dgd-escrow` | DGD non-custodial multisig escrow signing (open, fund-check, propose-release, payout-PSBT, sign, dispute, refund, arbitrator mediate) — platform holds no key; see [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md) |
 | `/api/cfv` | Crypto Fair Value metrics |
 | `/api/printify` | Print-on-demand (Printify) |
 | `/api/webhooks` | Blockchain and payment webhooks |

@@ -1,43 +1,24 @@
 const request = require('supertest');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
 const User = require('../src/models/User');
 const Product = require('../src/models/Product');
 const Category = require('../src/models/Category');
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('../src/utils/jwt');
 
-let mongoServer;
 let adminToken;
 
-beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
-  await mongoose.connect(mongoUri);
-
-  // Create admin user
+// Use the shared global connection (tests/setup.js). Re-seed the admin user each
+// test, since the global afterEach wipes all collections — a beforeAll user (and
+// its JWT) would not survive past the first test.
+beforeEach(async () => {
+  if (!global.isConnected()) return;
   const adminUser = await User.create({
     name: 'Admin User',
     email: 'admin@test.com',
     password: 'password123',
     role: 'admin'
   });
-
-  adminToken = jwt.sign(
-    { id: adminUser._id },
-    process.env.JWT_SECRET || 'test-secret',
-    { expiresIn: '1h' }
-  );
-});
-
-afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
-});
-
-beforeEach(async () => {
-  await Product.deleteMany({});
-  await Category.deleteMany({});
+  adminToken = generateToken(adminUser._id);
 });
 
 describe('Product Reorder', () => {
