@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable, zero-dependency `DgdSigningPanel` (`public/js/dgd-signing-panel.js`) that
   drives funding → PSBT sign-in-own-wallet (DGD-QT) → release, with file/base64/QR
   PSBT transports. Documented in [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md).
+- `DgdSigningPanel` now drives the recovery paths too, at parity with the routes:
+  a **Propose refund** button on funded escrows, and an `arbitratorMode` (admin) that
+  shows a **mediation** payout-split form on disputed escrows and signs as the 3rd
+  (arbitrator) key. Previously these routes existed but the panel only exposed
+  release/dispute.
 
 ### Known gaps
 
