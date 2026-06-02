@@ -29,7 +29,8 @@ order placed (cryptocurrency = DGD)
      default — otherwise 2-of-2 buyer/seller)
   → DgdSigningPanel.mount() drives the rest:
        created  → buyer funds the multisig address → "Check funding"
-       funded   → "Propose release" / "Open dispute"
+       funded   → "Propose release" / "Propose refund" / "Open dispute"
+       disputed → (arbitrator view) propose a mediation payout split
        proposal → fetch unsigned PSBT → sign in DGD-QT → submit signed PSBT
                   (download .psbt / copy base64 / QR; "Signed N of threshold")
        released → success + broadcast txid
@@ -44,12 +45,19 @@ const panel = new DgdSigningPanel({
   role: 'buyer',            // 'buyer' | 'seller'
   containerId: 'dgd-escrow-panel',
   getAuthToken: () => localStorage.getItem('token'), // Bearer JWT for the funds routes
+  arbitratorMode: false,    // true (admin only): show the mediation form + sign as arbitrator
 });
 panel.mount();
 ```
 - Never requests a key, seed, or passphrase.
 - Three PSBT transports each way: file (`.psbt`), copy/paste base64, QR.
 - Polls escrow state every 6s until terminal; maps server errors to clear text.
+- Party actions on a funded escrow: **Propose release**, **Propose refund**
+  (cancel-refund), **Open dispute**. All settle through the same sign-payout flow.
+- `arbitratorMode: true` (mounted by an admin) replaces the party actions with a
+  **mediation** form on a disputed escrow (one `address,sats` output per line);
+  the arbitrator then co-signs the payout PSBT as the 3rd key. Mediation calls are
+  admin-gated server-side, so a non-admin token gets a 401/403 the panel surfaces.
 
 ## Auth precondition (important)
 The `/api/dgd-escrow/*` routes are guarded by `protect` (Bearer JWT) — non-custodial
@@ -73,6 +81,10 @@ the panel and the open call attach `Authorization: Bearer <token>` from
     payout split on a disputed 2-of-3 escrow (`{ outputs:[{address,amount}], note? }`).
     Admin-only (the vetted arbitrator is neither buyer nor seller); the engine enforces
     the conservation invariant. One party co-signs → 2-of-3 met → escrow `resolved`.
+  - **Panel parity** — `DgdSigningPanel` now drives both paths from the UI: a
+    **Propose refund** button on funded escrows, and (in `arbitratorMode`) a
+    mediation form on disputed escrows. Previously the routes existed but the panel
+    only exposed release/dispute.
 
 ## Not yet wired (needs product decisions / live env)
 - **Live dgd-core + DGD node** — `DGD_CORE_URL` / `DGD_CORE_AUTH_TOKEN` must point at

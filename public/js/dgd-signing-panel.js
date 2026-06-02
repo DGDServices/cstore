@@ -13,9 +13,14 @@
 /* global QRCode */ // optional: included separately if available
 
 class DgdSigningPanel {
-  constructor({ orderId, role, containerId, getAuthToken }) {
+  constructor({ orderId, role, containerId, getAuthToken, arbitratorMode = false }) {
     this.orderId      = orderId;
     this.role         = role;                 // 'buyer' | 'seller'
+    // Arbitrator view: shows dispute-mediation controls and signs the payout as
+    // the 3rd (arbitrator) key. Only an admin session can use the /mediate route.
+    this.arbitratorMode = Boolean(arbitratorMode);
+    // The role used when signing the payout — arbitrator signs as the 3rd key.
+    this.signRole     = this.arbitratorMode ? 'arbitrator' : role;
     this.container    = document.getElementById(containerId);
     // The funds routes require an authenticated party session (Bearer JWT).
     // getAuthToken() returns the current token (or falsy if not logged in).
@@ -45,11 +50,14 @@ class DgdSigningPanel {
   getEscrow()           { return this._api('GET',  '');                                             }
   checkFunding()        { return this._api('POST', '/check-funding');                               }
   proposeRelease()      { return this._api('POST', '/propose-release', { role: this.role });        }
+  proposeRefund()       { return this._api('POST', '/refund',          { role: this.role });        }
+  proposeMediation(outputs, note) { return this._api('POST', '/mediate', { outputs, note });        }
   openDispute(reason)   { return this._api('POST', '/open-dispute',    { role: this.role, reason }); }
   getPayoutPsbt()       { return this._api('GET',  '/payout-psbt');                                 }
   signPayout(signed)    {
-    const key = `${this.orderId}:${this.role}:sign:${++this._idemSeq}`;
-    return this._api('POST', '/sign-payout', { role: this.role, signedPsbt: signed, idempotencyKey: key });
+    // Arbitrator signs as the 3rd key; buyer/seller sign as themselves.
+    const key = `${this.orderId}:${this.signRole}:sign:${++this._idemSeq}`;
+    return this._api('POST', '/sign-payout', { role: this.signRole, signedPsbt: signed, idempotencyKey: key });
   }
 
   // ── Rendering ─────────────────────────────────────────────────────────────
@@ -92,7 +100,9 @@ class DgdSigningPanel {
     } else if (proposal && !TERMINAL.includes(state)) {
       html += this._renderSigning(escrow, signed, threshold);
     } else if (state === 'disputed' && !proposal) {
-      html += `<p class="dgd-info">Dispute opened — awaiting arbitrator resolution.</p>`;
+      html += this.arbitratorMode
+        ? this._renderMediation()
+        : `<p class="dgd-info">Dispute opened — awaiting arbitrator resolution.</p>`;
     } else if (TERMINAL.includes(state)) {
       html += this._renderTerminal(escrow);
     }
@@ -114,12 +124,30 @@ class DgdSigningPanel {
   }
 
   _renderFunded() {
+    // The arbitrator is not a party — they only act once a dispute is open.
+    if (this.arbitratorMode) {
+      return `<p class="dgd-info">Escrow is funded. No dispute is open — nothing for the arbitrator to do yet.</p>`;
+    }
     return `
-      <p class="dgd-info">Escrow is funded. When ready to settle, propose the release:</p>
+      <p class="dgd-info">Escrow is funded. When ready to settle, propose the release —
+         or propose a refund to return the funds to the buyer:</p>
       <div class="dgd-actions">
         <button class="dgd-btn" id="dgd-propose-release">Propose release</button>
+        <button class="dgd-btn dgd-btn--secondary" id="dgd-propose-refund">Propose refund</button>
         <button class="dgd-btn dgd-btn--danger" id="dgd-open-dispute">Open dispute</button>
       </div>`;
+  }
+
+  _renderMediation() {
+    return `
+      <p class="dgd-info">A dispute is open. As the arbitrator, propose a payout split.
+         Enter one output per line as <code>address,sats</code>:</p>
+      <textarea id="dgd-mediation-outputs" class="dgd-textarea" rows="3"
+        placeholder="dgd1buyer…,60000000&#10;dgd1seller…,39990000"></textarea>
+      <input type="text" id="dgd-mediation-note" class="dgd-textarea"
+        placeholder="Note (optional) — e.g. split per evidence">
+      <button class="dgd-btn" id="dgd-propose-mediation">Propose mediation</button>
+      <p id="dgd-mediation-error" class="dgd-error" style="display:none"></p>`;
   }
 
   _renderSigning(escrow, signed, threshold) {
@@ -151,6 +179,8 @@ class DgdSigningPanel {
   _bindActions(escrow, signed, threshold) {
     this._on('dgd-check-funding',  () => this._doCheckFunding());
     this._on('dgd-propose-release',() => this._doProposeRelease());
+    this._on('dgd-propose-refund', () => this._doProposeRefund());
+    this._on('dgd-propose-mediation', () => this._doProposeMediation());
     this._on('dgd-open-dispute',   () => {
       const reason = prompt('Describe the dispute reason:');
       if (reason !== null) this._doOpenDispute(reason);
@@ -267,6 +297,38 @@ class DgdSigningPanel {
       const { escrow } = await this.proposeRelease();
       this._render(escrow);
     } catch (e) { this._showStatus(e.message, 'error'); }
+  }
+
+  async _doProposeRefund() {
+    try {
+      const { escrow } = await this.proposeRefund();
+      this._render(escrow);
+    } catch (e) { this._showStatus(e.message, 'error'); }
+  }
+
+  /** Arbitrator-only: parse the `address,sats` lines and propose a mediation split. */
+  async _doProposeMediation() {
+    const ta   = document.getElementById('dgd-mediation-outputs');
+    const note = document.getElementById('dgd-mediation-note')?.value.trim() || undefined;
+    const err  = (msg) => {
+      const el = document.getElementById('dgd-mediation-error');
+      if (el) { el.textContent = msg; el.style.display = ''; }
+    };
+    const outputs = (ta?.value || '')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => {
+        const [address, amount] = l.split(',').map((x) => x.trim());
+        return { address, amount };
+      });
+    if (!outputs.length || outputs.some((o) => !o.address || !o.amount)) {
+      return err('Enter at least one output as address,sats (one per line).');
+    }
+    try {
+      const { escrow } = await this.proposeMediation(outputs, note);
+      this._render(escrow);
+    } catch (e) { err(e.message); }
   }
 
   async _doOpenDispute(reason) {
