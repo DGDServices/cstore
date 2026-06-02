@@ -6,6 +6,17 @@
 
 ---
 
+> **⚠️ DGD-only alignment.** The target model is **DGD-only / single-price
+> (oracle) / non-custodial**: DGD is the sole settlement asset, value comes from
+> the signed DGD oracle (no bid/ask), and funds live in party-owned 2-of-3
+> multisig — the platform holds no key (canonical path: `/api/dgd-escrow`, see
+> [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md)). Architecture
+> components for multi-currency, direct/custodial payments, Lightning, and
+> crypto-to-fiat/exchange integration are **legacy/deprecated** under this model
+> (crypto→fiat disabled by design — white paper §9).
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
