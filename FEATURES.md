@@ -6,9 +6,24 @@
 
 ---
 
+> **⚠️ DGD-only alignment.** This marketplace is being aligned to the DGD
+> platform's **DGD-only / single-price / non-custodial** model — the canonical
+> funds path is `/api/dgd-escrow` (see
+> [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md) and the README's
+> *DGD-only invariants*). Features below describing **multi-currency pricing,
+> direct BTC/LTC/XRP payments, Lightning, custodial escrow, or crypto-to-fiat
+> conversion** are **legacy/deprecated** and not part of the DGD-only path;
+> crypto→fiat is disabled by design (white paper §9).
+
+---
+
 ## 📊 Feature Overview
 
-Cryptons.com is a full-featured cryptocurrency e-commerce platform with comprehensive blockchain integration, multi-currency support, and advanced admin tools.
+Cryptons.com is a **DGD-only, non-custodial** marketplace platform: DGD orders
+settle through party-owned multisig escrow priced by the single DGD oracle. It
+also includes auctions, seller tooling, C2C listings, content moderation, and a
+KYC/AML compliance framework. *(Legacy multi-coin/fiat capabilities documented
+below remain in the codebase but are deprecated — see the banner above.)*
 
 ### Feature Completion Status
 
