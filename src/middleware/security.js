@@ -47,7 +47,10 @@ const securityHeaders = helmet({
 // Rate limiting with audit logging
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX || 100),
+  // Keep the limiter active in tests (so RateLimit-* headers are still asserted),
+  // but raise the ceiling so a full suite run from one IP doesn't exhaust the
+  // per-window budget and start returning 429 to unrelated suites. Prod unchanged.
+  max: process.env.NODE_ENV === 'test' ? 100000 : parseInt(process.env.RATE_LIMIT_MAX || 100),
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,

@@ -20,7 +20,7 @@ describe('Printify POD Integration', () => {
       .post('/api/auth/register')
       .send({
         name: 'Admin User',
-        email: 'admin@printify.test',
+        email: 'admin@printify.example.com',
         password: 'admin123'
       });
 
@@ -29,7 +29,7 @@ describe('Printify POD Integration', () => {
     const adminLoginRes = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'admin@printify.test',
+        email: 'admin@printify.example.com',
         password: 'admin123'
       });
     
@@ -40,7 +40,7 @@ describe('Printify POD Integration', () => {
       .post('/api/auth/register')
       .send({
         name: 'Test User',
-        email: 'user@printify.test',
+        email: 'user@printify.example.com',
         password: 'user123'
       });
     
@@ -87,7 +87,7 @@ describe('Printify POD Integration', () => {
     // Create test order
     testOrder = await Order.create({
       user: userId,
-      customerEmail: 'user@printify.test',
+      customerEmail: 'user@printify.example.com',
       items: [{
         product: testProduct._id,
         productName: testProduct.name,
@@ -109,7 +109,7 @@ describe('Printify POD Integration', () => {
     await Product.deleteMany({ name: /Test POD/ });
     await PodProduct.deleteMany({});
     await PodOrder.deleteMany({});
-    await Order.deleteMany({ customerEmail: 'user@printify.test' });
+    await Order.deleteMany({ customerEmail: 'user@printify.example.com' });
   });
 
   describe('GET /api/printify/products', () => {

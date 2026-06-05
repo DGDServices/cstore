@@ -1,11 +1,29 @@
 # Changelog
 
-All notable changes to the Cryptons.com platform will be documented in this file.
+All notable changes to DGD Marketplace (built on the Cryptons.com platform codebase) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed - Audit follow-ups (2026-06-05)
+
+- **Identity:** project is now **DGD Marketplace** (built on the Cryptons.com platform
+  codebase); single reconciled production-readiness figure (~50%) replacing the prior
+  conflicting 45%/65%. See `docs/IDENTITY.md`.
+- **Product Q&A wired in:** `productQuestionRoutes` (a fully-built feature) was never
+  mounted and crashed app load via two missing validators; mounted at `/api/questions`,
+  added `validateQuestion`/`validateAnswer`, and `optionalAuth` so admins see pending
+  questions. Q&A suite 0 → 25 passing.
+- **Token revocation fail-mode** is now explicit and configurable
+  (`TOKEN_REVOCATION_FAIL_MODE=open|closed`, default `open`) with an alertable
+  `security.token_revocation.degraded` event. See `docs/security/JWT_TOKEN_REVOCATION.md`.
+- **DGD funds path (F-1):** `proposeRelease`/`openDispute`/`proposeRefund` now send a
+  stable idempotency key (parity with `sign-payout`); `mediate` intentionally excluded.
+  Funds-path review scoped in `audit/DGD_FUNDS_PATH_REVIEW.md`.
+- **Test reproducibility:** global rate limiter no longer 429s during the suite
+  (test-env ceiling). Baseline 586 → 610 passing.
 
 ### Added - DGD non-custodial escrow graft
 

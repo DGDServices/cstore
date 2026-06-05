@@ -586,3 +586,47 @@ redis-sentinel-2:
 **Owner**: Backend Team  
 **Estimated Effort**: 40-60 hours  
 **Dependencies**: Redis infrastructure
+
+---
+
+## Fail-mode policy
+
+When the revocation store (Redis) is **unavailable or errors**, the read-side checks
+(`isTokenBlacklisted`, `areUserTokensRevoked`) cannot consult the blacklist. The
+behaviour is an explicit, configurable policy rather than a silent default:
+
+| `TOKEN_REVOCATION_FAIL_MODE` | Behaviour on Redis outage | Trade-off |
+|---|---|---|
+| `open` (default) | Token is **allowed** through | Availability first. A revoked / logged-out token is briefly honoured again until Redis recovers. |
+| `closed` | Token is **denied** (fail secure) | Revocation can never be bypassed, but an outage rejects all token auth (effectively logs everyone out) until Redis recovers. |
+
+The default is `open` to preserve historical runtime behaviour; switching to `closed`
+is a deliberate **security-vs-availability** decision and should be made together with
+Redis HA so an outage can't lock everyone out.
+
+### Observability (alert on this)
+
+Every degraded check emits one structured log event — wire an alert to it so the gap
+is never silent:
+
+```
+level: warn
+message: "Token revocation store degraded — revocation not enforced via store"
+event:   security.token_revocation.degraded
+reason:  redis_unavailable | redis_error
+failMode: open | closed
+action:  allow | deny
+```
+
+A sustained stream of these events means revocation is not being enforced via the
+store and Redis needs attention. Recommended alert: any occurrence in production, and
+page if the rate exceeds a few per minute.
+
+### Decision record
+
+- **2026-06-05** — Made the previously hard-coded fail-**open** behaviour explicit and
+  configurable (`TOKEN_REVOCATION_FAIL_MODE`), and replaced the generic warning with the
+  alertable `security.token_revocation.degraded` event. Default left at `open` to avoid
+  changing runtime behaviour without an ops decision. **Open item:** choose the
+  production value once Redis HA is in place; until then `open` is the safer default for
+  availability. Covered by `tests/tokenRevocationFailMode.test.js`.

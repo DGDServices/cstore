@@ -1,4 +1,10 @@
-# Cryptons.com Full Security Audit - Executive Summary
+# DGD Marketplace (formerly Cryptons.com) — Full Security Audit · Executive Summary
+
+> ⚠️ **SUPERSEDED SNAPSHOT (v2.1.0, Oct 2024).** This report's headline readiness
+> figure of **45%** is historical. The canonical, reconciled figure is **~50%** as of
+> June 2026 — see [README · Production Readiness](README.md#-production-readiness).
+> The detailed findings below remain a useful security/compliance reference, but the
+> top-line percentage and version predate the DGD non-custodial escrow work.
 
 **Audit Completion Date:** October 2024  
 **Platform Version:** 2.1.0  

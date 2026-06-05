@@ -89,6 +89,19 @@ const schemas = {
     comment: Joi.string().min(10).max(1000).required()
   }),
 
+  // Create/Update product question. productId is optional so the same
+  // validator serves POST /questions (productId in body) and PUT /questions/:id
+  // (productId comes from the route — only the text changes).
+  question: Joi.object({
+    productId: Joi.string().optional(),
+    question: Joi.string().min(10).max(500).required()
+  }),
+
+  // Add/Update an answer to a product question.
+  answer: Joi.object({
+    text: Joi.string().min(1).max(1000).required()
+  }),
+
   // Create category
   createCategory: Joi.object({
     name: Joi.string().min(2).max(50).required(),
@@ -189,6 +202,8 @@ const schemas = {
 
 // Export validation middleware with specific schemas
 const validateReview = validate(schemas.review);
+const validateQuestion = validate(schemas.question);
+const validateAnswer = validate(schemas.answer);
 const validateCategory = validate(schemas.createCategory);
 const validateUpdateCategory = validate(schemas.updateCategory);
 const validateCartItem = validate(schemas.cartItem);
@@ -204,6 +219,8 @@ module.exports = {
   validate, 
   schemas,
   validateReview,
+  validateQuestion,
+  validateAnswer,
   validateCategory,
   validateUpdateCategory,
   validateCartItem,

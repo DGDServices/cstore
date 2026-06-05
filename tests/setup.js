@@ -29,11 +29,12 @@ beforeAll(async () => {
     // Try to use mongodb-memory-server for in-memory database
     try {
       // Skip download if network is unavailable
-      mongoServer = await MongoMemoryServer.create({
-        instance: {
-          storageEngine: 'ephemeralForTest'
-        }
-      });
+      // NB: do not force storageEngine here. 'ephemeralForTest' was removed in
+      // MongoDB 6.0+, and mongodb-memory-server 10.x pulls MongoDB 7.0 by default,
+      // so forcing it made the in-memory fallback throw in getStorageEngine and
+      // only runs that happened to reach a real local mongod passed. Let the
+      // server pick its default (wiredTiger).
+      mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
       
       await mongoose.connect(mongoUri, {

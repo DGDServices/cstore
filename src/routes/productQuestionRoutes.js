@@ -17,12 +17,13 @@ const {
   rejectQuestion,
   getQuestionStats
 } = require('../controllers/productQuestionController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const { validateQuestion, validateAnswer } = require('../middleware/validation');
 
-// Public routes
-router.get('/product/:productId', getProductQuestions);
-router.get('/:id', getQuestion);
+// Public routes — optionalAuth populates req.user when a token is present (so an
+// admin sees pending questions) without rejecting anonymous visitors.
+router.get('/product/:productId', optionalAuth, getProductQuestions);
+router.get('/:id', optionalAuth, getQuestion);
 
 // Protected routes (authentication required)
 router.post('/', protect, validateQuestion, createQuestion);
