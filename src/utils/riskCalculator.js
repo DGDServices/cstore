@@ -87,23 +87,14 @@ class RiskCalculator {
       return 50;
     }
 
-    try {
-      // This would integrate with the ConversionTransaction model
-      // For now, return a default score
-      // TODO: Implement actual user history analysis
-      
-      // Factors to consider:
-      // - Number of successful conversions
-      // - Failed conversion rate
-      // - Account age
-      // - Verification level
-      // - Previous fraud indicators
-      
-      return 25; // Default: low risk for existing users
-    } catch (error) {
-      logger.error('Error calculating user history risk:', error);
-      return 50; // Default to medium risk on error
-    }
+    // This would integrate with the ConversionTransaction model.
+    // For now, return a default score.
+    // TODO: Implement actual user history analysis (number of successful
+    // conversions, failed conversion rate, account age, verification level,
+    // previous fraud indicators). Wrap in a try/catch once that I/O — which can
+    // throw — is added; it was removed because the placeholder body cannot throw
+    // (no-unreachable).
+    return 25; // Default: low risk for existing users
   }
 
   /**
