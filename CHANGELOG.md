@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Funds-path review scoped in `audit/DGD_FUNDS_PATH_REVIEW.md`.
 - **Test reproducibility:** global rate limiter no longer 429s during the suite
   (test-env ceiling). Baseline 586 → 610 passing.
+- **Removed duplicate token-blacklist/Redis modules:** deleted the unused
+  `src/services/tokenBlacklist.js` and `src/services/redisService.js` duplicates (the
+  live auth path uses `src/utils/tokenBlacklist.js` over `src/config/redis.js`). The
+  duplication had already caused one fix to miss the live path. `tests/redisService.test.js`
+  now targets the canonical modules.
 
 ### Added - DGD non-custodial escrow graft
 
