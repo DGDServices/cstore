@@ -1,7 +1,7 @@
 {
-  "name": "cryptons",
+  "name": "dgd-marketplace",
   "version": "2.2.0",
-  "description": "Cryptons.com - Professional Cryptocurrency Trading Platform with real blockchain integration",
+  "description": "DGD Marketplace - Non-custodial cryptocurrency marketplace with party-owned multisig (DGD) escrow, built on the Cryptons.com platform codebase",
   "main": "server-new.js",
   "scripts": {
     "start": "node server-new.js",
@@ -36,7 +36,7 @@
     "trading-platform",
     "crypto-exchange"
   ],
-  "author": "Cryptons.com Team",
+  "author": "DGD Marketplace (DGDServices)",
   "license": "MIT",
   "repository": {
     "type": "git",

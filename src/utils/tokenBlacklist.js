@@ -2,6 +2,38 @@ const jwt = require('jsonwebtoken');
 const { getRedisClient, isRedisAvailable } = require('../config/redis');
 const logger = require('./logger');
 
+/**
+ * Behaviour when the revocation store (Redis) is unavailable or errors.
+ *   - 'open'   (default): allow the token through — availability over strict
+ *               revocation. A logged-out / revoked token is briefly honoured
+ *               again during a Redis outage.
+ *   - 'closed': deny the token (fail secure) — revocation can never be bypassed,
+ *               at the cost of rejecting all token auth while Redis is down.
+ *
+ * Configured via TOKEN_REVOCATION_FAIL_MODE. Default is 'open' to preserve the
+ * historical runtime behaviour; choosing 'closed' is a deliberate security vs.
+ * availability decision (see docs/security/JWT_TOKEN_REVOCATION.md#fail-mode-policy).
+ */
+const isFailClosed = () =>
+  (process.env.TOKEN_REVOCATION_FAIL_MODE || 'open').toLowerCase() === 'closed';
+
+/**
+ * Emit a structured, alertable security event for a degraded revocation check and
+ * return the decision the configured fail-mode dictates.
+ * @param {string} reason - 'redis_unavailable' | 'redis_error'
+ * @returns {boolean} the value the caller should return (true = revoked/deny)
+ */
+const degradedDecision = (reason) => {
+  const failClosed = isFailClosed();
+  logger.warn('Token revocation store degraded — revocation not enforced via store', {
+    event: 'security.token_revocation.degraded',
+    reason,
+    failMode: failClosed ? 'closed' : 'open',
+    action: failClosed ? 'deny' : 'allow'
+  });
+  return failClosed; // closed → treat as revoked (deny); open → not revoked (allow)
+};
+
 class TokenBlacklist {
   /**
    * Add a token to the blacklist
@@ -59,9 +91,7 @@ class TokenBlacklist {
   async isBlacklisted(token) {
     try {
       if (!isRedisAvailable()) {
-        // Fail-safe: If Redis is down, allow the token (logged for monitoring)
-        logger.warn('Redis unavailable, allowing token access (fail-open)');
-        return false;
+        return degradedDecision('redis_unavailable');
       }
 
       const key = `blacklist:${token}`;
@@ -70,9 +100,7 @@ class TokenBlacklist {
       return result === 'revoked';
     } catch (error) {
       logger.error('Error checking token blacklist:', error);
-      // Fail-safe: If Redis error, allow the token
-      logger.warn('Redis error, allowing token access (fail-open)');
-      return false;
+      return degradedDecision('redis_error');
     }
   }
 
@@ -112,23 +140,22 @@ class TokenBlacklist {
   async areUserTokensRevoked(userId, tokenIssuedAt) {
     try {
       if (!isRedisAvailable()) {
-        logger.warn('Redis unavailable, allowing user token access (fail-open)');
-        return false;
+        return degradedDecision('redis_unavailable');
       }
 
       const key = `user:${userId}:revoked`;
       const redisClient = getRedisClient();
       const revokedAt = await redisClient.get(key);
-      
+
       if (!revokedAt) {
         return false;
       }
-      
+
       // If token was issued before the revocation timestamp, it's invalid
       return tokenIssuedAt * 1000 < parseInt(revokedAt);
     } catch (error) {
       logger.error('Error checking user token revocation:', error);
-      return false;
+      return degradedDecision('redis_error');
     }
   }
 

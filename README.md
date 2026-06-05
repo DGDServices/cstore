@@ -1,13 +1,15 @@
-# Cryptons.com
+# DGD Marketplace
 
-**Professional Cryptocurrency E-Commerce & Marketplace Platform**
+**Non-Custodial Cryptocurrency Marketplace with Party-Owned Multisig Escrow**
 
 [![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
 [![Status](https://img.shields.io/badge/status-Development-orange.svg)](README.md)
 
-A full-featured cryptocurrency e-commerce and peer-to-peer marketplace platform with blockchain integration, multi-currency support, auction system, seller marketplace, consumer-to-consumer listings, content moderation, escrow services, print-on-demand, and a comprehensive KYC/AML compliance framework. Built with Node.js, Express, MongoDB, and React.
+A peer-to-peer cryptocurrency marketplace whose defining feature is **non-custodial DGD escrow**: orders settle through a party-owned 2-of-3 / 2-of-2 multisig on the DGD platform, so the marketplace **holds no key and never signs payouts**. It is built on a full-featured e-commerce + P2P platform codebase (product catalog, auctions, seller onboarding, C2C listings, multi-currency, content moderation, print-on-demand, and a KYC/AML compliance framework) using Node.js, Express, MongoDB, and React.
+
+> **Project identity.** This project is **DGD Marketplace** (developed by DGDServices). It is built on top of the inherited **Cryptons.com** platform codebase, which remains the substrate for the e-commerce, payments, and compliance features. Internal infrastructure identifiers (log service names `cryptons-api`/`cryptons-audit`, Vault secret paths `cryptons/*`, cache prefix `cryptons:`, the default seed admin) intentionally retain the `cryptons` name to avoid breaking monitoring, secret-store, and cache contracts — they are internal and not user-facing. See [docs/IDENTITY.md](docs/IDENTITY.md) for the full decision record.
 
 ---
 
@@ -15,8 +17,8 @@ A full-featured cryptocurrency e-commerce and peer-to-peer marketplace platform 
 
 **🚫 NOT PRODUCTION-READY FOR REAL CRYPTOCURRENCY TRANSACTIONS**
 
-- **Current Status**: Development/Educational Platform (April 2026)
-- **Production Readiness**: ~65%
+- **Current Status**: Development/Educational Platform (June 2026)
+- **Production Readiness**: **~50%** (single reconciled figure — see [Production Readiness](#-production-readiness))
 - **Timeline to Production**: 12-24 months minimum
 - **Estimated Cost**: $1.5-4M+ initial investment
 
@@ -262,7 +264,24 @@ We welcome contributions! Whether you're fixing bugs, adding features, improving
 
 ## 📋 Production Readiness
 
-**Status as of April 2026**: ~65% complete
+**Status as of June 2026: ~50% complete** (single reconciled figure)
+
+> **Why ~50%, and why the earlier numbers disagreed.** Prior documents reported
+> conflicting figures — the Oct 2024 audit said **45%** (v2.1.0) and a later README
+> revision said **65%** (April 2026). Neither was reconciled. This is the canonical
+> number, derived from the category breakdown below and superseding both. The
+> headline is **gated by compliance/licensing**: engineering progress (including the
+> non-custodial DGD escrow) cannot raise it past the legal blockers.
+>
+> | Category | Est. | Notes |
+> |---|---|---|
+> | Security & engineering | ~60% | Strong foundations; DGD escrow is well-built. Open: fail-open token revocation, no independent funds-path audit. |
+> | Infrastructure & ops | ~55% | Containers, CI/CD, monitoring **configs** present. Missing: DR, prod hardening, 24/7 alerting. |
+> | Data protection | ~45% | Encryption helpers + GDPR APIs exist; field-level coverage and retention enforcement partial. |
+> | Compliance & legal | ~15% | **Dominant blocker.** KYC/AML/sanctions are framework scaffolding; licensing is 0%. |
+>
+> Many feature checkmarks below reflect **implemented code paths (scaffolding)**, not
+> live, operational third-party integrations.
 
 ### Security
 
@@ -332,4 +351,4 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 **Made with ❤️ for the crypto community**
 
-*Version 2.2.0 | Last Updated: April 2026*
+*DGD Marketplace · Version 2.2.0 | Last Updated: June 2026*

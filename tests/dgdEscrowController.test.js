@@ -224,7 +224,7 @@ describe('DGD Escrow Signing API', () => {
       .set(auth)
       .send({ role: 'seller' });
     expect(res.status).toBe(200);
-    expect(mockClient.proposeRelease).toHaveBeenCalledWith('order-1', 'seller');
+    expect(mockClient.proposeRelease).toHaveBeenCalledWith('order-1', 'seller', undefined, 'order-1:seller:release');
   });
 
   it('POST .../check-funding marks order paid when funded', async () => {
@@ -245,7 +245,7 @@ describe('DGD Escrow Signing API', () => {
       .set(auth)
       .send({ role: 'buyer', reason: 'item never arrived' });
     expect(res.status).toBe(200);
-    expect(mockClient.openDispute).toHaveBeenCalledWith('order-1', 'buyer', 'item never arrived');
+    expect(mockClient.openDispute).toHaveBeenCalledWith('order-1', 'buyer', 'item never arrived', 'order-1:buyer:dispute');
   });
 
   it('POST .../refund proposes a cancel-refund for the user role', async () => {
@@ -255,7 +255,7 @@ describe('DGD Escrow Signing API', () => {
       .set(auth)
       .send({ role: 'buyer' });
     expect(res.status).toBe(200);
-    expect(mockClient.proposeRefund).toHaveBeenCalledWith('order-1', 'buyer');
+    expect(mockClient.proposeRefund).toHaveBeenCalledWith('order-1', 'buyer', 'order-1:buyer:refund');
   });
 
   it('POST .../refund returns 400 for an invalid role', async () => {

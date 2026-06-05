@@ -169,7 +169,9 @@ exports.proposeRelease = asyncHandler(async (req, res, next) => {
   if (!['buyer', 'seller'].includes(role)) {
     return next(new AppError('role must be buyer or seller', 400));
   }
-  const escrow = await dgd.proposeRelease(escrowId(order), role);
+  // Stable idempotency key — a retried release proposal replays the first result
+  const idemKey = `${order._id}:${role}:release`;
+  const escrow = await dgd.proposeRelease(escrowId(order), role, undefined, idemKey);
   res.json({ ok: true, escrow });
 });
 
@@ -221,7 +223,9 @@ exports.openDispute = asyncHandler(async (req, res, next) => {
   if (!['buyer', 'seller'].includes(role)) {
     return next(new AppError('role must be buyer or seller', 400));
   }
-  const escrow = await dgd.openDispute(escrowId(order), role, reason);
+  // Stable idempotency key — a retried dispute does not open a second one
+  const idemKey = `${order._id}:${role}:dispute`;
+  const escrow = await dgd.openDispute(escrowId(order), role, reason, idemKey);
   if (escrow?.state) {
     order.dgdEscrowState = escrow.state;
     await order.save();
@@ -241,7 +245,9 @@ exports.refund = asyncHandler(async (req, res, next) => {
   if (!['buyer', 'seller'].includes(role)) {
     return next(new AppError('role must be buyer or seller', 400));
   }
-  const escrow = await dgd.proposeRefund(escrowId(order), role);
+  // Stable idempotency key — a retried refund proposal replays the first result
+  const idemKey = `${order._id}:${role}:refund`;
+  const escrow = await dgd.proposeRefund(escrowId(order), role, idemKey);
   if (escrow?.state) {
     order.dgdEscrowState = escrow.state;
     await order.save();
@@ -274,6 +280,9 @@ exports.mediate = asyncHandler(async (req, res, next) => {
     }
   }
 
+  // No fixed idempotency key here: a mediation carries variable `outputs`, so an
+  // arbitrator must be able to re-propose a corrected split. (dgd-core still
+  // enforces the conservation invariant on whatever split is submitted.)
   const escrow = await dgd.proposeMediation(escrowId(order), outputs, note);
   if (escrow?.state) {
     order.dgdEscrowState = escrow.state;
