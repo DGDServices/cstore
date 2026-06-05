@@ -1,10 +1,10 @@
 /**
  * Token revocation fail-mode policy (priority #3).
  *
- * Targets the LIVE blacklist used by the auth middleware/controller
- * (`src/utils/tokenBlacklist.js`, backed by `config/redis`) — not the unused
- * `src/services/tokenBlacklist.js` duplicate. Runs with Redis mocked as DOWN, so it
- * is deterministic and needs no external service:
+ * Targets the canonical blacklist used by the auth middleware/controller
+ * (`src/utils/tokenBlacklist.js`, backed by `config/redis`) — the now-removed
+ * `src/services/tokenBlacklist.js` duplicate has been consolidated away. Runs with
+ * Redis mocked as DOWN, so it is deterministic and needs no external service:
  *   - default / 'open'  -> the token is allowed through (availability first)
  *   - 'closed'          -> the token is denied (fail secure)
  */
