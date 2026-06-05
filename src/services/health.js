@@ -127,22 +127,16 @@ class HealthService {
    * Check disk space (if available)
    */
   async checkDiskSpace() {
-    try {
-      // This is a simplified check - in production, use actual disk monitoring
-      return {
-        status: 'healthy',
-        message: 'Disk space adequate',
-        details: {
-          note: 'Disk monitoring requires additional configuration'
-        }
-      };
-    } catch (error) {
-      return {
-        status: 'unknown',
-        message: 'Disk check not available',
-        error: error.message
-      };
-    }
+    // This is a simplified check - in production, use actual disk monitoring.
+    // TODO: restore a try/catch once real disk I/O (which can throw) is added;
+    // it was removed because the placeholder body cannot throw (no-unreachable).
+    return {
+      status: 'healthy',
+      message: 'Disk space adequate',
+      details: {
+        note: 'Disk monitoring requires additional configuration'
+      }
+    };
   }
 
   /**

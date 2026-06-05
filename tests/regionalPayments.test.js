@@ -41,7 +41,7 @@ describe('Regional Payment Methods Tests', () => {
         await RegionalPaymentMethod.create({
           description: 'Missing required fields'
         });
-        fail('Should have thrown validation error');
+        throw new Error('Should have thrown validation error');
       } catch (error) {
         expect(error.name).toBe('ValidationError');
       }
@@ -60,7 +60,7 @@ describe('Regional Payment Methods Tests', () => {
           name: 'Second Method',
           code: 'UNIQUE'
         });
-        fail('Should have thrown duplicate key error');
+        throw new Error('Should have thrown duplicate key error');
       } catch (error) {
         expect(error.code).toBe(11000); // MongoDB duplicate key error
       }
@@ -75,7 +75,7 @@ describe('Regional Payment Methods Tests', () => {
           code: 'INVALID',
           type: 'invalid_type'
         });
-        fail('Should have thrown validation error');
+        throw new Error('Should have thrown validation error');
       } catch (error) {
         expect(error.name).toBe('ValidationError');
       }
