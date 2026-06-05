@@ -117,7 +117,9 @@ jobs:
       run: npm ci
 
     - name: Run tests with coverage
-      run: npm run test:coverage
+      # --runInBand: the suites share one MongoDB, so parallel jest workers clobber
+      # each other's data. Run serially (matches the `npm test` script) for isolation.
+      run: npm run test:coverage -- --runInBand
       env:
         MONGODB_TEST_URI: mongodb://localhost:27017/cstore-test
         REDIS_ENABLED: 'true'
