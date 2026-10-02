@@ -1,8 +1,6 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
-const User = require('../models/User');
 const logger = require('../utils/logger');
-const currencyService = require('../services/currencyService');
 
 /**
  * Get user's cart
@@ -11,10 +9,8 @@ const currencyService = require('../services/currencyService');
  */
 exports.getCart = async (req, res, next) => {
   try {
-    const { currency } = req.query;
-
     let cart = await Cart.findOne({ user: req.user.id })
-      .populate('items.product', 'name price priceUSD currency image stock isActive');
+      .populate('items.product', 'name price priceUSD image stock isActive');
 
     if (!cart) {
       cart = await Cart.create({ user: req.user.id, items: [] });
@@ -27,27 +23,9 @@ exports.getCart = async (req, res, next) => {
 
     await cart.save();
 
-    // If currency is requested and different from USD, convert prices
-    let cartData = cart.toObject();
-    if (currency && currency.toUpperCase() !== 'USD') {
-      const user = await User.findById(req.user.id);
-      const targetCurrency = currency.toUpperCase();
-
-      try {
-        const conversion = await currencyService.convertCurrency(
-          cart.totalPriceUSD,
-          'USD',
-          targetCurrency
-        );
-
-        cartData.displayCurrency = targetCurrency;
-        cartData.displayPrice = conversion.convertedAmount;
-        cartData.exchangeRate = conversion.exchangeRate;
-      } catch (error) {
-        logger.warn(`Currency conversion failed: ${error.message}`);
-        // Continue without conversion
-      }
-    }
+    // Prices are in DGD (`price`) at the single Explorer price; `priceUSD` is a
+    // display value only. No multi-currency conversion (DGD-only settlement).
+    const cartData = cart.toObject();
 
     res.json({
       success: true,
@@ -117,15 +95,13 @@ exports.addToCart = async (req, res, next) => {
       cart.items[existingItemIndex].quantity = newQuantity;
       cart.items[existingItemIndex].price = product.price;
       cart.items[existingItemIndex].priceUSD = product.priceUSD;
-      cart.items[existingItemIndex].currency = product.currency;
     } else {
       // Add new item
       cart.items.push({
         product: productId,
         quantity,
         price: product.price,
-        priceUSD: product.priceUSD,
-        currency: product.currency
+        priceUSD: product.priceUSD
       });
     }
 

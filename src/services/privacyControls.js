@@ -148,12 +148,12 @@ class PrivacyControlsService {
    */
   async exportUserData(userId) {
     try {
-      const ConversionTransaction = require('../models/ConversionTransaction');
+      const Order = require('../models/Order');
       const KYCVerification = require('../models/KYCVerification');
       const UserConsent = require('../models/UserConsent');
 
       const user = await User.findById(userId).select('-password');
-      const transactions = await ConversionTransaction.find({ user: userId })
+      const transactions = await Order.find({ user: userId })
         .select('-__v');
       const kyc = await KYCVerification.findOne({ user: userId })
         .select('-__v');

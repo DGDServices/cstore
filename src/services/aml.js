@@ -1,5 +1,5 @@
 const AMLAlert = require('../models/AMLAlert');
-const ConversionTransaction = require('../models/ConversionTransaction');
+const Order = require('../models/Order');
 const logger = require('../utils/logger');
 
 /**
@@ -31,15 +31,15 @@ class AMLService {
       const userId = transaction.user || transaction.userId;
 
       // Check amount thresholds
-      if (transaction.fiatAmount >= this.thresholds.ctr) {
+      if (transaction.totalPriceUSD >= this.thresholds.ctr) {
         const alert = await this.createAlert({
           user: userId,
           transaction: transaction._id,
           type: 'CTR_REQUIRED',
           severity: 'high',
-          description: `Transaction amount $${transaction.fiatAmount} exceeds CTR threshold`,
+          description: `Transaction amount $${transaction.totalPriceUSD} exceeds CTR threshold`,
           details: {
-            amount: transaction.fiatAmount,
+            amount: transaction.totalPriceUSD,
             threshold: this.thresholds.ctr
           }
         });
@@ -47,15 +47,15 @@ class AMLService {
       }
 
       // Check for large transactions
-      if (transaction.fiatAmount >= 5000) {
+      if (transaction.totalPriceUSD >= 5000) {
         const alert = await this.createAlert({
           user: userId,
           transaction: transaction._id,
           type: 'LARGE_TRANSACTION',
           severity: 'medium',
-          description: `Large transaction detected: $${transaction.fiatAmount}`,
+          description: `Large transaction detected: $${transaction.totalPriceUSD}`,
           details: {
-            amount: transaction.fiatAmount
+            amount: transaction.totalPriceUSD
           }
         });
         alerts.push(alert);
@@ -150,19 +150,19 @@ class AMLService {
       const timeWindow = 24; // hours
       const startDate = new Date(Date.now() - timeWindow * 60 * 60 * 1000);
 
-      const recentTransactions = await ConversionTransaction.find({
+      const recentTransactions = await Order.find({
         user: userId,
         createdAt: { $gte: startDate },
-        status: { $in: ['completed', 'pending'] }
+        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] }
       });
 
       // Look for multiple transactions just below CTR threshold
       const justBelowThreshold = recentTransactions.filter(
-        tx => tx.fiatAmount >= 9000 && tx.fiatAmount < this.thresholds.ctr
+        tx => tx.totalPriceUSD >= 9000 && tx.totalPriceUSD < this.thresholds.ctr
       );
 
       if (justBelowThreshold.length >= 3) {
-        const totalAmount = justBelowThreshold.reduce((sum, tx) => sum + tx.fiatAmount, 0);
+        const totalAmount = justBelowThreshold.reduce((sum, tx) => sum + tx.totalPriceUSD, 0);
         return {
           count: justBelowThreshold.length,
           totalAmount,
@@ -186,10 +186,10 @@ class AMLService {
       const timeWindow = 1; // hour
       const startDate = new Date(Date.now() - timeWindow * 60 * 60 * 1000);
 
-      const recentTransactions = await ConversionTransaction.find({
+      const recentTransactions = await Order.find({
         user: userId,
         createdAt: { $gte: startDate },
-        status: { $in: ['completed', 'pending'] }
+        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] }
       });
 
       if (recentTransactions.length >= 5) {
@@ -213,9 +213,9 @@ class AMLService {
   async detectUnusualPattern(userId, currentTransaction) {
     try {
       // Get user's historical average
-      const historicalTransactions = await ConversionTransaction.find({
+      const historicalTransactions = await Order.find({
         user: userId,
-        status: 'completed',
+        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
         createdAt: { $lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
       });
 
@@ -223,14 +223,14 @@ class AMLService {
         return null; // Not enough history
       }
 
-      const avgAmount = historicalTransactions.reduce((sum, tx) => sum + tx.fiatAmount, 0) / historicalTransactions.length;
+      const avgAmount = historicalTransactions.reduce((sum, tx) => sum + tx.totalPriceUSD, 0) / historicalTransactions.length;
 
       // Alert if current transaction is 5x the average
-      if (currentTransaction.fiatAmount > avgAmount * 5) {
+      if (currentTransaction.totalPriceUSD > avgAmount * 5) {
         return {
-          currentAmount: currentTransaction.fiatAmount,
+          currentAmount: currentTransaction.totalPriceUSD,
           historicalAverage: avgAmount,
-          multiplier: (currentTransaction.fiatAmount / avgAmount).toFixed(2)
+          multiplier: (currentTransaction.totalPriceUSD / avgAmount).toFixed(2)
         };
       }
 

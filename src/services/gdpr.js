@@ -43,20 +43,17 @@ class GDPRService {
   async collectUserData(userId) {
     try {
       const User = require('../models/User');
-      const ConversionTransaction = require('../models/ConversionTransaction');
       const Order = require('../models/Order');
       const KYCVerification = require('../models/KYCVerification');
       const UserConsent = require('../models/UserConsent');
 
       const user = await User.findById(userId).select('-password');
-      const transactions = await ConversionTransaction.find({ user: userId });
       const orders = await Order.find({ user: userId });
       const kyc = await KYCVerification.findOne({ user: userId });
       const consents = await UserConsent.find({ user: userId });
 
       return {
         personalData: user,
-        transactions,
         orders,
         kycVerification: kyc,
         consents,
@@ -157,12 +154,15 @@ class GDPRService {
    */
   async canEraseUserData(userId) {
     try {
-      const ConversionTransaction = require('../models/ConversionTransaction');
+      const Order = require('../models/Order');
       
-      // Check for pending transactions
-      const pendingTransactions = await ConversionTransaction.countDocuments({
+      // Check for orders with funds still in escrow or awaiting fulfilment
+      const pendingTransactions = await Order.countDocuments({
         user: userId,
-        status: { $in: ['pending', 'processing'] }
+        $or: [
+          { status: { $in: ['pending', 'processing', 'shipped'] } },
+          { dgdEscrowState: { $in: ['created', 'funded', 'disputed'] } }
+        ]
       });
 
       if (pendingTransactions > 0) {

@@ -8,7 +8,7 @@ const amlAlertSchema = new mongoose.Schema({
   },
   transaction: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ConversionTransaction'
+    ref: 'Order'
   },
   type: {
     type: String,

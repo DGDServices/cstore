@@ -130,7 +130,7 @@ describe('Compliance Services', () => {
       const transaction = {
         _id: new mongoose.Types.ObjectId(),
         user: testUser._id,
-        fiatAmount: 15000,
+        totalPriceUSD: 15000,
         status: 'pending'
       };
 
@@ -142,22 +142,23 @@ describe('Compliance Services', () => {
 
     test('should detect structuring', async () => {
       // Create multiple transactions just below threshold
-      const ConversionTransaction = require('../src/models/ConversionTransaction');
-      
+      const Order = require('../src/models/Order');
+
       for (let i = 0; i < 3; i++) {
-        await ConversionTransaction.create({
+        await Order.create({
           user: testUser._id,
-          cryptocurrency: 'BTC',
-          cryptoAmount: 0.5,
-          fiatCurrency: 'USD',
-          fiatAmount: 9500,
-          status: 'completed',
+          customerEmail: 'aml@example.com',
+          items: [],
+          totalPrice: 950,
+          totalPriceUSD: 9500,
+          dgdEscrowState: 'funded',
+          status: 'paid',
           createdAt: new Date()
         });
       }
 
       const structuring = await amlService.detectStructuring(testUser._id, {
-        fiatAmount: 9500
+        totalPriceUSD: 9500
       });
 
       expect(structuring).toBeDefined();

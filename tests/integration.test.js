@@ -42,8 +42,7 @@ describe('Integration Tests - Complete Order Flow', () => {
         description: 'This is a test product for integration testing',
         price: 0.01,
         priceUSD: 500,
-        stock: 5,
-        currency: 'BTC'
+        stock: 5
       };
 
       const createProductRes = await request(app)
@@ -84,7 +83,6 @@ describe('Integration Tests - Complete Order Flow', () => {
         productId: testProduct._id,
         quantity: 2,
         customerEmail: 'customer@integration.com',
-        cryptocurrency: 'BTC',
         shippingAddress: {
           street: '123 Integration St',
           city: 'Test City',
@@ -178,7 +176,6 @@ describe('Integration Tests - Complete Order Flow', () => {
         price: 0.005,
         priceUSD: 250,
         stock: 10,
-        currency: 'ETH',
         isActive: true
       });
 
@@ -186,8 +183,7 @@ describe('Integration Tests - Complete Order Flow', () => {
       const orderData = {
         productId: product._id.toString(),
         quantity: 1,
-        customerEmail: 'guest@integration.com',
-        cryptocurrency: 'ETH'
+        customerEmail: 'guest@integration.com'
       };
 
       const createOrderRes = await request(app)
@@ -219,7 +215,6 @@ describe('Integration Tests - Complete Order Flow', () => {
         price: 0.005,
         priceUSD: 250,
         stock: 10,
-        currency: 'BTC',
         isActive: true
       });
 
@@ -270,7 +265,6 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.5,
           priceUSD: 2500,
           stock: 5,
-          currency: 'BTC',
           isActive: true
         },
         {
@@ -279,7 +273,6 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.8,
           priceUSD: 4000,
           stock: 3,
-          currency: 'BTC',
           isActive: true
         },
         {
@@ -288,7 +281,6 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.2,
           priceUSD: 1000,
           stock: 10,
-          currency: 'BTC',
           isActive: true
         }
       ]);

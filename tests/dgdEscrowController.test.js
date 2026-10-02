@@ -59,6 +59,7 @@ jest.mock('../src/models/Product', () => {
   return {
     __store: store,
     findById: jest.fn((id) => ({ select: () => Promise.resolve(store.byId[id] || null) })),
+    updateOne: jest.fn().mockResolvedValue({ acknowledged: true }),
   };
 });
 

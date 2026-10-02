@@ -1,3 +1,11 @@
+/**
+ * Coin lists for the DGD Marketplace.
+ *
+ * Settlement is DGD only (see src/config/dgd.js and docs/DGD_ESCROW_SIGNING.md).
+ * DGF_CFV_COINS is the set of Digital Gold Foundation coins the CFV metrics
+ * endpoints report on; it is informational and has nothing to do with what
+ * the marketplace accepts as payment.
+ */
 const DGF_CFV_COINS = [
   { symbol: 'DGB', name: 'DigiByte' },
   { symbol: 'DASH', name: 'Dash' },
@@ -13,27 +21,12 @@ const DGF_CFV_COINS = [
   { symbol: 'DGD', name: 'Digital Gold' }
 ];
 
-const BASE_CRYPTOCURRENCIES = [
-  { symbol: 'BTC', name: 'Bitcoin' },
-  { symbol: 'ETH', name: 'Ethereum' },
-  { symbol: 'USDT', name: 'Tether' },
-  { symbol: 'LTC', name: 'Litecoin' },
-  { symbol: 'XRP', name: 'XRP' },
-  { symbol: 'BTC-LN', name: 'Bitcoin Lightning Network' }
-];
-
-const ALL_SUPPORTED_CRYPTOCURRENCIES = [
-  ...BASE_CRYPTOCURRENCIES,
-  ...DGF_CFV_COINS
-];
-
-const ALL_SUPPORTED_CRYPTO_SYMBOLS = ALL_SUPPORTED_CRYPTOCURRENCIES.map(coin => coin.symbol);
-const NON_LIGHTNING_CRYPTO_SYMBOLS = ALL_SUPPORTED_CRYPTO_SYMBOLS.filter(symbol => symbol !== 'BTC-LN');
+/** The one and only settlement asset. */
+const SETTLEMENT_CURRENCIES = [{ symbol: 'DGD', name: 'Digital Gold' }];
+const SETTLEMENT_CURRENCY_SYMBOLS = SETTLEMENT_CURRENCIES.map(coin => coin.symbol);
 
 module.exports = {
   DGF_CFV_COINS,
-  BASE_CRYPTOCURRENCIES,
-  ALL_SUPPORTED_CRYPTOCURRENCIES,
-  ALL_SUPPORTED_CRYPTO_SYMBOLS,
-  NON_LIGHTNING_CRYPTO_SYMBOLS
+  SETTLEMENT_CURRENCIES,
+  SETTLEMENT_CURRENCY_SYMBOLS
 };
