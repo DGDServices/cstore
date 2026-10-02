@@ -2,55 +2,24 @@ const request = require('supertest');
 const app = require('../src/app');
 
 describe('Cryptocurrency API', () => {
-  const dgfSymbols = ['DGB', 'DASH', 'XMR', 'XNO', 'ZCL', 'RVN', 'XEC', 'EGLD', 'NEAR', 'ICP', 'XCH', 'DGD'];
-
   describe('GET /api/cryptocurrencies', () => {
-    it('should get all supported cryptocurrencies', async () => {
+    it('should report DGD as the only settlement currency', async () => {
       const res = await request(app)
         .get('/api/cryptocurrencies');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.cryptocurrencies).toBeDefined();
-      expect(Array.isArray(res.body.data.cryptocurrencies)).toBe(true);
-      expect(res.body.data.cryptocurrencies.length).toBeGreaterThan(0);
+      expect(res.body.data.cryptocurrencies).toEqual([{ symbol: 'DGD', name: 'Digital Gold' }]);
     });
 
-    it('should include BTC, ETH, and USDT', async () => {
+    it('should not expose any platform payment address (non-custodial)', async () => {
       const res = await request(app)
         .get('/api/cryptocurrencies');
 
       expect(res.status).toBe(200);
-      
-      const symbols = res.body.data.cryptocurrencies.map(c => c.symbol);
-      expect(symbols).toContain('BTC');
-      expect(symbols).toContain('ETH');
-      expect(symbols).toContain('USDT');
-    });
-
-    it('should include all 12 DGF CFV coins', async () => {
-      const res = await request(app)
-        .get('/api/cryptocurrencies');
-
-      expect(res.status).toBe(200);
-
-      const symbols = res.body.data.cryptocurrencies.map(c => c.symbol);
-      dgfSymbols.forEach(symbol => {
-        expect(symbols).toContain(symbol);
-      });
-    });
-
-    it('should include cryptocurrency details', async () => {
-      const res = await request(app)
-        .get('/api/cryptocurrencies');
-
-      expect(res.status).toBe(200);
-      
-      const btc = res.body.data.cryptocurrencies.find(c => c.symbol === 'BTC');
-      expect(btc).toBeDefined();
-      expect(btc.name).toBeDefined();
-      expect(btc.address).toBeDefined();
-      expect(btc.symbol).toBe('BTC');
+      for (const coin of res.body.data.cryptocurrencies) {
+        expect(coin.address).toBeUndefined();
+      }
     });
 
     it('should be accessible without authentication', async () => {
@@ -58,7 +27,6 @@ describe('Cryptocurrency API', () => {
         .get('/api/cryptocurrencies');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
     });
   });
 

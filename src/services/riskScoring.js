@@ -21,7 +21,7 @@ class RiskScoringService {
   async calculateTransactionRisk(transaction, user, userHistory) {
     try {
       const scores = {
-        amount: this.scoreAmount(transaction.fiatAmount),
+        amount: this.scoreAmount(transaction.totalPriceUSD),
         frequency: await this.scoreFrequency(user._id, userHistory),
         userHistory: this.scoreUserHistory(userHistory),
         geography: this.scoreGeography(user.country),
@@ -94,8 +94,8 @@ class RiskScoringService {
       return 40; // No history = medium-high risk
     }
 
-    const completedTransactions = userHistory.filter(tx => tx.status === 'completed').length;
-    const failedTransactions = userHistory.filter(tx => tx.status === 'failed').length;
+    const completedTransactions = userHistory.filter(tx => ['paid', 'processing', 'shipped', 'delivered'].includes(tx.status)).length;
+    const failedTransactions = userHistory.filter(tx => ['cancelled', 'refunded'].includes(tx.status)).length;
     
     const successRate = completedTransactions / (completedTransactions + failedTransactions);
 
@@ -190,7 +190,7 @@ class RiskScoringService {
    */
   async calculateUserRiskProfile(userId) {
     try {
-      const ConversionTransaction = require('../models/ConversionTransaction');
+      const Order = require('../models/Order');
       const User = require('../models/User');
       const AMLAlert = require('../models/AMLAlert');
 
@@ -199,19 +199,19 @@ class RiskScoringService {
         throw new Error('User not found');
       }
 
-      const transactions = await ConversionTransaction.find({ user: userId });
+      const transactions = await Order.find({ user: userId });
       const alerts = await AMLAlert.find({ user: userId });
 
       const profile = {
         userId,
         accountAge: Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (24 * 60 * 60 * 1000)),
         totalTransactions: transactions.length,
-        totalVolume: transactions.reduce((sum, tx) => sum + (tx.fiatAmount || 0), 0),
+        totalVolume: transactions.reduce((sum, tx) => sum + (tx.totalPriceUSD || 0), 0),
         averageTransactionSize: transactions.length > 0 
-          ? transactions.reduce((sum, tx) => sum + (tx.fiatAmount || 0), 0) / transactions.length 
+          ? transactions.reduce((sum, tx) => sum + (tx.totalPriceUSD || 0), 0) / transactions.length 
           : 0,
         failureRate: transactions.length > 0
-          ? transactions.filter(tx => tx.status === 'failed').length / transactions.length
+          ? transactions.filter(tx => ['cancelled', 'refunded'].includes(tx.status)).length / transactions.length
           : 0,
         alertCount: alerts.length,
         criticalAlerts: alerts.filter(a => a.severity === 'critical').length,

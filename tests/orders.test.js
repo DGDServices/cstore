@@ -2,9 +2,18 @@ const request = require('supertest');
 const app = require('../src/app');
 const Order = require('../src/models/Order');
 const Product = require('../src/models/Product');
-const Escrow = require('../src/models/Escrow');
 const User = require('../src/models/User');
 const { generateToken } = require('../src/utils/jwt');
+
+// dgd-core is an external service; orders never talk to it except when the
+// buyer confirms delivery (which proposes the payout release). Mock it.
+jest.mock('../src/services/dgdCoreClient', () => {
+  const mockClient = {
+    proposeRelease: jest.fn(async (orderId, by) => ({ orderId, state: 'funded', proposedBy: by }))
+  };
+  return { DgdCoreClient: jest.fn(() => mockClient), mockClient };
+});
+const dgd = require('../src/services/dgdCoreClient').mockClient;
 
 describe('Orders API', () => {
   let adminToken;
@@ -47,7 +56,6 @@ describe('Orders API', () => {
       priceUSD: 250,
       seller: adminUser._id,
       stock: 10,
-      currency: 'BTC',
       isActive: true
     });
   });
@@ -60,7 +68,6 @@ describe('Orders API', () => {
         productId: testProduct._id.toString(),
         quantity: 2,
         customerEmail: 'customer@test.com',
-        cryptocurrency: 'BTC',
         shippingAddress: {
           street: '123 Main St',
           city: 'New York',
@@ -80,26 +87,24 @@ describe('Orders API', () => {
       expect(res.body.data.order).toBeDefined();
       expect(res.body.data.order.totalPrice).toBe(0.01);
       expect(res.body.data.order.totalPriceUSD).toBe(500);
-      expect(res.body.data.order.cryptocurrency).toBe('BTC');
-      expect(res.body.data.order.escrow).toBeDefined();
-
-      const escrow = await Escrow.findById(res.body.data.order.escrow);
-      expect(escrow).toBeDefined();
-      expect(escrow.order.toString()).toBe(res.body.data.order._id);
-      expect(res.body.data.order.paymentAddress).toBe(escrow.depositAddress);
+      expect(res.body.data.order.settlementAsset).toBe('DGD');
+      expect(res.body.data.order.dgdExpectedSats).toBe('1000000'); // 0.01 DGD in sats
+      expect(res.body.data.order.dgdEscrowState).toBeNull();
+      expect(res.body.data.order.status).toBe('pending');
+      expect(res.body.data.next.route).toBe(`/api/dgd-escrow/${res.body.data.order._id}/open`);
+      // No funds move on order creation; the buyer opens and funds the escrow next.
+      expect(dgd.proposeRelease).not.toHaveBeenCalled();
     });
 
     it('should require authentication for order creation', async () => {
       if (!global.isConnected()) return;
 
       const orderCountBefore = await Order.countDocuments();
-      const escrowCountBefore = await Escrow.countDocuments();
 
       const orderData = {
         productId: testProduct._id.toString(),
         quantity: 1,
-        customerEmail: 'guest@test.com',
-        cryptocurrency: 'ETH'
+        customerEmail: 'guest@test.com'
       };
 
       const res = await request(app)
@@ -113,9 +118,7 @@ describe('Orders API', () => {
       expect(res.body.message).toMatch(/Not authorized to access this route|Authentication required/i);
 
       const orderCountAfter = await Order.countDocuments();
-      const escrowCountAfter = await Escrow.countDocuments();
       expect(orderCountAfter).toBe(orderCountBefore);
-      expect(escrowCountAfter).toBe(escrowCountBefore);
     });
 
     it('should return error for insufficient stock', async () => {
@@ -124,8 +127,7 @@ describe('Orders API', () => {
       const orderData = {
         productId: testProduct._id.toString(),
         quantity: 100,
-        customerEmail: 'customer@test.com',
-        cryptocurrency: 'BTC'
+        customerEmail: 'customer@test.com'
       };
 
       const res = await request(app)
@@ -144,8 +146,7 @@ describe('Orders API', () => {
       const orderData = {
         productId: '507f1f77bcf86cd799439011',
         quantity: 1,
-        customerEmail: 'customer@test.com',
-        cryptocurrency: 'BTC'
+        customerEmail: 'customer@test.com'
       };
 
       const res = await request(app)
@@ -158,14 +159,14 @@ describe('Orders API', () => {
       expect(res.body.message).toContain('Product not found');
     });
 
-    it('should return error for unsupported cryptocurrency', async () => {
+    it('should reject a request that tries to pick a settlement asset (DGD only)', async () => {
       if (!global.isConnected()) return;
 
       const orderData = {
         productId: testProduct._id.toString(),
         quantity: 1,
         customerEmail: 'customer@test.com',
-        cryptocurrency: 'DOGE'
+        cryptocurrency: 'BTC'
       };
 
       const res = await request(app)
@@ -208,8 +209,6 @@ describe('Orders API', () => {
         }],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        cryptocurrency: 'BTC',
-        paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
         status: 'pending'
       });
     });
@@ -287,8 +286,6 @@ describe('Orders API', () => {
           }],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          cryptocurrency: 'BTC',
-          paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
           status: 'pending'
         },
         {
@@ -303,8 +300,6 @@ describe('Orders API', () => {
           }],
           totalPrice: testProduct.price * 2,
           totalPriceUSD: testProduct.priceUSD * 2,
-          cryptocurrency: 'ETH',
-          paymentAddress: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
           status: 'paid'
         }
       ]);
@@ -352,8 +347,6 @@ describe('Orders API', () => {
           }],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          cryptocurrency: 'BTC',
-          paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
           status: 'pending'
         },
         {
@@ -368,8 +361,6 @@ describe('Orders API', () => {
           }],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          cryptocurrency: 'ETH',
-          paymentAddress: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
           status: 'paid'
         }
       ]);
@@ -441,8 +432,6 @@ describe('Orders API', () => {
         }],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        cryptocurrency: 'BTC',
-        paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
         status: 'pending'
       });
     });
@@ -497,13 +486,13 @@ describe('Orders API', () => {
   });
 
   describe('POST /api/orders/:id/confirm-delivery', () => {
-    let deliveredOrder;
-    let escrow;
+    let fundedOrder;
 
     beforeEach(async () => {
       if (!global.isConnected()) return;
+      dgd.proposeRelease.mockClear();
 
-      deliveredOrder = await Order.create({
+      fundedOrder = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
         items: [{
@@ -515,43 +504,102 @@ describe('Orders API', () => {
         }],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        cryptocurrency: 'BTC',
-        paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-        status: 'delivered'
+        dgdExpectedSats: '500000',
+        dgdEscrowId: undefined,
+        dgdEscrowAddress: 'dgrt1qescrowaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        dgdEscrowState: 'funded',
+        status: 'shipped'
       });
-
-      escrow = await Escrow.create({
-        buyer: regularUser._id,
-        seller: adminUser._id,
-        order: deliveredOrder._id,
-        title: 'Delivery confirmation escrow',
-        amount: deliveredOrder.totalPrice,
-        cryptocurrency: deliveredOrder.cryptocurrency,
-        amountUSD: deliveredOrder.totalPriceUSD,
-        depositAddress: deliveredOrder.paymentAddress,
-        releaseType: 'manual',
-        releaseConditions: [{ type: 'delivery_confirmation' }],
-        status: 'funded'
-      });
-
-      deliveredOrder.escrow = escrow._id;
-      await deliveredOrder.save();
     });
 
-    it('should release escrow when buyer confirms delivery', async () => {
+    it('should propose escrow release to dgd-core when the buyer confirms delivery', async () => {
       if (!global.isConnected()) return;
 
       const res = await request(app)
-        .post(`/api/orders/${deliveredOrder._id}/confirm-delivery`)
+        .post(`/api/orders/${fundedOrder._id}/confirm-delivery`)
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.releaseStatus).toBe('released');
+      expect(dgd.proposeRelease).toHaveBeenCalledTimes(1);
+      expect(dgd.proposeRelease).toHaveBeenCalledWith(
+        fundedOrder._id.toString(), 'buyer', undefined, `confirm-delivery:${fundedOrder._id}`
+      );
+      expect(res.body.data.next.action).toBe('sign-payout');
 
-      const updatedEscrow = await Escrow.findById(escrow._id);
-      expect(updatedEscrow.status).toBe('completed');
-      expect(updatedEscrow.releaseConditions[0].met).toBe(true);
+      const updated = await Order.findById(fundedOrder._id);
+      expect(updated.deliveryConfirmedAt).toBeDefined();
+      // Funds have not moved: release needs threshold signatures from the parties' wallets.
+      expect(updated.dgdEscrowState).toBe('funded');
+      expect(updated.status).toBe('shipped');
+    });
+
+    it('should refuse delivery confirmation when the escrow is not funded', async () => {
+      if (!global.isConnected()) return;
+
+      fundedOrder.dgdEscrowState = 'created';
+      await fundedOrder.save();
+
+      const res = await request(app)
+        .post(`/api/orders/${fundedOrder._id}/confirm-delivery`)
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(409);
+      expect(dgd.proposeRelease).not.toHaveBeenCalled();
+    });
+
+    it('should not let another user confirm delivery', async () => {
+      if (!global.isConnected()) return;
+
+      const res = await request(app)
+        .post(`/api/orders/${fundedOrder._id}/confirm-delivery`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(403);
+      expect(dgd.proposeRelease).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('PUT /api/orders/:id/status guards', () => {
+    it('should not allow cancelling an order with a funded escrow', async () => {
+      if (!global.isConnected()) return;
+
+      const order = await Order.create({
+        user: regularUser._id,
+        customerEmail: 'customer@test.com',
+        items: [{ product: testProduct._id, productName: testProduct.name, quantity: 1, price: testProduct.price, priceUSD: testProduct.priceUSD }],
+        totalPrice: testProduct.price,
+        totalPriceUSD: testProduct.priceUSD,
+        dgdEscrowState: 'funded',
+        status: 'paid'
+      });
+
+      const res = await request(app)
+        .put(`/api/orders/${order._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'cancelled' });
+
+      expect(res.status).toBe(409);
+    });
+
+    it('should not allow an admin to mark an order paid by hand', async () => {
+      if (!global.isConnected()) return;
+
+      const order = await Order.create({
+        user: regularUser._id,
+        customerEmail: 'customer@test.com',
+        items: [{ product: testProduct._id, productName: testProduct.name, quantity: 1, price: testProduct.price, priceUSD: testProduct.priceUSD }],
+        totalPrice: testProduct.price,
+        totalPriceUSD: testProduct.priceUSD,
+        status: 'pending'
+      });
+
+      const res = await request(app)
+        .put(`/api/orders/${order._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'paid' });
+
+      expect(res.status).toBe(400);
     });
   });
 });

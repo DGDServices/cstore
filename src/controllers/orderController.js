@@ -1,133 +1,60 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const User = require('../models/User');
-const Escrow = require('../models/Escrow');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
-const currencyService = require('../services/currencyService');
-const escrowService = require('../services/escrowService');
-const { ALL_SUPPORTED_CRYPTOCURRENCIES } = require('../config/cryptocurrencies');
 const dgdConfig = require('../config/dgd');
+const { DgdCoreClient } = require('../services/dgdCoreClient');
+const { SETTLEMENT_CURRENCIES } = require('../config/cryptocurrencies');
 
-// Supported cryptocurrencies with addresses
-const cryptoAddressFallbacks = {
-  BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  ETH: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-  USDT: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-  LTC: 'ltc-address-not-configured',
-  XRP: 'xrp-address-not-configured',
-  'BTC-LN': 'Lightning Network'
-};
+/**
+ * Orders settle in DGD only, through the non-custodial escrow at
+ * /api/dgd-escrow (see docs/DGD_ESCROW_SIGNING.md). Creating an order records
+ * what is being bought and how much DGD it costs at the single Explorer price;
+ * it does not move funds. The buyer then opens and funds the escrow, and the
+ * order's `dgdEscrowState` is the source of truth for where the money is.
+ *
+ * Lifecycle (order.status / order.dgdEscrowState):
+ *   pending / null       order created, escrow not yet opened
+ *   pending / created    escrow opened, waiting for the buyer to fund it
+ *   paid    / funded     escrow funded (stock is reserved at this point)
+ *   shipped              admin or seller marks shipped
+ *   delivered / released buyer confirmed delivery and the payout PSBT settled
+ *   refunded / refunded  cancel-refund settled
+ *   disputed             open dispute; arbitrator may mediate
+ */
 
-const supportedCryptos = ALL_SUPPORTED_CRYPTOCURRENCIES.map((coin) => {
-  const envKey = `${coin.symbol.replace(/-/g, '_')}_ADDRESS`;
-  return {
-    symbol: coin.symbol,
-    name: coin.name,
-    address: process.env[envKey] || cryptoAddressFallbacks[coin.symbol] || 'Not configured'
-  };
-});
+// Same stateless client the escrow controller uses.
+const dgd = new DgdCoreClient({ baseUrl: dgdConfig.DGD_CORE_URL, authToken: dgdConfig.DGD_CORE_AUTH_TOKEN });
 
-const getEscrowDepositAddress = (cryptocurrency, fallbackAddress) => {
-  const envKey = `ESCROW_${cryptocurrency.replace(/-/g, '_')}_ADDRESS`;
-  return process.env[envKey] || process.env.ESCROW_DEPOSIT_ADDRESS || fallbackAddress;
-};
-
-const getDefaultSellerId = async (product) => {
-  if (product.seller) {
-    return product.seller;
-  }
-
-  if (process.env.DEFAULT_PLATFORM_SELLER_ID) {
-    return process.env.DEFAULT_PLATFORM_SELLER_ID;
-  }
-
-  const adminUser = await User.findOne({ role: 'admin' }).select('_id');
-  if (adminUser) {
-    return adminUser._id;
-  }
-
-  return null;
-};
-
-const markDeliveryConditionMet = (escrow) => {
-  if (!escrow || !Array.isArray(escrow.releaseConditions)) {
-    return false;
-  }
-
-  const deliveryCondition = escrow.releaseConditions.find(
-    condition => condition.type === 'delivery_confirmation'
-  );
-
-  if (!deliveryCondition || deliveryCondition.met) {
-    return false;
-  }
-
-  deliveryCondition.met = true;
-  deliveryCondition.metAt = new Date();
-  return true;
-};
+const escrowId = (order) => order.dgdEscrowId || order._id.toString();
 
 // @desc    Create order
 // @route   POST /api/orders
-// @access  Private (required for escrow buyer linkage)
+// @access  Private (the buyer must be a known party for the escrow)
 const createOrder = asyncHandler(async (req, res, next) => {
-  const { productId, quantity, customerEmail, cryptocurrency, shippingAddress, displayCurrency } = req.body;
+  const { productId, quantity, customerEmail, shippingAddress } = req.body;
 
   if (!req.user) {
-    return next(new AppError('Authentication required for escrow orders', 401));
+    return next(new AppError('Authentication required to place an order', 401));
   }
 
-  // Get product
   const product = await Product.findById(productId);
   if (!product || !product.isActive) {
     return next(new AppError('Product not found', 404));
   }
 
-  // Check stock
   if (product.stock < quantity) {
     return next(new AppError('Insufficient stock', 400));
   }
 
-  // Get crypto address
-  const crypto = supportedCryptos.find(c => c.symbol === cryptocurrency);
-  if (!crypto) {
-    return next(new AppError('Unsupported cryptocurrency', 400));
-  }
-  if (!crypto.address || crypto.address === 'Not configured') {
-    return next(new AppError(`Payment address not configured for ${cryptocurrency}`, 503));
-  }
-
-  // Calculate prices
+  // Prices are in DGD at the single Explorer price; USD is display only.
+  const totalPrice = product.price * quantity;
   const totalPriceUSD = product.priceUSD * quantity;
-  let displayPrice = totalPriceUSD;
-  let exchangeRate = 1;
-  let orderCurrency = displayCurrency || 'USD';
+  dgdConfig.assertSettlementIsDgd(dgdConfig.SETTLEMENT_ASSET);
 
-  // Convert to user's preferred currency if specified
-  if (displayCurrency && displayCurrency.toUpperCase() !== 'USD') {
-    try {
-      const conversion = await currencyService.convertCurrency(
-        totalPriceUSD,
-        'USD',
-        displayCurrency.toUpperCase()
-      );
-      displayPrice = conversion.convertedAmount;
-      exchangeRate = conversion.exchangeRate;
-      orderCurrency = displayCurrency.toUpperCase();
-    } catch (error) {
-      logger.warn(`Currency conversion failed during order creation: ${error.message}`);
-      // Continue with USD if conversion fails
-      orderCurrency = 'USD';
-    }
-  }
-
-  const depositAddress = getEscrowDepositAddress(cryptocurrency, crypto.address);
-
-  // Create order
   const order = await Order.create({
-    user: req.user ? req.user.id : null,
+    user: req.user.id,
     customerEmail,
     items: [{
       product: product._id,
@@ -136,61 +63,27 @@ const createOrder = asyncHandler(async (req, res, next) => {
       price: product.price,
       priceUSD: product.priceUSD
     }],
-    totalPrice: product.price * quantity,
+    totalPrice,
     totalPriceUSD,
-    displayCurrency: orderCurrency,
-    displayPrice,
-    exchangeRate,
-    cryptocurrency,
-    paymentAddress: depositAddress,
-    // For DGD orders, persist the expected amount in integer sats (8dp) so the
-    // escrow can be opened with the correct amount later (dgd-escrow signing flow).
-    dgdExpectedSats: cryptocurrency === 'DGD' ? dgdConfig.toSats(product.price * quantity) : undefined,
+    settlementAsset: dgdConfig.SETTLEMENT_ASSET,
+    // Expected escrow amount in integer sats (8 dp) so the escrow can be opened
+    // with the exact amount later without float drift.
+    dgdExpectedSats: dgdConfig.toSats(totalPrice),
     shippingAddress,
     status: 'pending'
   });
 
-  try {
-    const sellerId = await getDefaultSellerId(product);
-    if (!sellerId) {
-      throw new Error('No seller configured for product');
-    }
-
-    const escrow = await escrowService.createEscrow({
-      buyer: req.user.id,
-      seller: sellerId,
-      order: order._id,
-      title: `Order ${order._id}`,
-      description: `Escrow for order ${order._id}`,
-      amount: order.totalPrice,
-      cryptocurrency,
-      amountUSD: order.totalPriceUSD,
-      depositAddress,
-      releaseType: 'manual',
-      releaseConditions: [
-        {
-          type: 'delivery_confirmation',
-          value: true
-        }
-      ],
-      metadata: {
-        orderSource: 'orderController'
-      }
-    }, req.user.id);
-
-    order.escrow = escrow._id;
-    await order.save();
-  } catch (error) {
-    await Order.findByIdAndDelete(order._id);
-    logger.error(`Failed to create escrow for order ${order._id}: ${error.message}`);
-    return next(new AppError('Failed to create escrow for order', 500));
-  }
-
-  logger.info(`Order created: ${order._id} for ${customerEmail}`);
+  logger.info(`Order created: ${order._id} for ${customerEmail} (${totalPrice} DGD)`);
 
   res.status(201).json({
     success: true,
-    data: { order }
+    data: {
+      order,
+      next: {
+        action: 'open-escrow',
+        route: `/api/dgd-escrow/${order._id}/open`
+      }
+    }
   });
 });
 
@@ -204,7 +97,6 @@ const getOrder = asyncHandler(async (req, res, next) => {
     return next(new AppError('Order not found', 404));
   }
 
-  // Check if user is authorized to view this order
   if (req.user) {
     if (req.user.role !== 'admin' && order.user && order.user.toString() !== req.user.id) {
       return next(new AppError('Not authorized to view this order', 403));
@@ -235,10 +127,11 @@ const getMyOrders = asyncHandler(async (req, res, next) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 const getAllOrders = asyncHandler(async (req, res, next) => {
-  const { status, page = 1, limit = 20 } = req.query;
+  const { status, escrowState, page = 1, limit = 20 } = req.query;
 
   const query = {};
   if (status) query.status = status;
+  if (escrowState) query.dgdEscrowState = escrowState;
 
   const skip = (page - 1) * limit;
   const orders = await Order.find(query)
@@ -264,26 +157,34 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc    Update order status (admin)
+// @desc    Update order fulfilment status (admin)
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
+//
+// Fulfilment only. Money states (paid / delivered-after-release / refunded)
+// are set by the escrow controller when dgd-core reports them; an admin
+// cannot mark an order paid or released here.
+const FULFILMENT_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
 const updateOrderStatus = asyncHandler(async (req, res, next) => {
-  const { status } = req.body;
+  const { status, trackingNumber } = req.body;
+
+  if (!FULFILMENT_STATUSES.includes(status)) {
+    return next(new AppError(`Status must be one of: ${FULFILMENT_STATUSES.join(', ')}`, 400));
+  }
 
   const order = await Order.findById(req.params.id);
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
 
-  order.status = status;
-  await order.save();
-
-  if (status === 'delivered' && order.escrow) {
-    const escrow = await Escrow.findById(order.escrow);
-    if (escrow && markDeliveryConditionMet(escrow)) {
-      await escrow.save();
-    }
+  if (status === 'cancelled' && ['funded', 'released', 'disputed'].includes(order.dgdEscrowState)) {
+    return next(new AppError('Order has a live escrow; use the escrow refund/dispute flow instead of cancelling', 409));
   }
+
+  order.status = status;
+  if (trackingNumber) order.trackingNumber = trackingNumber;
+  await order.save();
 
   logger.info(`Order ${order._id} status updated to ${status} by admin ${req.user.email}`);
 
@@ -293,61 +194,57 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc    Buyer confirms delivery and releases escrow
+// @desc    Buyer confirms delivery and proposes release of the escrow
 // @route   POST /api/orders/:id/confirm-delivery
-// @access  Private
+// @access  Private (buyer)
+//
+// Confirming delivery proposes the payout to the seller in dgd-core as the
+// buyer. Funds move only once the payout PSBT carries the threshold
+// signatures (buyer + seller, or arbitrator), produced in the parties' own
+// wallets via /api/dgd-escrow/:id/sign-payout. The platform signs nothing.
 const confirmDelivery = asyncHandler(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
   if (!order) {
     return next(new AppError('Order not found', 404));
   }
 
-  if (!order.user) {
-    return next(new AppError('This order has no associated user and cannot be confirmed', 400));
-  }
-
-  if (order.user.toString() !== req.user.id) {
+  if (!order.user || order.user.toString() !== req.user.id) {
     return next(new AppError('Not authorized to confirm this order', 403));
   }
 
-  if (order.status !== 'delivered') {
-    return next(new AppError('Order must be delivered before confirmation', 400));
+  if (order.dgdEscrowState !== 'funded') {
+    return next(new AppError('Escrow must be funded before delivery can be confirmed', 409));
   }
 
-  if (!order.escrow) {
-    return next(new AppError('Escrow not found for this order', 404));
-  }
+  const idempotencyKey = `confirm-delivery:${order._id}`;
+  const escrow = await dgd.proposeRelease(escrowId(order), 'buyer', undefined, idempotencyKey);
 
-  const escrow = await Escrow.findById(order.escrow);
-  if (!escrow) {
-    return next(new AppError('Escrow not found for this order', 404));
-  }
+  order.deliveryConfirmedAt = new Date();
+  if (escrow?.state) order.dgdEscrowState = escrow.state;
+  await order.save();
 
-  if (markDeliveryConditionMet(escrow)) {
-    await escrow.save();
-  }
-
-  const releaseResult = await escrowService.releaseEscrow(order.escrow, req.user.id);
-
-  logger.info(`Delivery confirmed for order ${order._id} by user ${req.user.id}`);
+  logger.info(`Delivery confirmed for order ${order._id} by buyer ${req.user.id}; release proposed`);
 
   res.json({
     success: true,
     data: {
       order,
-      escrow: releaseResult.escrow,
-      releaseStatus: releaseResult.status
+      escrow,
+      next: {
+        action: 'sign-payout',
+        route: `/api/dgd-escrow/${order._id}/payout-psbt`
+      }
     }
   });
 });
 
-// @desc    Get supported cryptocurrencies
+// @desc    Get the settlement currency (DGD only)
 // @route   GET /api/cryptocurrencies
 // @access  Public
 const getCryptocurrencies = asyncHandler(async (req, res, next) => {
   res.json({
     success: true,
-    data: { cryptocurrencies: supportedCryptos }
+    data: { cryptocurrencies: SETTLEMENT_CURRENCIES }
   });
 });
 

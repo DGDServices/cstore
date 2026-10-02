@@ -58,7 +58,7 @@ exports.getDashboardStats = async (req, res, next) => {
       .sort('-createdAt')
       .limit(5)
       .populate('user', 'name email')
-      .select('orderNumber totalPriceUSD cryptocurrency status createdAt');
+      .select('orderNumber totalPriceUSD settlementAsset dgdEscrowState status createdAt');
 
     // Get top products
     const topProducts = await Order.aggregate([
@@ -323,7 +323,7 @@ exports.getSalesAnalytics = async (req, res, next) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // Sales by cryptocurrency
+    // Sales by settlement asset (DGD only)
     const salesByCrypto = await Order.aggregate([
       {
         $match: {
@@ -333,7 +333,7 @@ exports.getSalesAnalytics = async (req, res, next) => {
       },
       {
         $group: {
-          _id: '$cryptocurrency',
+          _id: '$settlementAsset',
           totalOrders: { $sum: 1 },
           totalRevenue: { $sum: '$totalPriceUSD' }
         }

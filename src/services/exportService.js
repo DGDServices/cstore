@@ -81,7 +81,8 @@ async function exportOrdersToCSV(orders) {
     { id: 'orderNumber', title: 'Order Number' },
     { id: 'customerEmail', title: 'Customer Email' },
     { id: 'totalPriceUSD', title: 'Total (USD)' },
-    { id: 'cryptocurrency', title: 'Cryptocurrency' },
+    { id: 'settlementAsset', title: 'Settlement Asset' },
+    { id: 'dgdEscrowState', title: 'Escrow State' },
     { id: 'status', title: 'Status' },
     { id: 'itemCount', title: 'Items' },
     { id: 'createdAt', title: 'Created At' }
@@ -91,7 +92,8 @@ async function exportOrdersToCSV(orders) {
     orderNumber: order.orderNumber,
     customerEmail: order.customerEmail,
     totalPriceUSD: order.totalPriceUSD,
-    cryptocurrency: order.cryptocurrency,
+    settlementAsset: order.settlementAsset || 'DGD',
+    dgdEscrowState: order.dgdEscrowState || '',
     status: order.status,
     itemCount: order.items?.length || 0,
     createdAt: new Date(order.createdAt).toISOString()

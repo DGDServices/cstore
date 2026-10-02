@@ -1,6 +1,5 @@
 const Joi = require('joi');
 const { AppError } = require('./errorHandler');
-const { ALL_SUPPORTED_CRYPTO_SYMBOLS, NON_LIGHTNING_CRYPTO_SYMBOLS } = require('../config/cryptocurrencies');
 
 // Validate request body
 const validate = (schema) => {
@@ -39,7 +38,8 @@ const schemas = {
     productId: Joi.string().required(),
     quantity: Joi.number().integer().min(1).required(),
     customerEmail: Joi.string().email().required(),
-    cryptocurrency: Joi.string().valid(...ALL_SUPPORTED_CRYPTO_SYMBOLS).required(),
+    // The marketplace settles in DGD only; a client may say so, but may not pick anything else.
+    cryptocurrency: Joi.string().valid('DGD').optional(),
     shippingAddress: Joi.object({
       street: Joi.string(),
       city: Joi.string(),
@@ -57,7 +57,6 @@ const schemas = {
     description: Joi.string().min(10).max(2000).required(),
     price: Joi.number().min(0).required(),
     priceUSD: Joi.number().min(0).required(),
-    currency: Joi.string().valid(...NON_LIGHTNING_CRYPTO_SYMBOLS).default('BTC'),
     category: Joi.string().optional(),
     stock: Joi.number().integer().min(0).default(0),
     image: Joi.string().optional()
@@ -69,7 +68,6 @@ const schemas = {
     description: Joi.string().min(10).max(2000).optional(),
     price: Joi.number().min(0).optional(),
     priceUSD: Joi.number().min(0).optional(),
-    currency: Joi.string().valid(...NON_LIGHTNING_CRYPTO_SYMBOLS).optional(),
     category: Joi.string().optional(),
     stock: Joi.number().integer().min(0).optional(),
     image: Joi.string().optional(),

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { ALL_SUPPORTED_CRYPTO_SYMBOLS } = require('../config/cryptocurrencies');
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -48,34 +47,12 @@ const orderSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  displayCurrency: {
+  // The marketplace settles in DGD only. `totalPrice` is DGD at the single
+  // Explorer price; `totalPriceUSD` is a display value derived from it.
+  settlementAsset: {
     type: String,
-    default: 'USD',
-    uppercase: true
-  },
-  displayPrice: {
-    type: Number,
-    min: 0
-  },
-  exchangeRate: {
-    type: Number,
-    min: 0
-  },
-  cryptocurrency: {
-    type: String,
-    required: true,
-    enum: ALL_SUPPORTED_CRYPTO_SYMBOLS
-  },
-  paymentAddress: {
-    type: String,
-    required: true
-  },
-  escrow: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Escrow'
-  },
-  transactionHash: {
-    type: String
+    default: 'DGD',
+    enum: ['DGD']
   },
   status: {
     type: String,
@@ -91,14 +68,12 @@ const orderSchema = new mongoose.Schema({
   },
   trackingNumber: String,
   notes: String,
-  paymentMethod: {
-    type: String,
-    enum: ['On-chain', 'Lightning Network'],
-    default: 'On-chain'
-  },
   paidAt: Date,
+  deliveryConfirmedAt: Date,
 
-  // DGD non-custodial escrow fields (set when the order settles through dgd-core)
+  // DGD non-custodial escrow fields (set when the order settles through dgd-core).
+  // `dgdEscrowState` is the source of truth for where the funds are; `status`
+  // is the fulfilment view derived from it plus admin updates.
   dgdEscrowId: {
     type: String,  // orderId key used in dgd-core (defaults to order._id.toString())
     index: true
@@ -122,6 +97,6 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ customerEmail: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
-orderSchema.index({ transactionHash: 1 });
+orderSchema.index({ dgdEscrowState: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

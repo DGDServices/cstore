@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { NON_LIGHTNING_CRYPTO_SYMBOLS } = require('../config/cryptocurrencies');
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -22,11 +21,6 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'USD price is required'],
     min: [0, 'Price cannot be negative']
-  },
-  currency: {
-    type: String,
-    default: 'BTC',
-    enum: NON_LIGHTNING_CRYPTO_SYMBOLS
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,

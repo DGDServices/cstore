@@ -1,5 +1,5 @@
 const AMLAlert = require('../models/AMLAlert');
-const ConversionTransaction = require('../models/ConversionTransaction');
+const Order = require('../models/Order');
 const logger = require('../utils/logger');
 
 /**
@@ -18,14 +18,14 @@ class ComplianceReportingService {
    */
   async generateCTR(transactionId) {
     try {
-      const transaction = await ConversionTransaction.findById(transactionId)
+      const transaction = await Order.findById(transactionId)
         .populate('user');
 
       if (!transaction) {
         throw new Error('Transaction not found');
       }
 
-      if (transaction.fiatAmount < 10000) {
+      if (transaction.totalPriceUSD < 10000) {
         throw new Error('CTR only required for transactions over $10,000');
       }
 
@@ -33,19 +33,19 @@ class ComplianceReportingService {
         reportType: 'CTR',
         reportId: `CTR-${Date.now()}`,
         transactionDate: transaction.createdAt,
-        amount: transaction.fiatAmount,
-        currency: transaction.fiatCurrency,
+        amount: transaction.totalPriceUSD,
+        currency: 'USD',
         customerInfo: {
           name: transaction.user.name,
           email: transaction.user.email,
           country: transaction.user.country
         },
         transactionDetails: {
-          type: 'cryptocurrency_conversion',
-          fromCurrency: transaction.cryptocurrency,
-          fromAmount: transaction.cryptoAmount,
-          toCurrency: transaction.fiatCurrency,
-          toAmount: transaction.fiatAmount
+          type: 'dgd_marketplace_order',
+          settlementAsset: 'DGD',
+          amountDGD: transaction.totalPrice,
+          amountUSD: transaction.totalPriceUSD,
+          escrowState: transaction.dgdEscrowState
         },
         generatedAt: new Date()
       };
@@ -89,8 +89,8 @@ class ComplianceReportingService {
         transactionInfo: alert.transaction ? {
           id: alert.transaction._id,
           date: alert.transaction.createdAt,
-          amount: alert.transaction.fiatAmount,
-          currency: alert.transaction.fiatCurrency
+          amount: alert.transaction.totalPriceUSD,
+          currency: 'USD'
         } : null,
         investigation: investigationDetails,
         generatedAt: new Date()
@@ -119,22 +119,22 @@ class ComplianceReportingService {
       const startOfDay = new Date(date.setHours(0, 0, 0, 0));
       const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
-      const summary = await ConversionTransaction.aggregate([
+      const summary = await Order.aggregate([
         {
           $match: {
             createdAt: {
               $gte: startOfDay,
               $lte: endOfDay
             },
-            status: 'completed'
+            status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
           }
         },
         {
           $group: {
-            _id: '$fiatCurrency',
-            totalVolume: { $sum: '$fiatAmount' },
+            _id: 'USD',
+            totalVolume: { $sum: '$totalPriceUSD' },
             transactionCount: { $sum: 1 },
-            avgTransactionSize: { $avg: '$fiatAmount' }
+            avgTransactionSize: { $avg: '$totalPriceUSD' }
           }
         }
       ]);
@@ -164,7 +164,7 @@ class ComplianceReportingService {
       const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
       // Transaction statistics
-      const transactionStats = await ConversionTransaction.aggregate([
+      const transactionStats = await Order.aggregate([
         {
           $match: {
             createdAt: {
@@ -177,7 +177,7 @@ class ComplianceReportingService {
           $group: {
             _id: '$status',
             count: { $sum: 1 },
-            totalVolume: { $sum: '$fiatAmount' }
+            totalVolume: { $sum: '$totalPriceUSD' }
           }
         }
       ]);
@@ -247,16 +247,16 @@ class ComplianceReportingService {
       const startDate = new Date(taxYear, 0, 1);
       const endDate = new Date(taxYear, 11, 31, 23, 59, 59, 999);
 
-      const transactions = await ConversionTransaction.find({
+      const transactions = await Order.find({
         user: userId,
         createdAt: {
           $gte: startDate,
           $lte: endDate
         },
-        status: 'completed'
+        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
       });
 
-      const totalVolume = transactions.reduce((sum, tx) => sum + tx.fiatAmount, 0);
+      const totalVolume = transactions.reduce((sum, tx) => sum + tx.totalPriceUSD, 0);
       const totalTransactions = transactions.length;
 
       const taxReport = {
@@ -267,11 +267,10 @@ class ComplianceReportingService {
         totalTransactions,
         transactions: transactions.map(tx => ({
           date: tx.createdAt,
-          type: 'conversion',
-          amount: tx.fiatAmount,
-          currency: tx.fiatCurrency,
-          cryptocurrency: tx.cryptocurrency,
-          cryptoAmount: tx.cryptoAmount
+          type: 'dgd_marketplace_order',
+          amountUSD: tx.totalPriceUSD,
+          amountDGD: tx.totalPrice,
+          escrowState: tx.dgdEscrowState
         })),
         generatedAt: new Date()
       };
@@ -366,8 +365,8 @@ class ComplianceReportingService {
           type: 'SAR_REQUIRED',
           createdAt: { $gte: thirtyDaysAgo }
         }),
-        highRiskTransactions: await ConversionTransaction.countDocuments({
-          fiatAmount: { $gte: 5000 },
+        highRiskTransactions: await Order.countDocuments({
+          totalPriceUSD: { $gte: 5000 },
           createdAt: { $gte: thirtyDaysAgo }
         }),
         generatedAt: new Date()

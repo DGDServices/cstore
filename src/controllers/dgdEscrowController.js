@@ -151,9 +151,19 @@ exports.checkFunding = asyncHandler(async (req, res, next) => {
   const order = await findOrderForUser(req.params.orderId, req.user.id);
   const escrow = await dgd.checkFunding(escrowId(order), req.body?.minConf);
   if (escrow?.state) {
+    const newlyFunded = escrow.state === 'funded' && order.dgdEscrowState !== 'funded';
     order.dgdEscrowState = escrow.state;
-    if (escrow.state === 'funded') order.status = 'paid';
+    if (escrow.state === 'funded') {
+      order.status = 'paid';
+      order.paidAt = order.paidAt || new Date();
+    }
     await order.save();
+    if (newlyFunded) {
+      // Funds are locked in the party-owned escrow; reserve the stock now.
+      await Promise.all(order.items.map(item =>
+        Product.updateOne({ _id: item.product }, { $inc: { stock: -item.quantity } })
+      ));
+    }
   }
   res.json({ ok: true, escrow });
 });

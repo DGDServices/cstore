@@ -367,9 +367,9 @@ function getOrderConfirmationTemplate(order, language = 'en') {
 
           <h3>${t('orderConfirmation.paymentDetailsTitle')}</h3>
           <p>
-            <strong>${t('orderConfirmation.cryptocurrency')}:</strong> ${order.cryptocurrency}<br>
-            <strong>${t('orderConfirmation.amount')}:</strong> ${order.totalPrice} ${order.cryptocurrency}<br>
-            <strong>${t('orderConfirmation.paymentAddress')}:</strong> ${order.paymentAddress}
+            <strong>${t('orderConfirmation.cryptocurrency')}:</strong> DGD<br>
+            <strong>${t('orderConfirmation.amount')}:</strong> ${order.totalPrice} DGD<br>
+            <strong>${t('orderConfirmation.paymentAddress')}:</strong> ${order.dgdEscrowAddress || '-'}
           </p>
 
           <p>${t('orderConfirmation.instruction')}</p>
@@ -407,9 +407,9 @@ function getPaymentConfirmationTemplate(order, payment, language = 'en') {
           
           <h3>${t('paymentConfirmation.paymentDetailsTitle')}</h3>
           <p>
-            <strong>${t('paymentConfirmation.transactionHash')}:</strong> ${payment.transactionHash}<br>
-            <strong>${t('paymentConfirmation.amount')}:</strong> ${payment.amount} ${payment.cryptocurrency}<br>
-            <strong>${t('paymentConfirmation.status')}:</strong> ${payment.status}
+            <strong>${t('paymentConfirmation.transactionHash')}:</strong> ${payment?.txid || payment?.transactionHash || '-'}<br>
+            <strong>${t('paymentConfirmation.amount')}:</strong> ${payment?.amount ?? order.totalPrice} DGD<br>
+            <strong>${t('paymentConfirmation.status')}:</strong> ${payment?.status || order.dgdEscrowState || 'funded'}
           </p>
 
           <p>${t('paymentConfirmation.processing')}</p>
