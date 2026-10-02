@@ -14,7 +14,7 @@ class AMLService {
       high: parseInt(process.env.RISK_THRESHOLD_HIGH) || 85,
       medium: parseInt(process.env.RISK_THRESHOLD_MEDIUM) || 50,
       autoBlock: parseInt(process.env.AUTO_BLOCK_THRESHOLD) || 95,
-      manualReview: parseInt(process.env.MANUAL_REVIEW_THRESHOLD) || 75
+      manualReview: parseInt(process.env.MANUAL_REVIEW_THRESHOLD) || 75,
     };
   }
 
@@ -40,8 +40,8 @@ class AMLService {
           description: `Transaction amount $${transaction.totalPriceUSD} exceeds CTR threshold`,
           details: {
             amount: transaction.totalPriceUSD,
-            threshold: this.thresholds.ctr
-          }
+            threshold: this.thresholds.ctr,
+          },
         });
         alerts.push(alert);
       }
@@ -55,8 +55,8 @@ class AMLService {
           severity: 'medium',
           description: `Large transaction detected: $${transaction.totalPriceUSD}`,
           details: {
-            amount: transaction.totalPriceUSD
-          }
+            amount: transaction.totalPriceUSD,
+          },
         });
         alerts.push(alert);
       }
@@ -70,7 +70,7 @@ class AMLService {
           type: 'POTENTIAL_STRUCTURING',
           severity: 'critical',
           description: 'Multiple transactions below reporting threshold detected',
-          details: structuringDetected
+          details: structuringDetected,
         });
         alerts.push(alert);
       }
@@ -84,7 +84,7 @@ class AMLService {
           type: 'RAPID_SUCCESSION',
           severity: 'medium',
           description: 'Multiple transactions in short time period',
-          details: rapidSuccession
+          details: rapidSuccession,
         });
         alerts.push(alert);
       }
@@ -98,12 +98,14 @@ class AMLService {
           type: 'UNUSUAL_PATTERN',
           severity: 'medium',
           description: 'Transaction pattern differs from user history',
-          details: unusualPattern
+          details: unusualPattern,
         });
         alerts.push(alert);
       }
 
-      logger.info(`AML monitoring completed for transaction ${transaction._id}: ${alerts.length} alerts`);
+      logger.info(
+        `AML monitoring completed for transaction ${transaction._id}: ${alerts.length} alerts`
+      );
 
       // Determine if transaction should be blocked
       const criticalAlerts = alerts.filter(a => a.severity === 'critical');
@@ -112,7 +114,7 @@ class AMLService {
       return {
         allowed,
         alerts,
-        requiresReview: alerts.some(a => a.severity === 'high' || a.severity === 'critical')
+        requiresReview: alerts.some(a => a.severity === 'high' || a.severity === 'critical'),
       };
     } catch (error) {
       logger.error(`Error monitoring transaction: ${error.message}`);
@@ -127,9 +129,9 @@ class AMLService {
     try {
       const alert = new AMLAlert(alertData);
       await alert.save();
-      
+
       logger.info(`AML alert created: ${alert.type} for user ${alert.user}`);
-      
+
       // Send notification to compliance team
       if (alert.severity === 'critical' || alert.severity === 'high') {
         await this.notifyComplianceTeam(alert);
@@ -153,7 +155,7 @@ class AMLService {
       const recentTransactions = await Order.find({
         user: userId,
         createdAt: { $gte: startDate },
-        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] }
+        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] },
       });
 
       // Look for multiple transactions just below CTR threshold
@@ -167,7 +169,7 @@ class AMLService {
           count: justBelowThreshold.length,
           totalAmount,
           timeWindow: `${timeWindow} hours`,
-          transactions: justBelowThreshold.map(tx => tx._id)
+          transactions: justBelowThreshold.map(tx => tx._id),
         };
       }
 
@@ -189,14 +191,14 @@ class AMLService {
       const recentTransactions = await Order.find({
         user: userId,
         createdAt: { $gte: startDate },
-        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] }
+        status: { $in: ['pending', 'paid', 'processing', 'shipped', 'delivered'] },
       });
 
       if (recentTransactions.length >= 5) {
         return {
           count: recentTransactions.length,
           timeWindow: `${timeWindow} hour`,
-          transactions: recentTransactions.map(tx => tx._id)
+          transactions: recentTransactions.map(tx => tx._id),
         };
       }
 
@@ -216,21 +218,23 @@ class AMLService {
       const historicalTransactions = await Order.find({
         user: userId,
         status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
-        createdAt: { $lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+        createdAt: { $lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
       });
 
       if (historicalTransactions.length < 5) {
         return null; // Not enough history
       }
 
-      const avgAmount = historicalTransactions.reduce((sum, tx) => sum + tx.totalPriceUSD, 0) / historicalTransactions.length;
+      const avgAmount =
+        historicalTransactions.reduce((sum, tx) => sum + tx.totalPriceUSD, 0) /
+        historicalTransactions.length;
 
       // Alert if current transaction is 5x the average
       if (currentTransaction.totalPriceUSD > avgAmount * 5) {
         return {
           currentAmount: currentTransaction.totalPriceUSD,
           historicalAverage: avgAmount,
-          multiplier: (currentTransaction.totalPriceUSD / avgAmount).toFixed(2)
+          multiplier: (currentTransaction.totalPriceUSD / avgAmount).toFixed(2),
         };
       }
 
@@ -248,7 +252,7 @@ class AMLService {
     try {
       // In production, this would send email/SMS to compliance officer
       logger.info(`[COMPLIANCE ALERT] ${alert.type} - Severity: ${alert.severity}`);
-      
+
       // Could integrate with email service, Slack, etc.
       const complianceEmail = process.env.COMPLIANCE_OFFICER_EMAIL;
       if (complianceEmail) {
@@ -264,9 +268,7 @@ class AMLService {
    */
   async generateSAR(alertId, reportData) {
     try {
-      const alert = await AMLAlert.findById(alertId)
-        .populate('user')
-        .populate('transaction');
+      const alert = await AMLAlert.findById(alertId).populate('user').populate('transaction');
 
       if (!alert) {
         throw new Error('Alert not found');
@@ -283,7 +285,7 @@ class AMLService {
         findings: reportData.findings,
         recommendation: reportData.recommendation,
         generatedAt: new Date(),
-        generatedBy: reportData.generatedBy
+        generatedBy: reportData.generatedBy,
       };
 
       // Update alert status
@@ -307,15 +309,15 @@ class AMLService {
   async getUserAlerts(userId, filters = {}) {
     try {
       const query = { user: userId };
-      
+
       if (filters.type) {
         query.type = filters.type;
       }
-      
+
       if (filters.severity) {
         query.severity = filters.severity;
       }
-      
+
       if (filters.status) {
         query.status = filters.status;
       }
@@ -337,7 +339,7 @@ class AMLService {
   async resolveAlert(alertId, resolution) {
     try {
       const alert = await AMLAlert.findById(alertId);
-      
+
       if (!alert) {
         throw new Error('Alert not found');
       }
@@ -347,7 +349,7 @@ class AMLService {
         action: resolution.action,
         notes: resolution.notes,
         resolvedBy: resolution.resolvedBy,
-        resolvedAt: new Date()
+        resolvedAt: new Date(),
       };
 
       await alert.save();
@@ -371,19 +373,19 @@ class AMLService {
           $match: {
             createdAt: {
               $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-              $lte: endDate || new Date()
-            }
-          }
+              $lte: endDate || new Date(),
+            },
+          },
         },
         {
           $group: {
             _id: {
               type: '$type',
-              severity: '$severity'
+              severity: '$severity',
             },
-            count: { $sum: 1 }
-          }
-        }
+            count: { $sum: 1 },
+          },
+        },
       ]);
 
       return stats;

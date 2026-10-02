@@ -6,7 +6,7 @@ const {
   getAllOrders,
   updateOrderStatus,
   confirmDelivery,
-  getCryptocurrencies
+  getCryptocurrencies,
 } = require('../controllers/orderController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');

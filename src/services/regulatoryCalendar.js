@@ -27,7 +27,7 @@ class RegulatoryCalendarService {
           dueDate: new Date(today.getTime() + 24 * 60 * 60 * 1000),
           priority: 'medium',
           recurring: true,
-          frequency: 'daily'
+          frequency: 'daily',
         });
       }
 
@@ -40,7 +40,7 @@ class RegulatoryCalendarService {
           dueDate: nextMonth,
           priority: 'high',
           recurring: true,
-          frequency: 'monthly'
+          frequency: 'monthly',
         });
       }
 
@@ -53,7 +53,7 @@ class RegulatoryCalendarService {
           dueDate: nextQuarter,
           priority: 'high',
           recurring: true,
-          frequency: 'quarterly'
+          frequency: 'quarterly',
         });
       }
 
@@ -66,7 +66,7 @@ class RegulatoryCalendarService {
           dueDate: nextYearEnd,
           priority: 'critical',
           recurring: true,
-          frequency: 'annually'
+          frequency: 'annually',
         });
       }
 
@@ -87,11 +87,11 @@ class RegulatoryCalendarService {
     const today = new Date();
     const quarter = Math.floor(today.getMonth() / 3);
     const nextQuarterMonth = (quarter + 1) * 3;
-    
+
     if (nextQuarterMonth >= 12) {
       return new Date(today.getFullYear() + 1, 2, 31); // Q1 next year
     }
-    
+
     return new Date(today.getFullYear(), nextQuarterMonth, 0); // Last day of quarter
   }
 
@@ -111,10 +111,10 @@ class RegulatoryCalendarService {
   async getOverdueItems() {
     try {
       const ComplianceCase = require('../models/ComplianceCase');
-      
+
       const overdueCases = await ComplianceCase.find({
         dueDate: { $lt: new Date() },
-        status: { $nin: ['resolved', 'closed'] }
+        status: { $nin: ['resolved', 'closed'] },
       })
         .populate('user', 'name email')
         .populate('assignedTo', 'name email')
@@ -122,7 +122,7 @@ class RegulatoryCalendarService {
 
       return {
         count: overdueCases.length,
-        items: overdueCases
+        items: overdueCases,
       };
     } catch (error) {
       logger.error(`Error getting overdue items: ${error.message}`);
@@ -143,7 +143,7 @@ class RegulatoryCalendarService {
         if (dayEvents.length > 0) {
           calendar.push({
             date: new Date(current),
-            events: dayEvents
+            events: dayEvents,
           });
         }
         current.setDate(current.getDate() + 1);
@@ -169,7 +169,7 @@ class RegulatoryCalendarService {
       events.push({
         type: 'daily_report',
         name: 'Daily Transaction Report Due',
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -178,17 +178,21 @@ class RegulatoryCalendarService {
       events.push({
         type: 'monthly_report',
         name: 'Monthly Regulatory Report Due',
-        priority: 'high'
+        priority: 'high',
       });
     }
 
     // Quarterly reviews (last day of quarter)
-    if ((month === 2 && day === 31) || (month === 5 && day === 30) || 
-        (month === 8 && day === 30) || (month === 11 && day === 31)) {
+    if (
+      (month === 2 && day === 31) ||
+      (month === 5 && day === 30) ||
+      (month === 8 && day === 30) ||
+      (month === 11 && day === 31)
+    ) {
       events.push({
         type: 'quarterly_review',
         name: 'Quarterly Compliance Review',
-        priority: 'high'
+        priority: 'high',
       });
     }
 
@@ -197,7 +201,7 @@ class RegulatoryCalendarService {
       events.push({
         type: 'annual_audit',
         name: 'Annual Compliance Audit',
-        priority: 'critical'
+        priority: 'critical',
       });
     }
 
@@ -216,7 +220,7 @@ class RegulatoryCalendarService {
         id: Date.now(),
         ...deadlineData,
         createdAt: new Date(),
-        notificationSent: false
+        notificationSent: false,
       };
 
       return reminder;
@@ -242,9 +246,9 @@ class RegulatoryCalendarService {
           total: upcomingDeadlines.length,
           critical: upcomingDeadlines.filter(d => d.priority === 'critical').length,
           high: upcomingDeadlines.filter(d => d.priority === 'high').length,
-          medium: upcomingDeadlines.filter(d => d.priority === 'medium').length
+          medium: upcomingDeadlines.filter(d => d.priority === 'medium').length,
         },
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error getting dashboard summary: ${error.message}`);
@@ -261,7 +265,7 @@ class RegulatoryCalendarService {
 
       return {
         success: true,
-        completedAt: new Date()
+        completedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error marking deadline completed: ${error.message}`);
@@ -279,10 +283,11 @@ class RegulatoryCalendarService {
       monthly: true, // Always required
       quarterly: true, // Always required
       annually: true, // Always required
-      nextDailyReport: this.reportingSchedule === 'daily' ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null,
+      nextDailyReport:
+        this.reportingSchedule === 'daily' ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null,
       nextMonthlyReport: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 15),
       nextQuarterlyReport: this.getNextQuarterEnd(),
-      nextAnnualReport: new Date(new Date().getFullYear(), 11, 31)
+      nextAnnualReport: new Date(new Date().getFullYear(), 11, 31),
     };
   }
 }

@@ -8,7 +8,7 @@ const {
   getSuggestions,
   getRecommendations,
   getRelatedProducts,
-  syncElasticsearch
+  syncElasticsearch,
 } = require('../controllers/productController');
 const { protect, authorize } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');

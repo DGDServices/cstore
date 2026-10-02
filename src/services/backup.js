@@ -59,14 +59,14 @@ class BackupService {
         success: true,
         timestamp,
         path: backupDir,
-        message: 'Backup completed successfully'
+        message: 'Backup completed successfully',
       };
     } catch (error) {
       logger.error('Backup failed:', error);
       return {
         success: false,
         error: error.message,
-        message: 'Backup failed'
+        message: 'Backup failed',
       };
     }
   }
@@ -116,14 +116,14 @@ class BackupService {
       return {
         success: true,
         path: backupPath,
-        message: 'Restore completed successfully'
+        message: 'Restore completed successfully',
       };
     } catch (error) {
       logger.error('Restore failed:', error);
       return {
         success: false,
         error: error.message,
-        message: 'Restore failed'
+        message: 'Restore failed',
       };
     }
   }
@@ -135,14 +135,14 @@ class BackupService {
     try {
       const backups = await fs.readdir(this.backupPath);
       const backupDetails = await Promise.all(
-        backups.map(async (backup) => {
+        backups.map(async backup => {
           const backupPath = path.join(this.backupPath, backup);
           const stats = await fs.stat(backupPath);
           return {
             name: backup,
             path: backupPath,
             created: stats.mtime,
-            size: stats.size
+            size: stats.size,
           };
         })
       );
@@ -206,13 +206,13 @@ class BackupService {
       return {
         valid: true,
         message: 'Backup appears valid',
-        files: files.length
+        files: files.length,
       };
     } catch (error) {
       logger.error('Backup verification failed:', error);
       return {
         valid: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -227,14 +227,16 @@ class BackupService {
     return {
       enabled: this.enabled,
       totalBackups: backups.length,
-      latestBackup: latestBackup ? {
-        name: latestBackup.name,
-        created: latestBackup.created,
-        age: Math.floor((Date.now() - latestBackup.created) / (1000 * 60 * 60))
-      } : null,
+      latestBackup: latestBackup
+        ? {
+            name: latestBackup.name,
+            created: latestBackup.created,
+            age: Math.floor((Date.now() - latestBackup.created) / (1000 * 60 * 60)),
+          }
+        : null,
       retentionDays: this.retentionDays,
       backupPath: this.backupPath,
-      s3Enabled: !!this.s3Bucket
+      s3Enabled: !!this.s3Bucket,
     };
   }
 }

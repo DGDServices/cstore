@@ -6,7 +6,7 @@ const logger = require('../src/utils/logger');
 jest.mock('../src/utils/logger', () => ({
   error: jest.fn(),
   warn: jest.fn(),
-  info: jest.fn()
+  info: jest.fn(),
 }));
 
 describe('verifyWebhookSignature Middleware', () => {
@@ -16,19 +16,19 @@ describe('verifyWebhookSignature Middleware', () => {
   beforeEach(() => {
     // Set up test environment
     process.env.WEBHOOK_SECRET = testSecret;
-    
+
     // Mock request object
     req = {
       headers: {},
       body: {},
       ip: '127.0.0.1',
-      path: '/test-webhook'
+      path: '/test-webhook',
     };
 
     // Mock response object
     res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
+      json: jest.fn().mockReturnThis(),
     };
 
     // Mock next function
@@ -88,7 +88,8 @@ describe('verifyWebhookSignature Middleware', () => {
     it('should reject request with invalid signature', () => {
       const payload = { event: 'payment', amount: 100 };
       req.body = payload;
-      req.headers['x-webhook-signature'] = 'invalid_signature_12345678901234567890123456789012345678901234567890123456789012';
+      req.headers['x-webhook-signature'] =
+        'invalid_signature_12345678901234567890123456789012345678901234567890123456789012';
 
       verifyWebhookSignature(req, res, next);
 
@@ -96,7 +97,7 @@ describe('verifyWebhookSignature Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Invalid webhook signature'
+        error: 'Invalid webhook signature',
       });
     });
 
@@ -119,7 +120,7 @@ describe('verifyWebhookSignature Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Invalid webhook signature'
+        error: 'Invalid webhook signature',
       });
     });
   });
@@ -134,7 +135,7 @@ describe('verifyWebhookSignature Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Missing webhook signature'
+        error: 'Missing webhook signature',
       });
     });
   });
@@ -151,7 +152,7 @@ describe('verifyWebhookSignature Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Webhook verification not configured'
+        error: 'Webhook verification not configured',
       });
     });
   });
@@ -190,12 +191,12 @@ describe('verifyWebhookSignature Middleware', () => {
           currency: 'USD',
           customer: {
             id: '123',
-            email: 'test@example.com'
-          }
+            email: 'test@example.com',
+          },
         },
         metadata: {
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       };
       req.body = payload;
 

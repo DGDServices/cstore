@@ -24,12 +24,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 
 export default function () {
   // Simulate various user actions
-  const scenarios = [
-    testHealth,
-    testProducts,
-    testAuth,
-    testOrders,
-  ];
+  const scenarios = [testHealth, testProducts, testAuth, testOrders];
 
   const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
   scenario();
@@ -40,14 +35,14 @@ export default function () {
 function testHealth() {
   const res = http.get(`${BASE_URL}/api/health`);
   check(res, {
-    'health check status is 200': (r) => r.status === 200,
+    'health check status is 200': r => r.status === 200,
   }) || errorRate.add(1);
 }
 
 function testProducts() {
   const res = http.get(`${BASE_URL}/api/products`);
   check(res, {
-    'products status is 200 or 503': (r) => r.status === 200 || r.status === 503,
+    'products status is 200 or 503': r => r.status === 200 || r.status === 503,
   }) || errorRate.add(1);
 }
 
@@ -65,7 +60,7 @@ function testAuth() {
 
   const res = http.post(`${BASE_URL}/api/auth/login`, payload, params);
   check(res, {
-    'auth status is 200, 401, or 503': (r) => 
+    'auth status is 200, 401, or 503': r =>
       r.status === 200 || r.status === 401 || r.status === 503,
   }) || errorRate.add(1);
 }
@@ -73,7 +68,7 @@ function testAuth() {
 function testOrders() {
   const res = http.get(`${BASE_URL}/api/orders`);
   check(res, {
-    'orders status is 200, 401, or 503': (r) => 
+    'orders status is 200, 401, or 503': r =>
       r.status === 200 || r.status === 401 || r.status === 503,
   }) || errorRate.add(1);
 }

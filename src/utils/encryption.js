@@ -15,7 +15,7 @@ const ENCRYPTED_POSITION = TAG_POSITION + TAG_LENGTH;
  */
 const getEncryptionKey = () => {
   const key = process.env.FIELD_ENCRYPTION_KEY;
-  
+
   if (!key) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('FIELD_ENCRYPTION_KEY must be set in production');
@@ -24,7 +24,7 @@ const getEncryptionKey = () => {
     logger.warn('Using default encryption key - DO NOT USE IN PRODUCTION');
     return crypto.scryptSync('development-key-not-for-production', 'salt', 32);
   }
-  
+
   // Convert hex key to buffer
   return Buffer.from(key, 'hex');
 };
@@ -34,7 +34,7 @@ const getEncryptionKey = () => {
  * @param {string} text - Plain text to encrypt
  * @returns {string} - Encrypted text in hex format
  */
-const encrypt = (text) => {
+const encrypt = text => {
   try {
     if (!text) {
       return text;
@@ -46,28 +46,23 @@ const encrypt = (text) => {
     // Generate random salt and IV
     const salt = crypto.randomBytes(SALT_LENGTH);
     const iv = crypto.randomBytes(IV_LENGTH);
-    
+
     // Derive key from master key and salt
     const key = getEncryptionKey();
-    
+
     // Create cipher
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-    
+
     // Encrypt
     let encrypted = cipher.update(textString, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     // Get auth tag
     const tag = cipher.getAuthTag();
-    
+
     // Combine salt + iv + tag + encrypted data
-    const result = Buffer.concat([
-      salt,
-      iv,
-      tag,
-      Buffer.from(encrypted, 'hex')
-    ]);
-    
+    const result = Buffer.concat([salt, iv, tag, Buffer.from(encrypted, 'hex')]);
+
     return result.toString('hex');
   } catch (error) {
     logger.error('Encryption error:', error);
@@ -80,7 +75,7 @@ const encrypt = (text) => {
  * @param {string} encryptedHex - Encrypted text in hex format
  * @returns {string} - Decrypted plain text
  */
-const decrypt = (encryptedHex) => {
+const decrypt = encryptedHex => {
   try {
     if (!encryptedHex) {
       return encryptedHex;
@@ -88,25 +83,25 @@ const decrypt = (encryptedHex) => {
 
     // Convert hex to buffer
     const data = Buffer.from(encryptedHex, 'hex');
-    
+
     // Extract components
     // Salt is not used for decryption with AES-GCM, but stored for future compatibility
     // const salt = data.subarray(0, SALT_LENGTH);
     const iv = data.subarray(SALT_LENGTH, TAG_POSITION);
     const tag = data.subarray(TAG_POSITION, ENCRYPTED_POSITION);
     const encrypted = data.subarray(ENCRYPTED_POSITION);
-    
+
     // Derive key
     const key = getEncryptionKey();
-    
+
     // Create decipher
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(tag);
-    
+
     // Decrypt
     let decrypted = decipher.update(encrypted.toString('hex'), 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   } catch (error) {
     logger.error('Decryption error:', error);
@@ -119,7 +114,7 @@ const decrypt = (encryptedHex) => {
  * @param {string} text - Text to hash
  * @returns {string} - Hashed text
  */
-const hash = (text) => {
+const hash = text => {
   try {
     if (!text) {
       return text;
@@ -150,13 +145,13 @@ const generateEncryptionKey = () => {
  */
 const encryptFields = (obj, fields) => {
   const encrypted = { ...obj };
-  
+
   fields.forEach(field => {
     if (encrypted[field]) {
       encrypted[field] = encrypt(encrypted[field]);
     }
   });
-  
+
   return encrypted;
 };
 
@@ -168,7 +163,7 @@ const encryptFields = (obj, fields) => {
  */
 const decryptFields = (obj, fields) => {
   const decrypted = { ...obj };
-  
+
   fields.forEach(field => {
     if (decrypted[field]) {
       try {
@@ -179,7 +174,7 @@ const decryptFields = (obj, fields) => {
       }
     }
   });
-  
+
   return decrypted;
 };
 
@@ -203,5 +198,5 @@ module.exports = {
   generateEncryptionKey,
   encryptFields,
   decryptFields,
-  isEncryptionAvailable
+  isEncryptionAvailable,
 };

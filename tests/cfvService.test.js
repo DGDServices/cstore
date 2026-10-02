@@ -1,5 +1,5 @@
 jest.mock('axios', () => ({
-  get: jest.fn()
+  get: jest.fn(),
 }));
 
 const axios = require('axios');
@@ -38,11 +38,11 @@ describe('CFV Service', () => {
             annualTransactions: 2000,
             annualTransactionValue: 3000,
             developers: 10,
-            circulatingSupply: 500000
+            circulatingSupply: 500000,
           },
-          updatedAt: '2026-01-01T00:00:00.000Z'
-        }
-      }
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      },
     });
 
     const result = await cfvService.getCFVForCoin('dgb');
@@ -61,9 +61,9 @@ describe('CFV Service', () => {
         data: {
           currentPrice: 1,
           fairValue: 1,
-          metrics: { circulatingSupply: 1000 }
-        }
-      }
+          metrics: { circulatingSupply: 1000 },
+        },
+      },
     });
 
     await cfvService.getCFVForCoin('XMR');
@@ -75,7 +75,7 @@ describe('CFV Service', () => {
   test('should reject unsupported symbol', async () => {
     const cfvService = loadService();
     await expect(cfvService.getCFVForCoin('DOGE')).rejects.toMatchObject({
-      statusCode: 400
+      statusCode: 400,
     });
   });
 });

@@ -9,35 +9,29 @@ describe('Products API', () => {
 
   beforeEach(async () => {
     // Create admin user
-    const adminRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Admin User',
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
+    const adminRes = await request(app).post('/api/auth/register').send({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: 'admin123',
+    });
 
     // Manually set admin role
     await User.findByIdAndUpdate(adminRes.body.data.user.id, { role: 'admin' });
-    
+
     // Login as admin to get fresh token
-    const adminLoginRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
-    
+    const adminLoginRes = await request(app).post('/api/auth/login').send({
+      email: 'admin@example.com',
+      password: 'admin123',
+    });
+
     adminToken = adminLoginRes.body.data.token;
 
     // Create regular user
-    const userRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Regular User',
-        email: 'user@example.com',
-        password: 'user123'
-      });
+    const userRes = await request(app).post('/api/auth/register').send({
+      name: 'Regular User',
+      email: 'user@example.com',
+      password: 'user123',
+    });
 
     userToken = userRes.body.data.token;
   });
@@ -50,15 +44,15 @@ describe('Products API', () => {
           description: 'Description 1',
           price: 0.001,
           priceUSD: 50,
-          stock: 10
+          stock: 10,
         },
         {
           name: 'Product 2',
           description: 'Description 2',
           price: 0.002,
           priceUSD: 100,
-          stock: 5
-        }
+          stock: 5,
+        },
       ]);
     });
 
@@ -71,9 +65,7 @@ describe('Products API', () => {
     });
 
     it('should filter products by price', async () => {
-      const res = await request(app)
-        .get('/api/products')
-        .query({ minPrice: 75 });
+      const res = await request(app).get('/api/products').query({ minPrice: 75 });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.products).toHaveLength(1);
@@ -91,7 +83,7 @@ describe('Products API', () => {
           description: 'New product description',
           price: 0.005,
           priceUSD: 250,
-          stock: 20
+          stock: 20,
         });
 
       expect(res.statusCode).toBe(201);
@@ -108,7 +100,7 @@ describe('Products API', () => {
           description: 'New product description',
           price: 0.005,
           priceUSD: 250,
-          stock: 20
+          stock: 20,
         });
 
       expect(res.statusCode).toBe(403);
@@ -120,7 +112,7 @@ describe('Products API', () => {
         .post('/api/products')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          name: 'New Product'
+          name: 'New Product',
         });
 
       expect(res.statusCode).toBe(400);
@@ -136,22 +128,20 @@ describe('Products API', () => {
           description: 'High performance laptop',
           price: 0.01,
           priceUSD: 500,
-          stock: 5
+          stock: 5,
         },
         {
           name: 'Laptop Stand',
           description: 'Ergonomic laptop stand',
           price: 0.001,
           priceUSD: 50,
-          stock: 10
-        }
+          stock: 10,
+        },
       ]);
     });
 
     it('should get search suggestions', async () => {
-      const res = await request(app)
-        .get('/api/products/suggestions')
-        .query({ q: 'Lap', limit: 5 });
+      const res = await request(app).get('/api/products/suggestions').query({ q: 'Lap', limit: 5 });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
@@ -159,9 +149,7 @@ describe('Products API', () => {
     });
 
     it('should return empty array for short query', async () => {
-      const res = await request(app)
-        .get('/api/products/suggestions')
-        .query({ q: 'L' });
+      const res = await request(app).get('/api/products/suggestions').query({ q: 'L' });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
@@ -189,8 +177,7 @@ describe('Products API', () => {
     });
 
     it('should require authentication', async () => {
-      const res = await request(app)
-        .post('/api/products/sync-elasticsearch');
+      const res = await request(app).post('/api/products/sync-elasticsearch');
 
       expect(res.statusCode).toBe(401);
       expect(res.body.success).toBe(false);

@@ -14,11 +14,13 @@ function makeRequest(urlStr, options, body) {
       port: url.port || (isHttps ? 443 : 80),
       path: url.pathname + url.search,
       method: options.method || 'POST',
-      headers: options.headers || {}
+      headers: options.headers || {},
     };
-    const req = lib.request(reqOptions, (res) => {
+    const req = lib.request(reqOptions, res => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', chunk => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve({ statusCode: res.statusCode, body: JSON.parse(data) });
@@ -61,12 +63,12 @@ class ContentModerationService {
       contentRef: contentType,
       submittedBy,
       checks: [],
-      metadata
+      metadata,
     });
 
     const [textChecks, imageChecks] = await Promise.all([
       text ? this.checkText(text) : Promise.resolve([]),
-      imageUrls.length > 0 ? this.checkImages(imageUrls) : Promise.resolve([])
+      imageUrls.length > 0 ? this.checkImages(imageUrls) : Promise.resolve([]),
     ]);
 
     const allChecks = [...textChecks, ...imageChecks];
@@ -101,11 +103,18 @@ class ContentModerationService {
     if (csamDetected) {
       try {
         const authorityReportingService = require('./authorityReportingService');
-        const userInfo = { userId: submittedBy, ipAddress: metadata && metadata.ipAddress, deviceFingerprint: metadata && metadata.deviceFingerprint };
+        const userInfo = {
+          userId: submittedBy,
+          ipAddress: metadata && metadata.ipAddress,
+          deviceFingerprint: metadata && metadata.deviceFingerprint,
+        };
         const contentInfo = { hash: metadata && metadata.hash };
         await authorityReportingService.reportCSAM(log._id, userInfo, contentInfo);
       } catch (err) {
-        logger.error('Failed to report CSAM to authority reporting service', { error: err.message, logId: log._id });
+        logger.error('Failed to report CSAM to authority reporting service', {
+          error: err.message,
+          logId: log._id,
+        });
       }
     }
 
@@ -116,7 +125,7 @@ class ContentModerationService {
     const [openaiResult, perspectiveResult, keywordResult] = await Promise.all([
       this.checkOpenAIModerationAPI(text),
       this.checkPerspectiveAPI(text),
-      this.checkKeywordBlocklist(text)
+      this.checkKeywordBlocklist(text),
     ]);
     return [openaiResult, perspectiveResult, keywordResult];
   }
@@ -127,7 +136,7 @@ class ContentModerationService {
       const [photodnaResult, awsResult, azureResult] = await Promise.all([
         this.checkPhotoDNA(imageUrl),
         this.checkAWSRekognition(imageUrl),
-        this.checkAzureContentSafety(imageUrl)
+        this.checkAzureContentSafety(imageUrl),
       ]);
       results.push(photodnaResult, awsResult, azureResult);
     }
@@ -144,13 +153,17 @@ class ContentModerationService {
     }
     try {
       const body = { input: text };
-      const response = await makeRequest('https://api.openai.com/v1/moderations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.openaiApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }, body);
+      const response = await makeRequest(
+        'https://api.openai.com/v1/moderations',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+        body
+      );
 
       const result = response.body;
       if (!result.results || !result.results[0]) {
@@ -162,7 +175,13 @@ class ContentModerationService {
         const flaggedCategories = Object.entries(item.categories || {})
           .filter(([, v]) => v)
           .map(([k]) => k);
-        return { ...base, result: 'fail', confidence: 1, categories: flaggedCategories, rawResponse: result };
+        return {
+          ...base,
+          result: 'fail',
+          confidence: 1,
+          categories: flaggedCategories,
+          rawResponse: result,
+        };
       }
       return { ...base, result: 'pass', confidence: 1, rawResponse: result };
     } catch (err) {
@@ -182,24 +201,36 @@ class ContentModerationService {
     try {
       const body = {
         comment: { text },
-        requestedAttributes: { TOXICITY: {}, THREAT: {} }
+        requestedAttributes: { TOXICITY: {}, THREAT: {} },
       };
       const url = `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${this.perspectiveApiKey}`;
-      const response = await makeRequest(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }, body);
+      const response = await makeRequest(
+        url,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+        body
+      );
 
       const result = response.body;
       const scores = result.attributeScores || {};
-      const toxicityScore = scores.TOXICITY && scores.TOXICITY.summaryScore ? scores.TOXICITY.summaryScore.value : 0;
-      const threatScore = scores.THREAT && scores.THREAT.summaryScore ? scores.THREAT.summaryScore.value : 0;
+      const toxicityScore =
+        scores.TOXICITY && scores.TOXICITY.summaryScore ? scores.TOXICITY.summaryScore.value : 0;
+      const threatScore =
+        scores.THREAT && scores.THREAT.summaryScore ? scores.THREAT.summaryScore.value : 0;
 
       if (toxicityScore > 0.8 || threatScore > 0.7) {
         const flagged = [];
         if (toxicityScore > 0.8) flagged.push('toxicity');
         if (threatScore > 0.7) flagged.push('threat');
-        return { ...base, result: 'fail', confidence: Math.max(toxicityScore, threatScore), categories: flagged, rawResponse: result };
+        return {
+          ...base,
+          result: 'fail',
+          confidence: Math.max(toxicityScore, threatScore),
+          categories: flagged,
+          rawResponse: result,
+        };
       }
       return { ...base, result: 'pass', confidence: 1, rawResponse: result };
     } catch (err) {
@@ -221,7 +252,7 @@ class ContentModerationService {
         let matched = false;
 
         if (rule.keywordMatchMode === 'regex') {
-          matched = rule.keywords.some((kw) => {
+          matched = rule.keywords.some(kw => {
             try {
               const flags = rule.keywordCaseSensitive ? '' : 'i';
               return new RegExp(kw, flags).test(textToMatch);
@@ -230,12 +261,12 @@ class ContentModerationService {
             }
           });
         } else if (rule.keywordMatchMode === 'all') {
-          matched = rule.keywords.every((kw) => {
+          matched = rule.keywords.every(kw => {
             const term = rule.keywordCaseSensitive ? kw : kw.toLowerCase();
             return textToMatch.includes(term);
           });
         } else {
-          matched = rule.keywords.some((kw) => {
+          matched = rule.keywords.some(kw => {
             const term = rule.keywordCaseSensitive ? kw : kw.toLowerCase();
             return textToMatch.includes(term);
           });
@@ -267,17 +298,27 @@ class ContentModerationService {
     }
     try {
       const body = { url: imageUrl };
-      const response = await makeRequest(this.photodnaApiUrl, {
-        method: 'POST',
-        headers: {
-          'Ocp-Apim-Subscription-Key': this.photodnaApiKey,
-          'Content-Type': 'application/json'
-        }
-      }, body);
+      const response = await makeRequest(
+        this.photodnaApiUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Ocp-Apim-Subscription-Key': this.photodnaApiKey,
+            'Content-Type': 'application/json',
+          },
+        },
+        body
+      );
 
       const result = response.body;
       if (result.isMatch) {
-        return { ...base, result: 'fail', confidence: 1, categories: ['csam'], rawResponse: result };
+        return {
+          ...base,
+          result: 'fail',
+          confidence: 1,
+          categories: ['csam'],
+          rawResponse: result,
+        };
       }
       return { ...base, result: 'pass', confidence: 1, rawResponse: result };
     } catch (err) {
@@ -312,25 +353,29 @@ class ContentModerationService {
     try {
       const url = `${this.azureContentSafetyEndpoint}/contentsafety/image:analyze?api-version=2023-10-01`;
       const body = { image: { url: imageUrl } };
-      const response = await makeRequest(url, {
-        method: 'POST',
-        headers: {
-          'Ocp-Apim-Subscription-Key': this.azureContentSafetyKey,
-          'Content-Type': 'application/json'
-        }
-      }, body);
+      const response = await makeRequest(
+        url,
+        {
+          method: 'POST',
+          headers: {
+            'Ocp-Apim-Subscription-Key': this.azureContentSafetyKey,
+            'Content-Type': 'application/json',
+          },
+        },
+        body
+      );
 
       const result = response.body;
       const categoriesResult = result.categoriesAnalysis || [];
-      const flagged = categoriesResult.filter((c) => c.severity > 2);
+      const flagged = categoriesResult.filter(c => c.severity > 2);
 
       if (flagged.length > 0) {
         return {
           ...base,
           result: 'fail',
           confidence: 1,
-          categories: flagged.map((c) => c.category),
-          rawResponse: result
+          categories: flagged.map(c => c.category),
+          rawResponse: result,
         };
       }
       return { ...base, result: 'pass', confidence: 1, rawResponse: result };
@@ -341,8 +386,7 @@ class ContentModerationService {
   }
 
   async getContentModerationLog(contentType, contentId) {
-    return ContentModerationLog
-      .findOne({ contentType, contentId })
+    return ContentModerationLog.findOne({ contentType, contentId })
       .sort({ createdAt: -1 })
       .populate('submittedBy', 'name email')
       .populate('dispositionBy', 'name email');
@@ -351,13 +395,12 @@ class ContentModerationService {
   async getModerationQueue(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
-      ContentModerationLog
-        .find({ disposition: 'pending_review' })
+      ContentModerationLog.find({ disposition: 'pending_review' })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('submittedBy', 'name email'),
-      ContentModerationLog.countDocuments({ disposition: 'pending_review' })
+      ContentModerationLog.countDocuments({ disposition: 'pending_review' }),
     ]);
     return { items, page, limit, total };
   }
@@ -369,10 +412,12 @@ class ContentModerationService {
         disposition: decision,
         dispositionBy: reviewedBy,
         dispositionAt: new Date(),
-        dispositionReason: reason
+        dispositionReason: reason,
       },
       { new: true }
-    ).populate('submittedBy', 'name email').populate('dispositionBy', 'name email');
+    )
+      .populate('submittedBy', 'name email')
+      .populate('dispositionBy', 'name email');
     return log;
   }
 

@@ -19,7 +19,7 @@ const connectDB = async () => {
       socketTimeoutMS: databaseHAConfig.mongodb.pool.socketTimeout,
       serverSelectionTimeoutMS: databaseHAConfig.mongodb.pool.serverSelectionTimeout,
       maxIdleTimeMS: databaseHAConfig.mongodb.pool.maxIdleTime,
-      
+
       // Retry settings
       retryWrites: databaseHAConfig.mongodb.retry.retryWrites,
       retryReads: databaseHAConfig.mongodb.retry.retryReads,
@@ -33,7 +33,7 @@ const connectDB = async () => {
       options.journal = databaseHAConfig.mongodb.replicaSet.writeConcern.j;
       options.wtimeout = databaseHAConfig.mongodb.replicaSet.writeConcern.wtimeout;
       options.readConcernLevel = databaseHAConfig.mongodb.replicaSet.readConcern.level;
-      
+
       logger.info(`Connecting to MongoDB replica set: ${databaseHAConfig.mongodb.replicaSet.name}`);
     }
 
@@ -42,8 +42,10 @@ const connectDB = async () => {
       options.tls = true;
       options.tlsCAFile = databaseHAConfig.mongodb.security.tls.ca;
       options.tlsCertificateKeyFile = databaseHAConfig.mongodb.security.tls.cert;
-      options.tlsAllowInvalidCertificates = databaseHAConfig.mongodb.security.tls.allowInvalidCertificates;
-      options.tlsAllowInvalidHostnames = databaseHAConfig.mongodb.security.tls.allowInvalidHostnames;
+      options.tlsAllowInvalidCertificates =
+        databaseHAConfig.mongodb.security.tls.allowInvalidCertificates;
+      options.tlsAllowInvalidHostnames =
+        databaseHAConfig.mongodb.security.tls.allowInvalidHostnames;
     }
 
     // Add compression if enabled
@@ -57,14 +59,14 @@ const connectDB = async () => {
     );
 
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
-    
+
     if (databaseHAConfig.mongodb.replicaSet.enabled) {
       logger.info(`MongoDB Replica Set: ${databaseHAConfig.mongodb.replicaSet.name}`);
       logger.info(`Read Preference: ${databaseHAConfig.mongodb.replicaSet.readPreference}`);
     }
-    
+
     // Handle connection events
-    mongoose.connection.on('error', (err) => {
+    mongoose.connection.on('error', err => {
       logger.error('MongoDB connection error:', err);
     });
 
@@ -81,7 +83,7 @@ const connectDB = async () => {
       mongoose.set('debug', (collectionName, method, query, doc) => {
         const performanceService = require('../services/performance');
         const startTime = Date.now();
-        
+
         // This is a simplified approach - in production, use proper query monitoring
         process.nextTick(() => {
           const duration = Date.now() - startTime;
@@ -89,21 +91,16 @@ const connectDB = async () => {
             logger.warn('Slow query detected', {
               collection: collectionName,
               method,
-              duration
-            });
-            performanceService.recordSlowQuery(
-              JSON.stringify(query),
               duration,
-              collectionName
-            );
+            });
+            performanceService.recordSlowQuery(JSON.stringify(query), duration, collectionName);
           }
         });
       });
     }
-
   } catch (error) {
     logger.error('MongoDB connection failed:', error);
-    
+
     // Don't exit in test environment
     if (process.env.NODE_ENV !== 'test') {
       process.exit(1);

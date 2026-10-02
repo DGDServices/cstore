@@ -22,7 +22,7 @@ class ComplianceOfficerService {
         priority: caseData.priority || 'medium',
         description: caseData.description,
         assignedTo: caseData.assignedTo,
-        dueDate: caseData.dueDate
+        dueDate: caseData.dueDate,
       });
 
       await complianceCase.save();
@@ -31,7 +31,7 @@ class ComplianceOfficerService {
 
       return {
         success: true,
-        case: complianceCase
+        case: complianceCase,
       };
     } catch (error) {
       logger.error(`Error creating compliance case: ${error.message}`);
@@ -62,18 +62,18 @@ class ComplianceOfficerService {
   async updateCaseStatus(caseId, status, notes) {
     try {
       const complianceCase = await ComplianceCase.findById(caseId);
-      
+
       if (!complianceCase) {
         throw new Error('Case not found');
       }
 
       complianceCase.status = status;
-      
+
       if (status === 'resolved' || status === 'closed') {
         complianceCase.resolution = {
           outcome: status,
           details: notes,
-          resolvedAt: new Date()
+          resolvedAt: new Date(),
         };
       }
 
@@ -94,7 +94,7 @@ class ComplianceOfficerService {
   async addCaseAction(caseId, actionData) {
     try {
       const complianceCase = await ComplianceCase.findById(caseId);
-      
+
       if (!complianceCase) {
         throw new Error('Case not found');
       }
@@ -103,7 +103,7 @@ class ComplianceOfficerService {
         action: actionData.action,
         performedBy: actionData.performedBy,
         performedAt: new Date(),
-        notes: actionData.notes
+        notes: actionData.notes,
       });
 
       await complianceCase.save();
@@ -123,14 +123,14 @@ class ComplianceOfficerService {
   async assignCase(caseId, officerId) {
     try {
       const complianceCase = await ComplianceCase.findById(caseId);
-      
+
       if (!complianceCase) {
         throw new Error('Case not found');
       }
 
       complianceCase.assignedTo = officerId;
       complianceCase.status = 'investigating';
-      
+
       await complianceCase.save();
 
       logger.info(`Case ${caseId} assigned to officer ${officerId}`);
@@ -179,7 +179,7 @@ class ComplianceOfficerService {
   async getPendingCases() {
     try {
       const cases = await ComplianceCase.find({
-        status: { $in: ['open', 'investigating', 'pending_decision'] }
+        status: { $in: ['open', 'investigating', 'pending_decision'] },
       })
         .populate('user', 'name email')
         .populate('assignedTo', 'name email')
@@ -199,7 +199,7 @@ class ComplianceOfficerService {
     try {
       const cases = await ComplianceCase.find({
         priority: { $in: ['high', 'critical'] },
-        status: { $nin: ['resolved', 'closed'] }
+        status: { $nin: ['resolved', 'closed'] },
       })
         .populate('user', 'name email')
         .populate('assignedTo', 'name email')
@@ -219,7 +219,7 @@ class ComplianceOfficerService {
     try {
       const cases = await ComplianceCase.find({
         dueDate: { $lt: new Date() },
-        status: { $nin: ['resolved', 'closed'] }
+        status: { $nin: ['resolved', 'closed'] },
       })
         .populate('user', 'name email')
         .populate('assignedTo', 'name email')
@@ -240,26 +240,26 @@ class ComplianceOfficerService {
       const dashboard = {
         summary: {
           totalOpen: await ComplianceCase.countDocuments({
-            status: { $in: ['open', 'investigating', 'pending_decision'] }
+            status: { $in: ['open', 'investigating', 'pending_decision'] },
           }),
           highPriority: await ComplianceCase.countDocuments({
             priority: { $in: ['high', 'critical'] },
-            status: { $nin: ['resolved', 'closed'] }
+            status: { $nin: ['resolved', 'closed'] },
           }),
           overdue: await ComplianceCase.countDocuments({
             dueDate: { $lt: new Date() },
-            status: { $nin: ['resolved', 'closed'] }
+            status: { $nin: ['resolved', 'closed'] },
           }),
           pendingAlerts: await AMLAlert.countDocuments({
-            status: { $in: ['open', 'under_review'] }
-          })
+            status: { $in: ['open', 'under_review'] },
+          }),
         },
         recentCases: await ComplianceCase.find({})
           .populate('user', 'name email')
           .sort({ createdAt: -1 })
           .limit(10),
         casesByType: await this.getCaseStatistics(),
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       return dashboard;
@@ -279,11 +279,11 @@ class ComplianceOfficerService {
           $group: {
             _id: {
               type: '$type',
-              status: '$status'
+              status: '$status',
             },
-            count: { $sum: 1 }
-          }
-        }
+            count: { $sum: 1 },
+          },
+        },
       ]);
 
       return stats;
@@ -301,8 +301,8 @@ class ComplianceOfficerService {
       const cases = await ComplianceCase.find({
         $or: [
           { caseNumber: { $regex: searchTerm, $options: 'i' } },
-          { description: { $regex: searchTerm, $options: 'i' } }
-        ]
+          { description: { $regex: searchTerm, $options: 'i' } },
+        ],
       })
         .populate('user', 'name email')
         .populate('assignedTo', 'name email')
@@ -322,7 +322,7 @@ class ComplianceOfficerService {
   async linkAlertToCase(caseId, alertId) {
     try {
       const complianceCase = await ComplianceCase.findById(caseId);
-      
+
       if (!complianceCase) {
         throw new Error('Case not found');
       }

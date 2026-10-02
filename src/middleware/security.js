@@ -19,14 +19,14 @@ const securityHeaders = helmet({
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'none'"]
-    }
+      frameSrc: ["'none'"],
+    },
   },
   // Strict Transport Security (HSTS)
   hsts: {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
-    preload: true
+    preload: true,
   },
   // Prevent MIME type sniffing
   noSniff: true,
@@ -36,12 +36,12 @@ const securityHeaders = helmet({
   xssFilter: true,
   // Prevent clickjacking
   frameguard: {
-    action: 'deny'
+    action: 'deny',
   },
   // Referrer Policy
   referrerPolicy: {
-    policy: 'strict-origin-when-cross-origin'
-  }
+    policy: 'strict-origin-when-cross-origin',
+  },
 });
 
 // Rate limiting with audit logging
@@ -60,9 +60,9 @@ const limiter = rateLimit({
       success: false,
       error: 'Too many requests',
       message: 'You have exceeded the rate limit. Please try again later.',
-      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
     });
-  }
+  },
 });
 
 // Stricter rate limiting for auth endpoints
@@ -79,9 +79,9 @@ const authLimiter = rateLimit({
       success: false,
       error: 'Too many authentication attempts',
       message: 'You have made too many login attempts. Please try again later.',
-      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
     });
-  }
+  },
 });
 
 // Rate limiting for multi-sig approval operations
@@ -92,7 +92,7 @@ const multiSigApprovalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Use standard IP-based rate limiting
-  skip: (req) => !req.user // Skip rate limiting if not authenticated
+  skip: req => !req.user, // Skip rate limiting if not authenticated
 });
 
 // Rate limiting for authenticated users - uses user ID from JWT as key
@@ -103,28 +103,28 @@ const authenticatedUserLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Use user ID from JWT token as the rate limit key instead of IP address
-  keyGenerator: (req) => {
+  keyGenerator: req => {
     let token;
-    
+
     // Extract token from Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
-    
+
     // If no token, fall back to IP address using the proper helper for IPv6 support
     if (!token) {
       return ipKeyGenerator(req.ip);
     }
-    
+
     try {
       // Verify and decode the JWT token
       const decoded = verifyToken(token);
-      
+
       // If token is valid and contains user ID, use it as the key
       if (decoded && decoded.id) {
         return `user:${decoded.id}`;
       }
-      
+
       // If token is invalid or doesn't contain ID, fall back to IP using the helper
       return ipKeyGenerator(req.ip);
     } catch (error) {
@@ -138,16 +138,16 @@ const authenticatedUserLimiter = rateLimit({
       success: false,
       error: 'Too many requests',
       message: 'You have exceeded the rate limit. Please try again later.',
-      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
     });
   },
   // Skip rate limiting if not authenticated (optional - can be removed if you want to rate limit all requests)
-  skip: (req) => {
+  skip: req => {
     // Only apply rate limiting if there's a valid JWT token
     if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
       return true;
     }
-    
+
     const token = req.headers.authorization.split(' ')[1];
     try {
       const decoded = verifyToken(token);
@@ -155,16 +155,16 @@ const authenticatedUserLimiter = rateLimit({
     } catch (error) {
       return true;
     }
-  }
+  },
 });
 
 // MongoDB sanitization - prevent NoSQL injection (Express 5 compatible)
 // Note: express-mongo-sanitize has compatibility issues with Express 5
 // This custom middleware removes MongoDB operators from request data
 const sanitizeData = (req, res, next) => {
-  const removeMongoOperators = (obj) => {
+  const removeMongoOperators = obj => {
     if (!obj || typeof obj !== 'object') return obj;
-    
+
     Object.keys(obj).forEach(key => {
       // Remove keys that start with $ (MongoDB operators)
       if (key.startsWith('$')) {
@@ -178,10 +178,10 @@ const sanitizeData = (req, res, next) => {
 
   // Sanitize body (mutable in Express 5)
   if (req.body) removeMongoOperators(req.body);
-  
+
   // Note: req.query and req.params are immutable in Express 5
   // Query string sanitization is handled by validation layer
-  
+
   next();
 };
 
@@ -190,7 +190,7 @@ const sanitizeData = (req, res, next) => {
 // This custom middleware sanitizes HTML/JavaScript in request body only
 // Query and params are immutable in Express 5, so we sanitize at validation layer
 const xssClean = (req, res, next) => {
-  const sanitizeValue = (value) => {
+  const sanitizeValue = value => {
     if (typeof value === 'string') {
       // Remove basic XSS patterns
       return value
@@ -202,9 +202,9 @@ const xssClean = (req, res, next) => {
     return value;
   };
 
-  const sanitizeObject = (obj) => {
+  const sanitizeObject = obj => {
     if (!obj || typeof obj !== 'object') return obj;
-    
+
     Object.keys(obj).forEach(key => {
       if (typeof obj[key] === 'string') {
         obj[key] = sanitizeValue(obj[key]);
@@ -217,20 +217,20 @@ const xssClean = (req, res, next) => {
 
   // Only sanitize body in Express 5 (query and params are immutable)
   if (req.body) sanitizeObject(req.body);
-  
+
   next();
 };
 
 // Prevent HTTP parameter pollution
 const preventParamPollution = hpp({
-  whitelist: ['price', 'rating', 'stock'] // Allow duplicates for these params
+  whitelist: ['price', 'rating', 'stock'], // Allow duplicates for these params
 });
 
 /**
  * Verify webhook signature using HMAC-SHA256
  * Compares calculated signature with X-Webhook-Signature header
  * Uses timing-safe comparison to prevent timing attacks
- * 
+ *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
@@ -244,21 +244,21 @@ const verifyWebhookSignature = (req, res, next) => {
       logger.error('Webhook secret not configured');
       return res.status(500).json({
         success: false,
-        error: 'Webhook verification not configured'
+        error: 'Webhook verification not configured',
       });
     }
 
     // Get signature from header
     const signatureHeader = req.headers['x-webhook-signature'];
-    
+
     if (!signatureHeader) {
       logger.warn('Webhook signature header missing', {
         ip: req.ip,
-        path: req.path
+        path: req.path,
       });
       return res.status(401).json({
         success: false,
-        error: 'Missing webhook signature'
+        error: 'Missing webhook signature',
       });
     }
 
@@ -284,11 +284,11 @@ const verifyWebhookSignature = (req, res, next) => {
         ip: req.ip,
         path: req.path,
         expectedLength: calculatedSignature.length,
-        receivedLength: receivedSignature.length
+        receivedLength: receivedSignature.length,
       });
       return res.status(401).json({
         success: false,
-        error: 'Invalid webhook signature'
+        error: 'Invalid webhook signature',
       });
     }
 
@@ -300,11 +300,11 @@ const verifyWebhookSignature = (req, res, next) => {
     if (calculatedBuffer.length !== receivedBuffer.length) {
       logger.warn('Webhook signature buffer length mismatch', {
         ip: req.ip,
-        path: req.path
+        path: req.path,
       });
       return res.status(401).json({
         success: false,
-        error: 'Invalid webhook signature'
+        error: 'Invalid webhook signature',
       });
     }
 
@@ -313,17 +313,17 @@ const verifyWebhookSignature = (req, res, next) => {
     if (!isValid) {
       logger.warn('Webhook signature verification failed', {
         ip: req.ip,
-        path: req.path
+        path: req.path,
       });
       return res.status(401).json({
         success: false,
-        error: 'Invalid webhook signature'
+        error: 'Invalid webhook signature',
       });
     }
 
     logger.info('Webhook signature verified successfully', {
       ip: req.ip,
-      path: req.path
+      path: req.path,
     });
 
     next();
@@ -331,11 +331,11 @@ const verifyWebhookSignature = (req, res, next) => {
     logger.error('Webhook signature verification error:', {
       error: error.message,
       ip: req.ip,
-      path: req.path
+      path: req.path,
     });
     return res.status(500).json({
       success: false,
-      error: 'Webhook verification failed'
+      error: 'Webhook verification failed',
     });
   }
 };
@@ -349,5 +349,5 @@ module.exports = {
   sanitizeData,
   xssClean,
   preventParamPollution,
-  verifyWebhookSignature
+  verifyWebhookSignature,
 };

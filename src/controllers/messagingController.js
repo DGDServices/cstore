@@ -10,7 +10,7 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
     total: result.total,
     page: result.page,
     limit: result.limit,
-    data: result.conversations
+    data: result.conversations,
   });
 });
 
@@ -38,12 +38,18 @@ exports.createConversation = asyncHandler(async (req, res, next) => {
 
 exports.getMessages = asyncHandler(async (req, res, next) => {
   const { page, limit, before } = req.query;
-  const result = await messagingService.getMessages(req.params.id, req.user.id, page, limit, before);
+  const result = await messagingService.getMessages(
+    req.params.id,
+    req.user.id,
+    page,
+    limit,
+    before
+  );
   res.json({
     success: true,
     count: result.messages.length,
     hasMore: result.hasMore,
-    data: result.messages
+    data: result.messages,
   });
 });
 

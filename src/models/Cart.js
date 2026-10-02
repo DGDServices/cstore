@@ -4,53 +4,56 @@ const cartItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: true,
   },
   quantity: {
     type: Number,
     required: true,
     min: 1,
-    default: 1
+    default: 1,
   },
   price: {
     type: Number,
-    required: true
+    required: true,
   },
   priceUSD: {
     type: Number,
-    required: true
+    required: true,
   },
 });
 
-const cartSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true
+const cartSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      unique: true,
+    },
+    items: [cartItemSchema],
+    totalItems: {
+      type: Number,
+      default: 0,
+    },
+    totalPrice: {
+      type: Number,
+      default: 0,
+    },
+    totalPriceUSD: {
+      type: Number,
+      default: 0,
+    },
   },
-  items: [cartItemSchema],
-  totalItems: {
-    type: Number,
-    default: 0
-  },
-  totalPrice: {
-    type: Number,
-    default: 0
-  },
-  totalPriceUSD: {
-    type: Number,
-    default: 0
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Calculate totals before saving
-cartSchema.pre('save', function(next) {
+cartSchema.pre('save', function (next) {
   this.totalItems = this.items.reduce((sum, item) => sum + item.quantity, 0);
-  this.totalPrice = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  this.totalPriceUSD = this.items.reduce((sum, item) => sum + (item.priceUSD * item.quantity), 0);
+  this.totalPrice = this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  this.totalPriceUSD = this.items.reduce((sum, item) => sum + item.priceUSD * item.quantity, 0);
   next();
 });
 

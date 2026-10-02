@@ -5,7 +5,7 @@ const {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
-  clearWishlist
+  clearWishlist,
 } = require('../controllers/wishlistController');
 
 // All wishlist routes require authentication

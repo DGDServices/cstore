@@ -17,25 +17,22 @@ const logger = winston.createLogger({
   transports: [
     // Write all logs to console
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
     // Write all logs to combined.log
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: path.join(__dirname, '../../logs/combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
     // Write error logs to error.log
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: path.join(__dirname, '../../logs/error.log'),
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    })
-  ]
+    }),
+  ],
 });
 
 // Create dedicated security logger for multi-sig operations
@@ -44,12 +41,12 @@ const securityLogger = winston.createLogger({
   format: logFormat,
   defaultMeta: { service: 'cryptons-security', category: 'multi-sig' },
   transports: [
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: path.join(__dirname, '../../logs/security.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 10,
-    })
-  ]
+    }),
+  ],
 });
 
 // Helper function to log multi-sig operations
@@ -57,9 +54,9 @@ logger.logMultiSigOperation = (operation, details) => {
   const logEntry = {
     operation,
     timestamp: new Date().toISOString(),
-    ...details
+    ...details,
   };
-  
+
   // Log to both main logger and security logger
   logger.info(`Multi-sig ${operation}`, logEntry);
   securityLogger.info(`Multi-sig ${operation}`, logEntry);

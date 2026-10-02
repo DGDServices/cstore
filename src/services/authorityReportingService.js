@@ -23,11 +23,13 @@ function makeRequest(urlStr, options, body) {
       port: url.port || (isHttps ? 443 : 80),
       path: url.pathname + url.search,
       method: options.method || 'POST',
-      headers: options.headers || {}
+      headers: options.headers || {},
     };
-    const req = lib.request(reqOptions, (res) => {
+    const req = lib.request(reqOptions, res => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', chunk => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve({ statusCode: res.statusCode, body: JSON.parse(data) });
@@ -59,7 +61,10 @@ class AuthorityReportingService {
       }
 
       if (log.ncmecReported) {
-        logger.info('CSAM already reported to NCMEC', { logId: log._id, reportId: log.ncmecReportId });
+        logger.info('CSAM already reported to NCMEC', {
+          logId: log._id,
+          reportId: log.ncmecReportId,
+        });
         return { reported: true, reportId: log.ncmecReportId };
       }
 
@@ -68,7 +73,7 @@ class AuthorityReportingService {
         submittingOrganization: process.env.PLATFORM_LEGAL_NAME || 'Cryptons.com',
         reportingPerson: {
           name: process.env.COMPLIANCE_OFFICER_NAME,
-          email: process.env.COMPLIANCE_OFFICER_EMAIL
+          email: process.env.COMPLIANCE_OFFICER_EMAIL,
         },
         incidentDetails: {
           contentType: log.contentType,
@@ -80,30 +85,43 @@ class AuthorityReportingService {
             userId: userInfo.userId,
             email: userInfo.email,
             username: userInfo.username,
-            createdAt: userInfo.createdAt
+            createdAt: userInfo.createdAt,
           },
           contentHash: contentInfo.hash,
-          evidencePath: log.evidencePath
-        }
+          evidencePath: log.evidencePath,
+        },
       };
 
       let reportId = null;
       try {
         if (!this.ncmecApiKey) {
-          logger.warn('NCMEC API key not configured - CSAM report not transmitted', { logId: log._id });
+          logger.warn('NCMEC API key not configured - CSAM report not transmitted', {
+            logId: log._id,
+          });
         } else {
-          const response = await makeRequest(`${this.ncmecApiUrl}/reports`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${this.ncmecApiKey}`,
-              'Content-Type': 'application/json'
-            }
-          }, payload);
+          const response = await makeRequest(
+            `${this.ncmecApiUrl}/reports`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${this.ncmecApiKey}`,
+                'Content-Type': 'application/json',
+              },
+            },
+            payload
+          );
           reportId = response.body && response.body.reportId;
-          logger.info('CSAM report submitted to NCMEC', { logId: log._id, reportId, statusCode: response.statusCode });
+          logger.info('CSAM report submitted to NCMEC', {
+            logId: log._id,
+            reportId,
+            statusCode: response.statusCode,
+          });
         }
       } catch (httpErr) {
-        logger.error('Failed to transmit CSAM report to NCMEC', { error: httpErr.message, logId: log._id });
+        logger.error('Failed to transmit CSAM report to NCMEC', {
+          error: httpErr.message,
+          logId: log._id,
+        });
       }
 
       log.ncmecReported = true;
@@ -138,7 +156,7 @@ class AuthorityReportingService {
           resourceId: userId,
           changes: { isActive: false },
           status: 'success',
-          metadata: { reason }
+          metadata: { reason },
         });
       } catch (e) {
         logger.error('Failed to create AuditLog for account freeze', { error: e.message, userId });
@@ -163,7 +181,7 @@ class AuthorityReportingService {
   async exportEvidencePackage(userId) {
     const [userInfo, moderationLogs] = await Promise.all([
       User.findById(userId).select('-password'),
-      ContentModerationLog.find({ submittedBy: userId }).sort({ createdAt: -1 })
+      ContentModerationLog.find({ submittedBy: userId }).sort({ createdAt: -1 }),
     ]);
 
     let auditTrail = [];
@@ -180,12 +198,17 @@ class AuthorityReportingService {
       userInfo,
       moderationLogs,
       auditTrail,
-      exportedAt: new Date()
+      exportedAt: new Date(),
     };
   }
 
   async reportFinancialCrime(transactionId, crimeType, details) {
-    const validCrimeTypes = ['triangulation_fraud', 'synthetic_identity', 'money_mule', 'counterfeit_goods'];
+    const validCrimeTypes = [
+      'triangulation_fraud',
+      'synthetic_identity',
+      'money_mule',
+      'counterfeit_goods',
+    ];
     if (!validCrimeTypes.includes(crimeType)) {
       throw new AppError(`Invalid crime type. Must be one of: ${validCrimeTypes.join(', ')}`, 400);
     }
@@ -196,7 +219,7 @@ class AuthorityReportingService {
       transactionId,
       crimeType,
       validCrimeType: validCrimeTypes.includes(crimeType),
-      details
+      details,
     });
 
     return { reportId, crimeType, status: 'submitted' };
@@ -217,7 +240,12 @@ class AuthorityReportingService {
 
     const userLogs = await ContentModerationLog.find({ submittedBy: userId });
     await Promise.all(
-      userLogs.map((log) => this.placeLegalHold(log._id, `LE request - Agency: ${requestingAgency}, Case: ${caseNumber}, Reason: ${reason}`))
+      userLogs.map(log =>
+        this.placeLegalHold(
+          log._id,
+          `LE request - Agency: ${requestingAgency}, Case: ${caseNumber}, Reason: ${reason}`
+        )
+      )
     );
 
     logger.info('Law enforcement request handled', { userId, requestingAgency, caseNumber });

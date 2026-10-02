@@ -3,7 +3,7 @@ const request = require('supertest');
 jest.mock('../src/services/cfvService', () => ({
   getAllCFVCoins: jest.fn(),
   getCFVForCoin: jest.fn(),
-  getCoinValuationStatus: jest.fn()
+  getCoinValuationStatus: jest.fn(),
 }));
 
 const cfvService = require('../src/services/cfvService');
@@ -13,7 +13,7 @@ describe('CFV API Routes', () => {
   test('GET /api/cfv/coins returns all CFV coins', async () => {
     cfvService.getAllCFVCoins.mockResolvedValue([
       { symbol: 'DGB', name: 'DigiByte' },
-      { symbol: 'DGD', name: 'Digital Gold' }
+      { symbol: 'DGD', name: 'Digital Gold' },
     ]);
 
     const res = await request(app).get('/api/cfv/coins');
@@ -28,12 +28,12 @@ describe('CFV API Routes', () => {
       symbol: 'DGB',
       name: 'DigiByte',
       currentPrice: 1,
-      fairValue: 2
+      fairValue: 2,
     });
     cfvService.getCoinValuationStatus.mockResolvedValue({
       symbol: 'DGB',
       status: 'undervalued',
-      percentageDifference: 100
+      percentageDifference: 100,
     });
 
     const res = await request(app).get('/api/cfv/coins/DGB');
@@ -46,9 +46,30 @@ describe('CFV API Routes', () => {
 
   test('GET /api/cfv/summary returns summary totals', async () => {
     cfvService.getAllCFVCoins.mockResolvedValue([
-      { symbol: 'DGB', name: 'DigiByte', valuationStatus: 'undervalued', currentPrice: 1, fairValue: 2, percentageDifference: 100 },
-      { symbol: 'DASH', name: 'Dash', valuationStatus: 'overvalued', currentPrice: 3, fairValue: 2, percentageDifference: -33.33 },
-      { symbol: 'DGD', name: 'Digital Gold', valuationStatus: 'fairly valued', currentPrice: 2, fairValue: 2, percentageDifference: 0 }
+      {
+        symbol: 'DGB',
+        name: 'DigiByte',
+        valuationStatus: 'undervalued',
+        currentPrice: 1,
+        fairValue: 2,
+        percentageDifference: 100,
+      },
+      {
+        symbol: 'DASH',
+        name: 'Dash',
+        valuationStatus: 'overvalued',
+        currentPrice: 3,
+        fairValue: 2,
+        percentageDifference: -33.33,
+      },
+      {
+        symbol: 'DGD',
+        name: 'Digital Gold',
+        valuationStatus: 'fairly valued',
+        currentPrice: 2,
+        fairValue: 2,
+        percentageDifference: 0,
+      },
     ]);
 
     const res = await request(app).get('/api/cfv/summary');

@@ -9,7 +9,7 @@ const { generateToken } = require('../src/utils/jwt');
 // buyer confirms delivery (which proposes the payout release). Mock it.
 jest.mock('../src/services/dgdCoreClient', () => {
   const mockClient = {
-    proposeRelease: jest.fn(async (orderId, by) => ({ orderId, state: 'funded', proposedBy: by }))
+    proposeRelease: jest.fn(async (orderId, by) => ({ orderId, state: 'funded', proposedBy: by })),
   };
   return { DgdCoreClient: jest.fn(() => mockClient), mockClient };
 });
@@ -35,7 +35,7 @@ describe('Orders API', () => {
       name: 'Admin User',
       email: 'admin@test.com',
       password: 'password123',
-      role: 'admin'
+      role: 'admin',
     });
     adminToken = generateToken(adminUser._id);
 
@@ -44,7 +44,7 @@ describe('Orders API', () => {
       name: 'Regular User',
       email: 'user@test.com',
       password: 'password123',
-      role: 'user'
+      role: 'user',
     });
     userToken = generateToken(regularUser._id);
 
@@ -56,7 +56,7 @@ describe('Orders API', () => {
       priceUSD: 250,
       seller: adminUser._id,
       stock: 10,
-      isActive: true
+      isActive: true,
     });
   });
 
@@ -73,8 +73,8 @@ describe('Orders API', () => {
           city: 'New York',
           state: 'NY',
           postalCode: '10001',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       };
 
       const res = await request(app)
@@ -104,18 +104,18 @@ describe('Orders API', () => {
       const orderData = {
         productId: testProduct._id.toString(),
         quantity: 1,
-        customerEmail: 'guest@test.com'
+        customerEmail: 'guest@test.com',
       };
 
-      const res = await request(app)
-        .post('/api/orders')
-        .send(orderData);
+      const res = await request(app).post('/api/orders').send(orderData);
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
       // `protect` rejects before the controller runs, so the message is the
       // auth middleware's, not the controller's.
-      expect(res.body.message).toMatch(/Not authorized to access this route|Authentication required/i);
+      expect(res.body.message).toMatch(
+        /Not authorized to access this route|Authentication required/i
+      );
 
       const orderCountAfter = await Order.countDocuments();
       expect(orderCountAfter).toBe(orderCountBefore);
@@ -127,7 +127,7 @@ describe('Orders API', () => {
       const orderData = {
         productId: testProduct._id.toString(),
         quantity: 100,
-        customerEmail: 'customer@test.com'
+        customerEmail: 'customer@test.com',
       };
 
       const res = await request(app)
@@ -146,7 +146,7 @@ describe('Orders API', () => {
       const orderData = {
         productId: '507f1f77bcf86cd799439011',
         quantity: 1,
-        customerEmail: 'customer@test.com'
+        customerEmail: 'customer@test.com',
       };
 
       const res = await request(app)
@@ -166,7 +166,7 @@ describe('Orders API', () => {
         productId: testProduct._id.toString(),
         quantity: 1,
         customerEmail: 'customer@test.com',
-        cryptocurrency: 'BTC'
+        cryptocurrency: 'BTC',
       };
 
       const res = await request(app)
@@ -200,16 +200,18 @@ describe('Orders API', () => {
       testOrder = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
-        items: [{
-          product: testProduct._id,
-          productName: testProduct.name,
-          quantity: 1,
-          price: testProduct.price,
-          priceUSD: testProduct.priceUSD
-        }],
+        items: [
+          {
+            product: testProduct._id,
+            productName: testProduct.name,
+            quantity: 1,
+            price: testProduct.price,
+            priceUSD: testProduct.priceUSD,
+          },
+        ],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        status: 'pending'
+        status: 'pending',
       });
     });
 
@@ -244,7 +246,7 @@ describe('Orders API', () => {
       const otherUser = await User.create({
         name: 'Other User',
         email: 'other@test.com',
-        password: 'password123'
+        password: 'password123',
       });
       const otherToken = generateToken(otherUser._id);
 
@@ -277,31 +279,35 @@ describe('Orders API', () => {
         {
           user: regularUser._id,
           customerEmail: 'customer@test.com',
-          items: [{
-            product: testProduct._id,
-            productName: testProduct.name,
-            quantity: 1,
-            price: testProduct.price,
-            priceUSD: testProduct.priceUSD
-          }],
+          items: [
+            {
+              product: testProduct._id,
+              productName: testProduct.name,
+              quantity: 1,
+              price: testProduct.price,
+              priceUSD: testProduct.priceUSD,
+            },
+          ],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          status: 'pending'
+          status: 'pending',
         },
         {
           user: regularUser._id,
           customerEmail: 'customer@test.com',
-          items: [{
-            product: testProduct._id,
-            productName: testProduct.name,
-            quantity: 2,
-            price: testProduct.price,
-            priceUSD: testProduct.priceUSD
-          }],
+          items: [
+            {
+              product: testProduct._id,
+              productName: testProduct.name,
+              quantity: 2,
+              price: testProduct.price,
+              priceUSD: testProduct.priceUSD,
+            },
+          ],
           totalPrice: testProduct.price * 2,
           totalPriceUSD: testProduct.priceUSD * 2,
-          status: 'paid'
-        }
+          status: 'paid',
+        },
       ]);
     });
 
@@ -321,8 +327,7 @@ describe('Orders API', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get('/api/orders/my-orders');
+      const res = await request(app).get('/api/orders/my-orders');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -338,31 +343,35 @@ describe('Orders API', () => {
         {
           user: regularUser._id,
           customerEmail: 'customer1@test.com',
-          items: [{
-            product: testProduct._id,
-            productName: testProduct.name,
-            quantity: 1,
-            price: testProduct.price,
-            priceUSD: testProduct.priceUSD
-          }],
+          items: [
+            {
+              product: testProduct._id,
+              productName: testProduct.name,
+              quantity: 1,
+              price: testProduct.price,
+              priceUSD: testProduct.priceUSD,
+            },
+          ],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          status: 'pending'
+          status: 'pending',
         },
         {
           user: regularUser._id,
           customerEmail: 'customer2@test.com',
-          items: [{
-            product: testProduct._id,
-            productName: testProduct.name,
-            quantity: 1,
-            price: testProduct.price,
-            priceUSD: testProduct.priceUSD
-          }],
+          items: [
+            {
+              product: testProduct._id,
+              productName: testProduct.name,
+              quantity: 1,
+              price: testProduct.price,
+              priceUSD: testProduct.priceUSD,
+            },
+          ],
           totalPrice: testProduct.price,
           totalPriceUSD: testProduct.priceUSD,
-          status: 'paid'
-        }
+          status: 'paid',
+        },
       ]);
     });
 
@@ -395,9 +404,7 @@ describe('Orders API', () => {
     it('should not allow regular user to access', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`);
+      const res = await request(app).get('/api/orders').set('Authorization', `Bearer ${userToken}`);
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
@@ -406,8 +413,7 @@ describe('Orders API', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get('/api/orders');
+      const res = await request(app).get('/api/orders');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -423,16 +429,18 @@ describe('Orders API', () => {
       testOrder = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
-        items: [{
-          product: testProduct._id,
-          productName: testProduct.name,
-          quantity: 1,
-          price: testProduct.price,
-          priceUSD: testProduct.priceUSD
-        }],
+        items: [
+          {
+            product: testProduct._id,
+            productName: testProduct.name,
+            quantity: 1,
+            price: testProduct.price,
+            priceUSD: testProduct.priceUSD,
+          },
+        ],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        status: 'pending'
+        status: 'pending',
       });
     });
 
@@ -495,20 +503,22 @@ describe('Orders API', () => {
       fundedOrder = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
-        items: [{
-          product: testProduct._id,
-          productName: testProduct.name,
-          quantity: 1,
-          price: testProduct.price,
-          priceUSD: testProduct.priceUSD
-        }],
+        items: [
+          {
+            product: testProduct._id,
+            productName: testProduct.name,
+            quantity: 1,
+            price: testProduct.price,
+            priceUSD: testProduct.priceUSD,
+          },
+        ],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
         dgdExpectedSats: '500000',
         dgdEscrowId: undefined,
         dgdEscrowAddress: 'dgrt1qescrowaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         dgdEscrowState: 'funded',
-        status: 'shipped'
+        status: 'shipped',
       });
     });
 
@@ -523,7 +533,10 @@ describe('Orders API', () => {
       expect(res.body.success).toBe(true);
       expect(dgd.proposeRelease).toHaveBeenCalledTimes(1);
       expect(dgd.proposeRelease).toHaveBeenCalledWith(
-        fundedOrder._id.toString(), 'buyer', undefined, `confirm-delivery:${fundedOrder._id}`
+        fundedOrder._id.toString(),
+        'buyer',
+        undefined,
+        `confirm-delivery:${fundedOrder._id}`
       );
       expect(res.body.data.next.action).toBe('sign-payout');
 
@@ -567,11 +580,19 @@ describe('Orders API', () => {
       const order = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
-        items: [{ product: testProduct._id, productName: testProduct.name, quantity: 1, price: testProduct.price, priceUSD: testProduct.priceUSD }],
+        items: [
+          {
+            product: testProduct._id,
+            productName: testProduct.name,
+            quantity: 1,
+            price: testProduct.price,
+            priceUSD: testProduct.priceUSD,
+          },
+        ],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
         dgdEscrowState: 'funded',
-        status: 'paid'
+        status: 'paid',
       });
 
       const res = await request(app)
@@ -588,10 +609,18 @@ describe('Orders API', () => {
       const order = await Order.create({
         user: regularUser._id,
         customerEmail: 'customer@test.com',
-        items: [{ product: testProduct._id, productName: testProduct.name, quantity: 1, price: testProduct.price, priceUSD: testProduct.priceUSD }],
+        items: [
+          {
+            product: testProduct._id,
+            productName: testProduct.name,
+            quantity: 1,
+            price: testProduct.price,
+            priceUSD: testProduct.priceUSD,
+          },
+        ],
         totalPrice: testProduct.price,
         totalPriceUSD: testProduct.priceUSD,
-        status: 'pending'
+        status: 'pending',
       });
 
       const res = await request(app)

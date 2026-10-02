@@ -3,11 +3,7 @@ const logger = require('./logger');
 /**
  * Critical secrets that must be set in production
  */
-const CRITICAL_SECRETS = [
-  'JWT_SECRET',
-  'JWT_REFRESH_SECRET',
-  'MONGODB_URI'
-];
+const CRITICAL_SECRETS = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'MONGODB_URI'];
 
 /**
  * Recommended secrets for production
@@ -16,7 +12,7 @@ const RECOMMENDED_SECRETS = [
   'WEBHOOK_SECRET',
   'FIELD_ENCRYPTION_KEY',
   'REDIS_PASSWORD',
-  'SMTP_PASSWORD'
+  'SMTP_PASSWORD',
 ];
 
 /**
@@ -30,7 +26,7 @@ const INSECURE_DEFAULTS = [
   'default',
   'secret',
   'password',
-  '12345'
+  '12345',
 ];
 
 /**
@@ -38,7 +34,7 @@ const INSECURE_DEFAULTS = [
  * @param {string} secret - Secret to validate
  * @returns {Object} - { valid: boolean, reason: string }
  */
-const validateSecretStrength = (secret) => {
+const validateSecretStrength = secret => {
   if (!secret) {
     return { valid: false, reason: 'Secret is empty or undefined' };
   }
@@ -72,7 +68,7 @@ const validateSecrets = () => {
     valid: true,
     errors: [],
     warnings: [],
-    environment: env
+    environment: env,
   };
 
   // Skip validation in development/test
@@ -84,7 +80,7 @@ const validateSecrets = () => {
   // Validate critical secrets
   CRITICAL_SECRETS.forEach(secret => {
     const value = process.env[secret];
-    
+
     if (!value) {
       results.valid = false;
       results.errors.push(`❌ ${secret} is not set`);
@@ -100,7 +96,7 @@ const validateSecrets = () => {
   // Validate recommended secrets (warnings only)
   RECOMMENDED_SECRETS.forEach(secret => {
     const value = process.env[secret];
-    
+
     if (!value) {
       results.warnings.push(`⚠️  ${secret} is not set (recommended for production)`);
     } else {
@@ -150,7 +146,7 @@ const validateAndLogSecrets = () => {
 const isMongoAuthEnabled = () => {
   const uri = process.env.MONGODB_URI;
   if (!uri) return false;
-  
+
   // Check if URI contains username:password
   return uri.includes('@') && uri.includes('://');
 };
@@ -162,7 +158,7 @@ const isMongoAuthEnabled = () => {
 const isMongoTLSEnabled = () => {
   const uri = process.env.MONGODB_URI;
   if (!uri) return false;
-  
+
   return uri.includes('tls=true') || uri.includes('ssl=true');
 };
 
@@ -172,7 +168,7 @@ const isMongoTLSEnabled = () => {
  */
 const getSecuritySummary = () => {
   const env = process.env.NODE_ENV || 'development';
-  
+
   return {
     environment: env,
     jwtConfigured: !!process.env.JWT_SECRET,
@@ -182,7 +178,7 @@ const getSecuritySummary = () => {
     mongoAuth: isMongoAuthEnabled(),
     mongoTLS: isMongoTLSEnabled(),
     corsConfigured: !!process.env.ALLOWED_ORIGINS,
-    productionReady: env === 'production' && validateSecrets().valid
+    productionReady: env === 'production' && validateSecrets().valid,
   };
 };
 
@@ -192,5 +188,5 @@ module.exports = {
   validateSecretStrength,
   isMongoAuthEnabled,
   isMongoTLSEnabled,
-  getSecuritySummary
+  getSecuritySummary,
 };

@@ -27,11 +27,11 @@ beforeAll(async () => {
   try {
     // First, try to connect to external MongoDB service (CI environment)
     const mongoUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/cstore-test';
-    
+
     try {
       await mongoose.connect(mongoUri, {
         serverSelectionTimeoutMS: 3000,
-        connectTimeoutMS: 3000
+        connectTimeoutMS: 3000,
       });
       isConnected = true;
       console.log('Connected to test database');
@@ -51,9 +51,9 @@ beforeAll(async () => {
       // server pick its default (wiredTiger).
       mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
-      
+
       await mongoose.connect(mongoUri, {
-        serverSelectionTimeoutMS: 3000
+        serverSelectionTimeoutMS: 3000,
       });
       isConnected = true;
       console.log('Connected to in-memory test database');

@@ -58,11 +58,9 @@ describe('Token blacklist (utils/tokenBlacklist)', () => {
 
   beforeEach(() => {
     // Create a test token
-    testToken = jwt.sign(
-      { id: 'test-user-id', email: 'test@example.com' },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
+    testToken = jwt.sign({ id: 'test-user-id', email: 'test@example.com' }, 'test-secret', {
+      expiresIn: '1h',
+    });
   });
 
   describe('blacklistToken / addToBlacklist', () => {

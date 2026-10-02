@@ -12,8 +12,7 @@ exports.getModerationQueue = asyncHandler(async (req, res) => {
 });
 
 exports.getModerationLog = asyncHandler(async (req, res, next) => {
-  const log = await ContentModerationLog
-    .findById(req.params.id)
+  const log = await ContentModerationLog.findById(req.params.id)
     .populate('submittedBy', 'name email')
     .populate('dispositionBy', 'name email');
   if (!log) {
@@ -27,7 +26,12 @@ exports.reviewContent = asyncHandler(async (req, res, next) => {
   if (!['approved', 'rejected'].includes(decision)) {
     return next(new AppError('Decision must be "approved" or "rejected"', 400));
   }
-  const log = await contentModerationService.reviewContent(req.params.id, decision, req.user.id, reason);
+  const log = await contentModerationService.reviewContent(
+    req.params.id,
+    decision,
+    req.user.id,
+    reason
+  );
   if (!log) {
     return next(new AppError('Moderation log not found', 404));
   }
@@ -55,7 +59,10 @@ exports.getLegalHolds = asyncHandler(async (req, res) => {
 // Rate limit: 10 req/hour (apply rate limiter middleware at the router level)
 exports.handleLERequest = asyncHandler(async (req, res) => {
   const apiKey = req.headers['x-le-api-key'];
-  const evidencePackage = await authorityReportingService.handleLawEnforcementRequest(req.body, apiKey);
+  const evidencePackage = await authorityReportingService.handleLawEnforcementRequest(
+    req.body,
+    apiKey
+  );
   res.json({ success: true, data: evidencePackage });
 });
 
@@ -68,7 +75,7 @@ exports.createProhibitedItemRule = asyncHandler(async (req, res) => {
   const rule = await ProhibitedItemRule.create({
     ...req.body,
     createdBy: req.user.id,
-    lastModifiedBy: req.user.id
+    lastModifiedBy: req.user.id,
   });
   res.status(201).json({ success: true, data: rule });
 });

@@ -9,20 +9,20 @@ const recommendationService = require('../services/recommendationService');
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res, next) => {
-  const { 
-    category, 
-    search, 
-    minPrice, 
-    maxPrice, 
+  const {
+    category,
+    search,
+    minPrice,
+    maxPrice,
     featured,
     minRating,
     sort = '-createdAt',
     page = 1,
-    limit = 10 
+    limit = 10,
   } = req.query;
 
   // Try Elasticsearch first if enabled and available
-  if (elasticsearchService.isEnabled() && await elasticsearchService.isAvailable()) {
+  if (elasticsearchService.isEnabled() && (await elasticsearchService.isAvailable())) {
     const esResults = await elasticsearchService.searchProducts({
       search,
       category,
@@ -32,7 +32,7 @@ const getProducts = asyncHandler(async (req, res, next) => {
       minRating,
       sort,
       page,
-      limit
+      limit,
     });
 
     if (esResults) {
@@ -63,10 +63,10 @@ const getProducts = asyncHandler(async (req, res, next) => {
             page: esResults.page,
             limit: esResults.limit,
             total: esResults.total,
-            pages: esResults.pages
+            pages: esResults.pages,
           },
-          searchEngine: 'elasticsearch'
-        }
+          searchEngine: 'elasticsearch',
+        },
       });
     }
   }
@@ -114,10 +114,10 @@ const getProducts = asyncHandler(async (req, res, next) => {
         page: Number(page),
         limit: Number(limit),
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      searchEngine: 'mongodb'
-    }
+      searchEngine: 'mongodb',
+    },
   });
 });
 
@@ -133,7 +133,7 @@ const getProduct = asyncHandler(async (req, res, next) => {
 
   res.json({
     success: true,
-    data: { product }
+    data: { product },
   });
 });
 
@@ -152,7 +152,7 @@ const createProduct = asyncHandler(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    data: { product }
+    data: { product },
   });
 });
 
@@ -168,7 +168,7 @@ const updateProduct = asyncHandler(async (req, res, next) => {
 
   product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
 
   logger.info(`Product updated: ${product.name} by admin ${req.user.email}`);
@@ -185,13 +185,13 @@ const updateProduct = asyncHandler(async (req, res, next) => {
       featured: product.featured,
       averageRating: product.averageRating,
       numReviews: product.numReviews,
-      updatedAt: product.updatedAt
+      updatedAt: product.updatedAt,
     });
   }
 
   res.json({
     success: true,
-    data: { product }
+    data: { product },
   });
 });
 
@@ -214,13 +214,13 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
   // Update in Elasticsearch if enabled (mark as inactive)
   if (elasticsearchService.isEnabled()) {
     await elasticsearchService.updateProduct(req.params.id, {
-      isActive: false
+      isActive: false,
     });
   }
 
   res.json({
     success: true,
-    message: 'Product deleted successfully'
+    message: 'Product deleted successfully',
   });
 });
 
@@ -236,7 +236,10 @@ const getSuggestions = asyncHandler(async (req, res, next) => {
   let suggestions = await elasticsearchService.getSuggestions(q, limit);
   if (!suggestions || suggestions.length === 0) {
     // Fallback when Elasticsearch is unavailable: prefix match on product names.
-    const products = await Product.find({ isActive: true, name: { $regex: `^${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, $options: 'i' } })
+    const products = await Product.find({
+      isActive: true,
+      name: { $regex: `^${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, $options: 'i' },
+    })
       .select('name')
       .limit(limit)
       .lean();
@@ -274,7 +277,9 @@ const syncElasticsearch = asyncHandler(async (req, res, next) => {
   const synced = await elasticsearchService.syncAllProducts(Product);
   res.json({
     success: synced,
-    message: synced ? 'Products synced to Elasticsearch' : 'Elasticsearch not available; nothing synced'
+    message: synced
+      ? 'Products synced to Elasticsearch'
+      : 'Elasticsearch not available; nothing synced',
   });
 });
 
@@ -287,5 +292,5 @@ module.exports = {
   getSuggestions,
   getRecommendations,
   getRelatedProducts,
-  syncElasticsearch
+  syncElasticsearch,
 };

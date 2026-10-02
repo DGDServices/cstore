@@ -23,8 +23,8 @@ class HealthService {
           status: 'unhealthy',
           message: 'Database not connected',
           details: {
-            readyState: mongoose.connection.readyState
-          }
+            readyState: mongoose.connection.readyState,
+          },
         };
       }
 
@@ -37,15 +37,15 @@ class HealthService {
         details: {
           readyState: mongoose.connection.readyState,
           host: mongoose.connection.host,
-          name: mongoose.connection.name
-        }
+          name: mongoose.connection.name,
+        },
       };
     } catch (error) {
       logger.error('Database health check failed:', error);
       return {
         status: 'unhealthy',
         message: 'Database check failed',
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -62,21 +62,21 @@ class HealthService {
           status: 'degraded',
           message: 'Redis not available',
           details: {
-            enabled: process.env.REDIS_ENABLED === 'true'
-          }
+            enabled: process.env.REDIS_ENABLED === 'true',
+          },
         };
       }
 
       return {
         status: 'healthy',
-        message: 'Redis connected'
+        message: 'Redis connected',
       };
     } catch (error) {
       logger.error('Redis health check failed:', error);
       return {
         status: 'unhealthy',
         message: 'Redis check failed',
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -88,7 +88,7 @@ class HealthService {
     try {
       const memory = process.memoryUsage();
       const memoryUsagePercent = (memory.heapUsed / memory.heapTotal) * 100;
-      
+
       let status = 'healthy';
       let message = 'System resources normal';
 
@@ -107,18 +107,18 @@ class HealthService {
           memory: {
             heapUsed: Math.round(memory.heapUsed / 1024 / 1024) + ' MB',
             heapTotal: Math.round(memory.heapTotal / 1024 / 1024) + ' MB',
-            usagePercent: memoryUsagePercent.toFixed(2) + '%'
+            usagePercent: memoryUsagePercent.toFixed(2) + '%',
           },
           uptime: Math.floor(process.uptime()) + ' seconds',
-          nodeVersion: process.version
-        }
+          nodeVersion: process.version,
+        },
       };
     } catch (error) {
       logger.error('System resources check failed:', error);
       return {
         status: 'unhealthy',
         message: 'System check failed',
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -132,8 +132,8 @@ class HealthService {
       status: 'healthy',
       message: 'Disk space adequate',
       details: {
-        note: 'Disk monitoring requires additional configuration'
-      }
+        note: 'Disk monitoring requires additional configuration',
+      },
     };
   }
 
@@ -149,13 +149,13 @@ class HealthService {
         // This would need actual implementation based on elasticsearch service
         checks.elasticsearch = {
           status: 'unknown',
-          message: 'Check not implemented'
+          message: 'Check not implemented',
         };
       } catch (error) {
         checks.elasticsearch = {
           status: 'unhealthy',
           message: 'Elasticsearch check failed',
-          error: error.message
+          error: error.message,
         };
       }
     }
@@ -172,7 +172,7 @@ class HealthService {
     const results = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      checks: {}
+      checks: {},
     };
 
     try {
@@ -182,7 +182,7 @@ class HealthService {
         this.checkRedis(),
         Promise.resolve(this.checkSystemResources()),
         this.checkDiskSpace(),
-        this.checkExternalDependencies()
+        this.checkExternalDependencies(),
       ]);
 
       results.checks = {
@@ -190,12 +190,12 @@ class HealthService {
         redis,
         system,
         disk,
-        ...external
+        ...external,
       };
 
       // Determine overall status
       const statuses = Object.values(results.checks).map(check => check.status);
-      
+
       if (statuses.includes('unhealthy')) {
         results.status = 'unhealthy';
       } else if (statuses.includes('degraded')) {
@@ -204,7 +204,7 @@ class HealthService {
 
       results.duration = Date.now() - startTime;
       this.lastCheckTime = Date.now();
-      
+
       return results;
     } catch (error) {
       logger.error('Health check failed:', error);
@@ -212,7 +212,7 @@ class HealthService {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
         error: error.message,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
   }
@@ -224,7 +224,7 @@ class HealthService {
     return {
       status: 'alive',
       timestamp: new Date().toISOString(),
-      uptime: Math.floor(process.uptime())
+      uptime: Math.floor(process.uptime()),
     };
   }
 
@@ -233,15 +233,15 @@ class HealthService {
    */
   async getReadiness() {
     const database = await this.checkDatabase();
-    
+
     const ready = database.status === 'healthy';
 
     return {
       status: ready ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
       checks: {
-        database
-      }
+        database,
+      },
     };
   }
 
@@ -250,13 +250,13 @@ class HealthService {
    */
   async getStartup() {
     const checks = await this.runHealthChecks();
-    
+
     const started = checks.status !== 'unhealthy';
 
     return {
       status: started ? 'started' : 'starting',
       timestamp: new Date().toISOString(),
-      checks: checks.checks
+      checks: checks.checks,
     };
   }
 
@@ -265,16 +265,16 @@ class HealthService {
    */
   async getHealthSummary() {
     const health = await this.runHealthChecks();
-    
+
     return {
       status: health.status,
       timestamp: health.timestamp,
       summary: {
         healthy: Object.values(health.checks).filter(c => c.status === 'healthy').length,
         degraded: Object.values(health.checks).filter(c => c.status === 'degraded').length,
-        unhealthy: Object.values(health.checks).filter(c => c.status === 'unhealthy').length
+        unhealthy: Object.values(health.checks).filter(c => c.status === 'unhealthy').length,
       },
-      details: health.checks
+      details: health.checks,
     };
   }
 }

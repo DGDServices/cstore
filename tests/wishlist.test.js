@@ -18,7 +18,7 @@ describe('Wishlist API Tests', () => {
     testUser = await User.create({
       name: 'Test User',
       email: 'wishlist-user@test.com',
-      password: 'password123'
+      password: 'password123',
     });
     userToken = generateToken(testUser._id);
 
@@ -27,7 +27,7 @@ describe('Wishlist API Tests', () => {
       name: 'Admin User',
       email: 'wishlist-admin@test.com',
       password: 'password123',
-      role: 'admin'
+      role: 'admin',
     });
     adminToken = generateToken(adminUser._id);
 
@@ -39,13 +39,13 @@ describe('Wishlist API Tests', () => {
       priceUSD: 500,
       stock: 10,
       currency: 'BTC',
-      isActive: true
+      isActive: true,
     });
   });
 
   afterAll(async () => {
     if (!global.isConnected()) return;
-    
+
     await Wishlist.deleteMany({});
     await Product.deleteMany({});
     await User.deleteMany({});
@@ -67,8 +67,7 @@ describe('Wishlist API Tests', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get('/api/wishlist');
+      const res = await request(app).get('/api/wishlist');
 
       expect(res.status).toBe(401);
     });
@@ -151,7 +150,7 @@ describe('Wishlist API Tests', () => {
   describe('DELETE /api/wishlist/items/:productId', () => {
     beforeEach(async () => {
       if (!global.isConnected()) return;
-      
+
       // Add item to wishlist
       await Wishlist.deleteMany({ user: testUser._id });
       await request(app)
@@ -175,8 +174,7 @@ describe('Wishlist API Tests', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .delete(`/api/wishlist/items/${testProduct._id}`);
+      const res = await request(app).delete(`/api/wishlist/items/${testProduct._id}`);
 
       expect(res.status).toBe(401);
     });
@@ -185,7 +183,7 @@ describe('Wishlist API Tests', () => {
   describe('DELETE /api/wishlist', () => {
     beforeEach(async () => {
       if (!global.isConnected()) return;
-      
+
       // Add item to wishlist
       await Wishlist.deleteMany({ user: testUser._id });
       await request(app)
@@ -209,8 +207,7 @@ describe('Wishlist API Tests', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .delete('/api/wishlist');
+      const res = await request(app).delete('/api/wishlist');
 
       expect(res.status).toBe(401);
     });

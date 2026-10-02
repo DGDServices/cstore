@@ -19,7 +19,7 @@ describe('Integration Tests - Complete Order Flow', () => {
     regularUser = await User.create({
       name: 'Test User',
       email: 'user@integration.com',
-      password: 'password123'
+      password: 'password123',
     });
     userToken = generateToken(regularUser._id);
 
@@ -27,7 +27,7 @@ describe('Integration Tests - Complete Order Flow', () => {
       name: 'Admin User',
       email: 'admin@integration.com',
       password: 'password123',
-      role: 'admin'
+      role: 'admin',
     });
     adminToken = generateToken(adminUser._id);
   });
@@ -42,7 +42,7 @@ describe('Integration Tests - Complete Order Flow', () => {
         description: 'This is a test product for integration testing',
         price: 0.01,
         priceUSD: 500,
-        stock: 5
+        stock: 5,
       };
 
       const createProductRes = await request(app)
@@ -55,24 +55,21 @@ describe('Integration Tests - Complete Order Flow', () => {
       testProduct = createProductRes.body.data.product;
 
       // Step 2: Get all products (public)
-      const getProductsRes = await request(app)
-        .get('/api/products');
+      const getProductsRes = await request(app).get('/api/products');
 
       expect(getProductsRes.status).toBe(200);
       expect(getProductsRes.body.success).toBe(true);
       expect(getProductsRes.body.data.products.length).toBeGreaterThan(0);
 
       // Step 3: Get single product details
-      const getProductRes = await request(app)
-        .get(`/api/products/${testProduct._id}`);
+      const getProductRes = await request(app).get(`/api/products/${testProduct._id}`);
 
       expect(getProductRes.status).toBe(200);
       expect(getProductRes.body.success).toBe(true);
       expect(getProductRes.body.data.product.name).toBe(productData.name);
 
       // Step 4: Get supported cryptocurrencies
-      const getCryptoRes = await request(app)
-        .get('/api/cryptocurrencies');
+      const getCryptoRes = await request(app).get('/api/cryptocurrencies');
 
       expect(getCryptoRes.status).toBe(200);
       expect(getCryptoRes.body.success).toBe(true);
@@ -88,8 +85,8 @@ describe('Integration Tests - Complete Order Flow', () => {
           city: 'Test City',
           state: 'TC',
           postalCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       };
 
       const createOrderRes = await request(app)
@@ -150,8 +147,7 @@ describe('Integration Tests - Complete Order Flow', () => {
       expect(updateProductRes.body.data.product.stock).toBe(100);
 
       // Step 14: Verify product stock was reduced
-      const finalProductRes = await request(app)
-        .get(`/api/products/${testProduct._id}`);
+      const finalProductRes = await request(app).get(`/api/products/${testProduct._id}`);
 
       expect(finalProductRes.status).toBe(200);
       // Stock should be 100 (from update) - orders are already processed
@@ -159,8 +155,7 @@ describe('Integration Tests - Complete Order Flow', () => {
 
       // Step 15: Liveness (the full /api/health reports process heap usage,
       // which is noisy inside a long jest run; liveness is what matters here)
-      const healthRes = await request(app)
-        .get('/api/health/live');
+      const healthRes = await request(app).get('/api/health/live');
 
       expect(healthRes.status).toBe(200);
     });
@@ -174,16 +169,14 @@ describe('Integration Tests - Complete Order Flow', () => {
         price: 0.005,
         priceUSD: 250,
         stock: 10,
-        isActive: true
+        isActive: true,
       });
 
-      const createOrderRes = await request(app)
-        .post('/api/orders')
-        .send({
-          productId: product._id.toString(),
-          quantity: 1,
-          customerEmail: 'guest@integration.com'
-        });
+      const createOrderRes = await request(app).post('/api/orders').send({
+        productId: product._id.toString(),
+        quantity: 1,
+        customerEmail: 'guest@integration.com',
+      });
 
       expect(createOrderRes.status).toBe(401);
       expect(createOrderRes.body.success).toBe(false);
@@ -198,19 +191,17 @@ describe('Integration Tests - Complete Order Flow', () => {
         price: 0.005,
         priceUSD: 250,
         stock: 10,
-        isActive: true
+        isActive: true,
       });
 
       // Try to create product without authentication
-      const noAuthRes = await request(app)
-        .post('/api/products')
-        .send({
-          name: 'Should Fail',
-          description: 'This should fail',
-          price: 0.01,
-          priceUSD: 500,
-          stock: 10
-        });
+      const noAuthRes = await request(app).post('/api/products').send({
+        name: 'Should Fail',
+        description: 'This should fail',
+        price: 0.01,
+        priceUSD: 500,
+        stock: 10,
+      });
 
       expect(noAuthRes.status).toBe(401);
 
@@ -223,7 +214,7 @@ describe('Integration Tests - Complete Order Flow', () => {
           description: 'This should fail',
           price: 0.01,
           priceUSD: 500,
-          stock: 10
+          stock: 10,
         });
 
       expect(userRes.status).toBe(403);
@@ -234,7 +225,6 @@ describe('Integration Tests - Complete Order Flow', () => {
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(ordersRes.status).toBe(403);
-
     });
 
     it('should handle product filtering and search', async () => {
@@ -248,7 +238,7 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.5,
           priceUSD: 2500,
           stock: 5,
-          isActive: true
+          isActive: true,
         },
         {
           name: 'Desktop Computer',
@@ -256,7 +246,7 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.8,
           priceUSD: 4000,
           stock: 3,
-          isActive: true
+          isActive: true,
         },
         {
           name: 'Tablet Device',
@@ -264,21 +254,19 @@ describe('Integration Tests - Complete Order Flow', () => {
           price: 0.2,
           priceUSD: 1000,
           stock: 10,
-          isActive: true
-        }
+          isActive: true,
+        },
       ]);
 
       // Filter by price range
-      const priceFilterRes = await request(app)
-        .get('/api/products?minPrice=2000&maxPrice=3000');
+      const priceFilterRes = await request(app).get('/api/products?minPrice=2000&maxPrice=3000');
 
       expect(priceFilterRes.status).toBe(200);
       expect(priceFilterRes.body.success).toBe(true);
       expect(priceFilterRes.body.data.products.length).toBeGreaterThan(0);
 
       // Test pagination
-      const paginationRes = await request(app)
-        .get('/api/products?page=1&limit=2');
+      const paginationRes = await request(app).get('/api/products?page=1&limit=2');
 
       expect(paginationRes.status).toBe(200);
       expect(paginationRes.body.success).toBe(true);

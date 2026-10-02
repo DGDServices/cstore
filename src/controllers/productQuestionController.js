@@ -19,7 +19,7 @@ exports.createQuestion = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
       });
     }
 
@@ -27,7 +27,7 @@ exports.createQuestion = async (req, res, next) => {
     const productQuestion = await ProductQuestion.create({
       product: productId,
       user: userId,
-      question
+      question,
     });
 
     // Populate user details
@@ -49,7 +49,7 @@ exports.createQuestion = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: productQuestion
+      data: productQuestion,
     });
   } catch (error) {
     logger.error('Error creating product question:', error);
@@ -92,8 +92,8 @@ exports.getProductQuestions = async (req, res, next) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     logger.error('Error fetching product questions:', error);
@@ -116,22 +116,24 @@ exports.getQuestion = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
     // Check if question is approved or user is admin/owner
-    if (!question.isApproved && 
-        (!req.user || (req.user.role !== 'admin' && req.user.id !== question.user._id.toString()))) {
+    if (
+      !question.isApproved &&
+      (!req.user || (req.user.role !== 'admin' && req.user.id !== question.user._id.toString()))
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Question not available'
+        message: 'Question not available',
       });
     }
 
     res.json({
       success: true,
-      data: question
+      data: question,
     });
   } catch (error) {
     logger.error('Error fetching question:', error);
@@ -166,8 +168,8 @@ exports.getMyQuestions = async (req, res, next) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     logger.error('Error fetching user questions:', error);
@@ -193,7 +195,7 @@ exports.addAnswer = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -204,7 +206,7 @@ exports.addAnswer = async (req, res, next) => {
     question.answers.push({
       user: userId,
       text,
-      isSellerOrAdmin
+      isSellerOrAdmin,
     });
 
     await question.save();
@@ -224,7 +226,7 @@ exports.addAnswer = async (req, res, next) => {
             <p><strong>Your Question:</strong> ${question.question}</p>
             <p><strong>Answer:</strong> ${text}</p>
             <p>Visit the product page to see the full answer.</p>
-          `
+          `,
         });
       }
     } catch (emailError) {
@@ -233,7 +235,7 @@ exports.addAnswer = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: question
+      data: question,
     });
   } catch (error) {
     logger.error('Error adding answer:', error);
@@ -254,7 +256,7 @@ exports.updateQuestion = async (req, res, next) => {
     if (!questionDoc) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -262,7 +264,7 @@ exports.updateQuestion = async (req, res, next) => {
     if (questionDoc.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this question'
+        message: 'Not authorized to update this question',
       });
     }
 
@@ -271,7 +273,7 @@ exports.updateQuestion = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: questionDoc
+      data: questionDoc,
     });
   } catch (error) {
     logger.error('Error updating question:', error);
@@ -291,7 +293,7 @@ exports.deleteQuestion = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -299,7 +301,7 @@ exports.deleteQuestion = async (req, res, next) => {
     if (question.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this question'
+        message: 'Not authorized to delete this question',
       });
     }
 
@@ -308,7 +310,7 @@ exports.deleteQuestion = async (req, res, next) => {
     res.json({
       success: true,
       data: {},
-      message: 'Question deleted successfully'
+      message: 'Question deleted successfully',
     });
   } catch (error) {
     logger.error('Error deleting question:', error);
@@ -331,7 +333,7 @@ exports.updateAnswer = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -340,7 +342,7 @@ exports.updateAnswer = async (req, res, next) => {
     if (!answer) {
       return res.status(404).json({
         success: false,
-        message: 'Answer not found'
+        message: 'Answer not found',
       });
     }
 
@@ -348,7 +350,7 @@ exports.updateAnswer = async (req, res, next) => {
     if (answer.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this answer'
+        message: 'Not authorized to update this answer',
       });
     }
 
@@ -357,7 +359,7 @@ exports.updateAnswer = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: question
+      data: question,
     });
   } catch (error) {
     logger.error('Error updating answer:', error);
@@ -379,7 +381,7 @@ exports.deleteAnswer = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -388,7 +390,7 @@ exports.deleteAnswer = async (req, res, next) => {
     if (!answer) {
       return res.status(404).json({
         success: false,
-        message: 'Answer not found'
+        message: 'Answer not found',
       });
     }
 
@@ -396,7 +398,7 @@ exports.deleteAnswer = async (req, res, next) => {
     if (answer.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this answer'
+        message: 'Not authorized to delete this answer',
       });
     }
 
@@ -406,7 +408,7 @@ exports.deleteAnswer = async (req, res, next) => {
     res.json({
       success: true,
       data: {},
-      message: 'Answer deleted successfully'
+      message: 'Answer deleted successfully',
     });
   } catch (error) {
     logger.error('Error deleting answer:', error);
@@ -426,7 +428,7 @@ exports.markQuestionHelpful = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -435,7 +437,7 @@ exports.markQuestionHelpful = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: question
+      data: question,
     });
   } catch (error) {
     logger.error('Error marking question as helpful:', error);
@@ -457,7 +459,7 @@ exports.markAnswerHelpful = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -466,7 +468,7 @@ exports.markAnswerHelpful = async (req, res, next) => {
     if (!answer) {
       return res.status(404).json({
         success: false,
-        message: 'Answer not found'
+        message: 'Answer not found',
       });
     }
 
@@ -475,7 +477,7 @@ exports.markAnswerHelpful = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: question
+      data: question,
     });
   } catch (error) {
     logger.error('Error marking answer as helpful:', error);
@@ -513,8 +515,8 @@ exports.getPendingQuestions = async (req, res, next) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     logger.error('Error fetching pending questions:', error);
@@ -534,7 +536,7 @@ exports.approveQuestion = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -545,7 +547,7 @@ exports.approveQuestion = async (req, res, next) => {
     res.json({
       success: true,
       data: question,
-      message: 'Question approved successfully'
+      message: 'Question approved successfully',
     });
   } catch (error) {
     logger.error('Error approving question:', error);
@@ -565,7 +567,7 @@ exports.rejectQuestion = async (req, res, next) => {
     if (!question) {
       return res.status(404).json({
         success: false,
-        message: 'Question not found'
+        message: 'Question not found',
       });
     }
 
@@ -576,7 +578,7 @@ exports.rejectQuestion = async (req, res, next) => {
     res.json({
       success: true,
       data: question,
-      message: 'Question rejected successfully'
+      message: 'Question rejected successfully',
     });
   } catch (error) {
     logger.error('Error rejecting question:', error);
@@ -594,7 +596,9 @@ exports.getQuestionStats = async (req, res, next) => {
     const totalQuestions = await ProductQuestion.countDocuments();
     const pendingQuestions = await ProductQuestion.countDocuments({ isApproved: false });
     const approvedQuestions = await ProductQuestion.countDocuments({ isApproved: true });
-    const questionsWithAnswers = await ProductQuestion.countDocuments({ 'answers.0': { $exists: true } });
+    const questionsWithAnswers = await ProductQuestion.countDocuments({
+      'answers.0': { $exists: true },
+    });
     const unansweredQuestions = await ProductQuestion.countDocuments({ answers: { $size: 0 } });
 
     res.json({
@@ -604,8 +608,8 @@ exports.getQuestionStats = async (req, res, next) => {
         pendingQuestions,
         approvedQuestions,
         questionsWithAnswers,
-        unansweredQuestions
-      }
+        unansweredQuestions,
+      },
     });
   } catch (error) {
     logger.error('Error fetching question stats:', error);

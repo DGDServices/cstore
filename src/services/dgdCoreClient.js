@@ -83,19 +83,44 @@ class DgdCoreClient {
   // request (timeout/network blip) is de-duplicated by dgd-core rather than
   // re-running the action. Pass a stable key per logical operation.
   proposeRelease(orderId, by, outputs, idempotencyKey) {
-    return this._req('POST', `/escrow/${encodeURIComponent(orderId)}/release`, { by, outputs: outputs && outputs.map(stringifyOutput) }, { idempotencyKey });
+    return this._req(
+      'POST',
+      `/escrow/${encodeURIComponent(orderId)}/release`,
+      { by, outputs: outputs && outputs.map(stringifyOutput) },
+      { idempotencyKey }
+    );
   }
   openDispute(orderId, by, reason, idempotencyKey) {
-    return this._req('POST', `/escrow/${encodeURIComponent(orderId)}/dispute`, { by, reason }, { idempotencyKey });
+    return this._req(
+      'POST',
+      `/escrow/${encodeURIComponent(orderId)}/dispute`,
+      { by, reason },
+      { idempotencyKey }
+    );
   }
   proposeMediation(orderId, outputs, note, idempotencyKey) {
-    return this._req('POST', `/escrow/${encodeURIComponent(orderId)}/mediate`, { outputs: outputs.map(stringifyOutput), note }, { idempotencyKey });
+    return this._req(
+      'POST',
+      `/escrow/${encodeURIComponent(orderId)}/mediate`,
+      { outputs: outputs.map(stringifyOutput), note },
+      { idempotencyKey }
+    );
   }
   proposeRefund(orderId, by, idempotencyKey) {
-    return this._req('POST', `/escrow/${encodeURIComponent(orderId)}/refund`, { by }, { idempotencyKey });
+    return this._req(
+      'POST',
+      `/escrow/${encodeURIComponent(orderId)}/refund`,
+      { by },
+      { idempotencyKey }
+    );
   }
   signPayout(orderId, role, signature, idempotencyKey) {
-    return this._req('POST', `/escrow/${encodeURIComponent(orderId)}/sign`, { role, signature }, { idempotencyKey });
+    return this._req(
+      'POST',
+      `/escrow/${encodeURIComponent(orderId)}/sign`,
+      { role, signature },
+      { idempotencyKey }
+    );
   }
 }
 

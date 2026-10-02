@@ -26,14 +26,14 @@ function initializeClient() {
 
   try {
     const config = {
-      node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200'
+      node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
     };
 
     // Add auth if credentials are provided
     if (process.env.ELASTICSEARCH_USERNAME && process.env.ELASTICSEARCH_PASSWORD) {
       config.auth = {
         username: process.env.ELASTICSEARCH_USERNAME,
-        password: process.env.ELASTICSEARCH_PASSWORD
+        password: process.env.ELASTICSEARCH_PASSWORD,
       };
     }
 
@@ -74,7 +74,7 @@ async function createProductsIndex() {
 
   try {
     const indexExists = await client.indices.exists({ index: 'products' });
-    
+
     if (indexExists) {
       logger.info('Products index already exists');
       return true;
@@ -89,10 +89,10 @@ async function createProductsIndex() {
               product_analyzer: {
                 type: 'custom',
                 tokenizer: 'standard',
-                filter: ['lowercase', 'asciifolding']
-              }
-            }
-          }
+                filter: ['lowercase', 'asciifolding'],
+              },
+            },
+          },
         },
         mappings: {
           properties: {
@@ -101,52 +101,52 @@ async function createProductsIndex() {
               analyzer: 'product_analyzer',
               fields: {
                 keyword: { type: 'keyword' },
-                suggest: { type: 'completion' }
-              }
+                suggest: { type: 'completion' },
+              },
             },
             description: {
               type: 'text',
-              analyzer: 'product_analyzer'
+              analyzer: 'product_analyzer',
             },
             category: {
-              type: 'keyword'
+              type: 'keyword',
             },
             categoryName: {
               type: 'text',
               fields: {
-                keyword: { type: 'keyword' }
-              }
+                keyword: { type: 'keyword' },
+              },
             },
             price: {
-              type: 'float'
+              type: 'float',
             },
             priceUSD: {
-              type: 'float'
+              type: 'float',
             },
             stock: {
-              type: 'integer'
+              type: 'integer',
             },
             isActive: {
-              type: 'boolean'
+              type: 'boolean',
             },
             featured: {
-              type: 'boolean'
+              type: 'boolean',
             },
             averageRating: {
-              type: 'float'
+              type: 'float',
             },
             numReviews: {
-              type: 'integer'
+              type: 'integer',
             },
             createdAt: {
-              type: 'date'
+              type: 'date',
             },
             updatedAt: {
-              type: 'date'
-            }
-          }
-        }
-      }
+              type: 'date',
+            },
+          },
+        },
+      },
     });
 
     logger.info('Products index created successfully');
@@ -181,14 +181,14 @@ async function indexProduct(product) {
       averageRating: product.averageRating || 0,
       numReviews: product.numReviews || 0,
       createdAt: product.createdAt,
-      updatedAt: product.updatedAt
+      updatedAt: product.updatedAt,
     };
 
     await client.index({
       index: 'products',
       id: product._id.toString(),
       document: doc,
-      refresh: true
+      refresh: true,
     });
 
     logger.debug(`Product indexed: ${product._id}`);
@@ -215,7 +215,7 @@ async function updateProduct(productId, updates) {
       index: 'products',
       id: productId,
       doc: updates,
-      refresh: true
+      refresh: true,
     });
 
     logger.debug(`Product updated in Elasticsearch: ${productId}`);
@@ -240,7 +240,7 @@ async function deleteProduct(productId) {
     await client.delete({
       index: 'products',
       id: productId,
-      refresh: true
+      refresh: true,
     });
 
     logger.debug(`Product deleted from Elasticsearch: ${productId}`);
@@ -275,7 +275,7 @@ async function searchProducts(params) {
     minRating,
     sort = '-createdAt',
     page = 1,
-    limit = 10
+    limit = 10,
   } = params;
 
   try {
@@ -292,8 +292,8 @@ async function searchProducts(params) {
           query: search,
           fields: ['name^3', 'description', 'categoryName'],
           fuzziness: 'AUTO',
-          prefix_length: 2
-        }
+          prefix_length: 2,
+        },
       });
     }
 
@@ -317,10 +317,10 @@ async function searchProducts(params) {
 
     // Rating filter
     if (minRating) {
-      filter.push({ 
-        range: { 
-          averageRating: { gte: Number(minRating) } 
-        } 
+      filter.push({
+        range: {
+          averageRating: { gte: Number(minRating) },
+        },
       });
     }
 
@@ -341,7 +341,7 @@ async function searchProducts(params) {
       priceUSD: 'priceUSD',
       rating: 'averageRating',
       averageRating: 'averageRating',
-      name: 'name.keyword'
+      name: 'name.keyword',
     };
 
     const esSortField = sortFieldMap[sortField] || 'createdAt';
@@ -357,24 +357,23 @@ async function searchProducts(params) {
         query: {
           bool: {
             must: must.length > 0 ? must : { match_all: {} },
-            filter
-          }
+            filter,
+          },
         },
         sort: sortArray,
         from,
-        size: Number(limit)
-      }
+        size: Number(limit),
+      },
     });
 
     const hits = response.hits.hits;
-    const total = typeof response.hits.total === 'object' 
-      ? response.hits.total.value 
-      : response.hits.total;
+    const total =
+      typeof response.hits.total === 'object' ? response.hits.total.value : response.hits.total;
 
     const products = hits.map(hit => ({
       _id: hit._id,
       ...hit._source,
-      _score: hit._score
+      _score: hit._score,
     }));
 
     return {
@@ -382,7 +381,7 @@ async function searchProducts(params) {
       total,
       page: Number(page),
       limit: Number(limit),
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     };
   } catch (error) {
     logger.error('Elasticsearch search failed:', error.message);
@@ -412,11 +411,11 @@ async function getSuggestions(query, limit = 5) {
             completion: {
               field: 'name.suggest',
               size: limit,
-              skip_duplicates: true
-            }
-          }
-        }
-      }
+              skip_duplicates: true,
+            },
+          },
+        },
+      },
     });
 
     const suggestions = response.suggest.product_suggest[0].options;
@@ -453,13 +452,13 @@ async function bulkIndexProducts(products) {
         averageRating: product.averageRating || 0,
         numReviews: product.numReviews || 0,
         createdAt: product.createdAt,
-        updatedAt: product.updatedAt
-      }
+        updatedAt: product.updatedAt,
+      },
     ]);
 
     const response = await client.bulk({
       operations,
-      refresh: true
+      refresh: true,
     });
 
     if (response.errors) {
@@ -494,7 +493,7 @@ async function syncAllProducts(Product) {
 
     // Get all products from MongoDB
     const products = await Product.find({}).populate('category', 'name').lean();
-    
+
     if (products.length === 0) {
       logger.info('No products to sync');
       return true;
@@ -502,7 +501,7 @@ async function syncAllProducts(Product) {
 
     // Bulk index all products
     const success = await bulkIndexProducts(products);
-    
+
     if (success) {
       logger.info(`Successfully synced ${products.length} products to Elasticsearch`);
     }
@@ -525,5 +524,5 @@ module.exports = {
   searchProducts,
   getSuggestions,
   bulkIndexProducts,
-  syncAllProducts
+  syncAllProducts,
 };

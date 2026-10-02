@@ -11,7 +11,7 @@ describe('dgd.toSats — decimal DGD → integer sats string (8dp)', () => {
 
   it('handles fractional amounts', () => {
     expect(dgd.toSats('1.5')).toBe('150000000');
-    expect(dgd.toSats('0.00000001')).toBe('1');       // 1 sat
+    expect(dgd.toSats('0.00000001')).toBe('1'); // 1 sat
     expect(dgd.toSats('0.1')).toBe('10000000');
   });
 

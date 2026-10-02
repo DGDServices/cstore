@@ -11,7 +11,10 @@ const logger = require('../utils/logger');
 const verifyWebhookSignature = (req, res, next) => {
   try {
     // Skip verification in development if explicitly disabled
-    if (process.env.NODE_ENV === 'development' && process.env.SKIP_WEBHOOK_VERIFICATION === 'true') {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.SKIP_WEBHOOK_VERIFICATION === 'true'
+    ) {
       logger.warn('Webhook signature verification skipped (development mode)');
       return next();
     }
@@ -21,12 +24,12 @@ const verifyWebhookSignature = (req, res, next) => {
       logger.error('Webhook secret not configured');
       return res.status(500).json({
         success: false,
-        error: 'Webhook authentication not configured'
+        error: 'Webhook authentication not configured',
       });
     }
 
     const verification = webhookVerification.verifyWebhook(req);
-    
+
     if (!verification.valid) {
       logger.warn('Webhook verification failed:', {
         error: verification.error,
@@ -34,30 +37,30 @@ const verifyWebhookSignature = (req, res, next) => {
         path: req.path,
         headers: {
           signature: req.headers['x-signature'] ? 'present' : 'missing',
-          timestamp: req.headers['x-timestamp'] ? 'present' : 'missing'
-        }
+          timestamp: req.headers['x-timestamp'] ? 'present' : 'missing',
+        },
       });
-      
+
       return res.status(401).json({
         success: false,
         error: 'Webhook verification failed',
-        message: verification.error
+        message: verification.error,
       });
     }
-    
+
     logger.info('Webhook verified successfully', {
       path: req.path,
       timestamp: req.headers['x-timestamp'],
-      ip: req.ip
+      ip: req.ip,
     });
-    
+
     next();
   } catch (error) {
     logger.error('Webhook verification error:', error);
     return res.status(500).json({
       success: false,
       error: 'Webhook verification error',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 };
@@ -74,23 +77,23 @@ const optionalWebhookVerification = (req, res, next) => {
     }
 
     const verification = webhookVerification.verifyWebhook(req);
-    
+
     if (!verification.valid) {
       logger.warn('Optional webhook verification failed (not blocking):', {
         error: verification.error,
         ip: req.ip,
-        path: req.path
+        path: req.path,
       });
       // Add flag to request but don't block
       req.webhookVerified = false;
     } else {
       logger.info('Optional webhook verified successfully', {
         path: req.path,
-        timestamp: req.headers['x-timestamp']
+        timestamp: req.headers['x-timestamp'],
       });
       req.webhookVerified = true;
     }
-    
+
     next();
   } catch (error) {
     logger.error('Optional webhook verification error:', error);
@@ -101,5 +104,5 @@ const optionalWebhookVerification = (req, res, next) => {
 
 module.exports = {
   verifyWebhookSignature,
-  optionalWebhookVerification
+  optionalWebhookVerification,
 };

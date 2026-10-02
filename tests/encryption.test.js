@@ -1,11 +1,11 @@
-const { 
-  encrypt, 
-  decrypt, 
+const {
+  encrypt,
+  decrypt,
   hash,
   encryptFields,
   decryptFields,
   isEncryptionAvailable,
-  generateEncryptionKey
+  generateEncryptionKey,
 } = require('../src/utils/encryption');
 
 describe('Field Encryption', () => {
@@ -38,7 +38,7 @@ describe('Field Encryption', () => {
 
       // Should be different due to random IV
       expect(encrypted1).not.toBe(encrypted2);
-      
+
       // But both should decrypt to same plaintext
       expect(decrypt(encrypted1)).toBe(plainText);
       expect(decrypt(encrypted2)).toBe(plainText);
@@ -115,7 +115,7 @@ describe('Field Encryption', () => {
         name: 'John Doe',
         email: 'john@example.com',
         ssn: '123-45-6789',
-        publicData: 'visible'
+        publicData: 'visible',
       };
 
       const encrypted = encryptFields(obj, ['email', 'ssn']);
@@ -130,7 +130,7 @@ describe('Field Encryption', () => {
       const obj = {
         name: 'John Doe',
         email: 'john@example.com',
-        ssn: '123-45-6789'
+        ssn: '123-45-6789',
       };
 
       const encrypted = encryptFields(obj, ['email', 'ssn']);
@@ -143,7 +143,7 @@ describe('Field Encryption', () => {
 
     it('should handle missing fields gracefully', () => {
       const obj = {
-        name: 'John Doe'
+        name: 'John Doe',
       };
 
       const encrypted = encryptFields(obj, ['email', 'ssn']);
@@ -156,7 +156,7 @@ describe('Field Encryption', () => {
   describe('Key Generation', () => {
     it('should generate valid encryption key', () => {
       const key = generateEncryptionKey();
-      
+
       expect(key).toBeDefined();
       expect(typeof key).toBe('string');
       expect(key.length).toBe(64); // 32 bytes in hex
@@ -166,7 +166,7 @@ describe('Field Encryption', () => {
     it('should generate different keys each time', () => {
       const key1 = generateEncryptionKey();
       const key2 = generateEncryptionKey();
-      
+
       expect(key1).not.toBe(key2);
     });
   });

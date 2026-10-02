@@ -17,7 +17,7 @@ describe('CORS Configuration', () => {
       delete process.env.ALLOWED_ORIGINS;
 
       const origins = getAllowedOrigins();
-      
+
       // In production, ALLOWED_ORIGINS must be explicitly set
       expect(Array.isArray(origins)).toBe(true);
       expect(origins.length).toBe(0);
@@ -25,10 +25,11 @@ describe('CORS Configuration', () => {
 
     it('should use ALLOWED_ORIGINS in production when set', () => {
       process.env.NODE_ENV = 'production';
-      process.env.ALLOWED_ORIGINS = 'https://cryptons.com,https://www.cryptons.com,https://app.cryptons.com';
+      process.env.ALLOWED_ORIGINS =
+        'https://cryptons.com,https://www.cryptons.com,https://app.cryptons.com';
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).toContain('https://cryptons.com');
       expect(origins).toContain('https://www.cryptons.com');
       expect(origins).toContain('https://app.cryptons.com');
@@ -40,7 +41,7 @@ describe('CORS Configuration', () => {
       delete process.env.ALLOWED_ORIGINS;
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).toContain('https://staging.cryptons.com');
       expect(origins).toContain('https://staging-app.cryptons.com');
     });
@@ -50,7 +51,7 @@ describe('CORS Configuration', () => {
       delete process.env.ALLOWED_ORIGINS;
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).toContain('http://localhost:3000');
       expect(origins).toContain('http://localhost:3001');
     });
@@ -60,7 +61,7 @@ describe('CORS Configuration', () => {
       process.env.ALLOWED_ORIGINS = 'https://custom1.com,https://custom2.com';
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).toContain('https://custom1.com');
       expect(origins).toContain('https://custom2.com');
       expect(origins.length).toBe(2);
@@ -70,7 +71,7 @@ describe('CORS Configuration', () => {
       process.env.ALLOWED_ORIGINS = ' https://example1.com , https://example2.com ';
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).toContain('https://example1.com');
       expect(origins).toContain('https://example2.com');
     });
@@ -88,14 +89,12 @@ describe('CORS Configuration', () => {
     it('should allow localhost origins in test environment', async () => {
       process.env.NODE_ENV = 'test';
       delete process.env.ALLOWED_ORIGINS;
-      
+
       // Reload app with test environment
       app = require('../src/app');
-      
+
       const testOrigin = 'http://localhost:3000';
-      const res = await request(app)
-        .get('/api/health')
-        .set('Origin', testOrigin);
+      const res = await request(app).get('/api/health').set('Origin', testOrigin);
 
       // In test environment, localhost should be allowed
       expect([200, 503]).toContain(res.statusCode); // 503 if services are down
@@ -107,10 +106,10 @@ describe('CORS Configuration', () => {
     it('should handle preflight OPTIONS request in test environment', async () => {
       process.env.NODE_ENV = 'test';
       delete process.env.ALLOWED_ORIGINS;
-      
+
       // Reload app with test environment
       app = require('../src/app');
-      
+
       const testOrigin = 'http://localhost:3000';
       const res = await request(app)
         .options('/api/auth/login')
@@ -129,7 +128,7 @@ describe('CORS Configuration', () => {
       process.env.ALLOWED_ORIGINS = 'https://cryptons.com,https://www.cryptons.com';
 
       const origins = getAllowedOrigins();
-      
+
       expect(origins).not.toContain('*');
       expect(Array.isArray(origins)).toBe(true);
     });
@@ -139,7 +138,7 @@ describe('CORS Configuration', () => {
       delete process.env.ALLOWED_ORIGINS;
 
       const origins = getAllowedOrigins();
-      
+
       expect(Array.isArray(origins)).toBe(true);
       expect(origins.length).toBe(0);
     });
@@ -149,7 +148,7 @@ describe('CORS Configuration', () => {
       delete process.env.ALLOWED_ORIGINS;
 
       const origins = getAllowedOrigins();
-      
+
       expect(Array.isArray(origins)).toBe(true);
       expect(origins.length).toBeGreaterThan(0);
     });
@@ -159,13 +158,13 @@ describe('CORS Configuration', () => {
     it('should always have credentials set to true', () => {
       process.env.NODE_ENV = 'production';
       const options = getCorsOptions();
-      
+
       expect(options.credentials).toBe(true);
     });
 
     it('should specify allowed methods', () => {
       const options = getCorsOptions();
-      
+
       expect(options.methods).toBeDefined();
       expect(Array.isArray(options.methods)).toBe(true);
       expect(options.methods).toContain('GET');
@@ -178,7 +177,7 @@ describe('CORS Configuration', () => {
 
     it('should specify allowed headers', () => {
       const options = getCorsOptions();
-      
+
       expect(options.allowedHeaders).toBeDefined();
       expect(Array.isArray(options.allowedHeaders)).toBe(true);
       expect(options.allowedHeaders).toContain('Content-Type');
@@ -189,10 +188,10 @@ describe('CORS Configuration', () => {
     it('should have different maxAge for production vs development', () => {
       process.env.NODE_ENV = 'production';
       const prodOptions = getCorsOptions();
-      
+
       process.env.NODE_ENV = 'development';
       const devOptions = getCorsOptions();
-      
+
       expect(prodOptions.maxAge).toBe(86400);
       expect(devOptions.maxAge).toBe(600);
     });

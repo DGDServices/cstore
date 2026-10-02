@@ -15,7 +15,7 @@ class MonitoringService {
       dbQueries: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      businessMetrics: new Map()
+      businessMetrics: new Map(),
     };
     this.startTime = Date.now();
   }
@@ -34,7 +34,7 @@ class MonitoringService {
     this.metrics.responseTime.push({
       timestamp: Date.now(),
       duration,
-      path
+      path,
     });
 
     // Keep only last 1000 response times
@@ -83,7 +83,7 @@ class MonitoringService {
    */
   recordBusinessMetric(metric, value) {
     if (!this.enabled) return;
-    
+
     const current = this.metrics.businessMetrics.get(metric) || { count: 0, total: 0 };
     current.count++;
     current.total += value;
@@ -95,24 +95,20 @@ class MonitoringService {
    */
   getMetrics() {
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
-    
+
     // Calculate response time percentiles
-    const sortedTimes = this.metrics.responseTime
-      .map(r => r.duration)
-      .sort((a, b) => a - b);
-    
+    const sortedTimes = this.metrics.responseTime.map(r => r.duration).sort((a, b) => a - b);
+
     const p50 = this.getPercentile(sortedTimes, 50);
     const p95 = this.getPercentile(sortedTimes, 95);
     const p99 = this.getPercentile(sortedTimes, 99);
-    const avgResponseTime = sortedTimes.length > 0
-      ? sortedTimes.reduce((a, b) => a + b, 0) / sortedTimes.length
-      : 0;
+    const avgResponseTime =
+      sortedTimes.length > 0 ? sortedTimes.reduce((a, b) => a + b, 0) / sortedTimes.length : 0;
 
     // Calculate cache hit rate
     const totalCacheRequests = this.metrics.cacheHits + this.metrics.cacheMisses;
-    const cacheHitRate = totalCacheRequests > 0
-      ? (this.metrics.cacheHits / totalCacheRequests) * 100
-      : 0;
+    const cacheHitRate =
+      totalCacheRequests > 0 ? (this.metrics.cacheHits / totalCacheRequests) * 100 : 0;
 
     // Calculate error rate
     let totalRequests = 0;
@@ -131,7 +127,7 @@ class MonitoringService {
         uptime,
         nodeVersion: process.version,
         memory: process.memoryUsage(),
-        cpu: process.cpuUsage()
+        cpu: process.cpuUsage(),
       },
       application: {
         totalRequests,
@@ -142,18 +138,18 @@ class MonitoringService {
           avg: avgResponseTime.toFixed(2),
           p50: p50.toFixed(2),
           p95: p95.toFixed(2),
-          p99: p99.toFixed(2)
-        }
+          p99: p99.toFixed(2),
+        },
       },
       database: {
-        totalQueries: this.metrics.dbQueries
+        totalQueries: this.metrics.dbQueries,
       },
       cache: {
         hits: this.metrics.cacheHits,
         misses: this.metrics.cacheMisses,
-        hitRate: cacheHitRate.toFixed(2)
+        hitRate: cacheHitRate.toFixed(2),
       },
-      business: Object.fromEntries(this.metrics.businessMetrics)
+      business: Object.fromEntries(this.metrics.businessMetrics),
     };
   }
 
@@ -229,12 +225,13 @@ class MonitoringService {
    */
   getHealthStatus() {
     const metrics = this.getMetrics();
-    
+
     const checks = {
       memory: metrics.system.memory.heapUsed < metrics.system.memory.heapTotal * 0.9,
       errorRate: parseFloat(metrics.application.errorRate) < 5,
       responseTime: parseFloat(metrics.application.responseTime.p95) < 2000,
-      cacheHitRate: parseFloat(metrics.cache.hitRate) > 70 || metrics.cache.hits + metrics.cache.misses === 0
+      cacheHitRate:
+        parseFloat(metrics.cache.hitRate) > 70 || metrics.cache.hits + metrics.cache.misses === 0,
     };
 
     const healthy = Object.values(checks).every(check => check);
@@ -246,8 +243,11 @@ class MonitoringService {
         errorRate: metrics.application.errorRate,
         responseTimeP95: metrics.application.responseTime.p95,
         cacheHitRate: metrics.cache.hitRate,
-        memoryUsage: ((metrics.system.memory.heapUsed / metrics.system.memory.heapTotal) * 100).toFixed(2)
-      }
+        memoryUsage: (
+          (metrics.system.memory.heapUsed / metrics.system.memory.heapTotal) *
+          100
+        ).toFixed(2),
+      },
     };
   }
 
@@ -263,7 +263,7 @@ class MonitoringService {
       dbQueries: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      businessMetrics: new Map()
+      businessMetrics: new Map(),
     };
     this.startTime = Date.now();
   }

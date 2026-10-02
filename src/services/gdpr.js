@@ -28,7 +28,7 @@ class GDPRService {
       return {
         success: true,
         data: userData,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error processing data access request: ${error.message}`);
@@ -57,7 +57,7 @@ class GDPRService {
         orders,
         kycVerification: kyc,
         consents,
-        exportedAt: new Date()
+        exportedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error collecting user data: ${error.message}`);
@@ -85,7 +85,7 @@ class GDPRService {
         if (updates[field] !== undefined) {
           changes[field] = {
             old: user[field],
-            new: updates[field]
+            new: updates[field],
           };
           user[field] = updates[field];
         }
@@ -99,7 +99,7 @@ class GDPRService {
       return {
         success: true,
         changes,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error processing rectification request: ${error.message}`);
@@ -122,12 +122,12 @@ class GDPRService {
 
       // Check if erasure is allowed (e.g., no pending transactions, legal holds)
       const canErase = await this.canEraseUserData(userId);
-      
+
       if (!canErase.allowed) {
         return {
           success: false,
           reason: canErase.reason,
-          canRetryAfter: canErase.canRetryAfter
+          canRetryAfter: canErase.canRetryAfter,
         };
       }
 
@@ -140,7 +140,7 @@ class GDPRService {
       return {
         success: true,
         message: 'User data has been anonymized',
-        processedAt: new Date()
+        processedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error processing erasure request: ${error.message}`);
@@ -155,21 +155,21 @@ class GDPRService {
   async canEraseUserData(userId) {
     try {
       const Order = require('../models/Order');
-      
+
       // Check for orders with funds still in escrow or awaiting fulfilment
       const pendingTransactions = await Order.countDocuments({
         user: userId,
         $or: [
           { status: { $in: ['pending', 'processing', 'shipped'] } },
-          { dgdEscrowState: { $in: ['created', 'funded', 'disputed'] } }
-        ]
+          { dgdEscrowState: { $in: ['created', 'funded', 'disputed'] } },
+        ],
       });
 
       if (pendingTransactions > 0) {
         return {
           allowed: false,
           reason: 'User has pending transactions',
-          canRetryAfter: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+          canRetryAfter: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         };
       }
 
@@ -177,25 +177,25 @@ class GDPRService {
       const AMLAlert = require('../models/AMLAlert');
       const openAlerts = await AMLAlert.countDocuments({
         user: userId,
-        status: { $in: ['open', 'under_review', 'escalated'] }
+        status: { $in: ['open', 'under_review', 'escalated'] },
       });
 
       if (openAlerts > 0) {
         return {
           allowed: false,
           reason: 'User has open compliance alerts',
-          canRetryAfter: null // Cannot determine
+          canRetryAfter: null, // Cannot determine
         };
       }
 
       return {
-        allowed: true
+        allowed: true,
       };
     } catch (error) {
       logger.error(`Error checking erasure eligibility: ${error.message}`);
       return {
         allowed: false,
-        reason: 'Error checking eligibility'
+        reason: 'Error checking eligibility',
       };
     }
   }
@@ -206,7 +206,7 @@ class GDPRService {
   async anonymizeUserData(userId) {
     try {
       const user = await User.findById(userId);
-      
+
       // Anonymize personal data
       user.email = `deleted-${userId}@deleted.local`;
       user.name = 'Deleted User';
@@ -233,7 +233,7 @@ class GDPRService {
       const userData = await this.collectUserData(userId);
 
       let exportData;
-      
+
       if (format === 'json') {
         exportData = JSON.stringify(userData, null, 2);
       } else if (format === 'csv') {
@@ -249,7 +249,7 @@ class GDPRService {
         success: true,
         data: exportData,
         format,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error processing portability request: ${error.message}`);
@@ -265,7 +265,7 @@ class GDPRService {
     // Simplified CSV conversion
     const csvLines = [];
     csvLines.push('Type,Field,Value');
-    
+
     if (userData.personalData) {
       Object.keys(userData.personalData.toObject()).forEach(key => {
         if (key !== '_id' && key !== '__v') {
@@ -292,8 +292,8 @@ class GDPRService {
         changes,
         metadata: {
           requestType,
-          notes
-        }
+          notes,
+        },
       });
 
       await auditLog.save();
@@ -323,7 +323,7 @@ class GDPRService {
       return {
         success: true,
         message: 'Processing objection recorded',
-        processedAt: new Date()
+        processedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error processing objection request: ${error.message}`);

@@ -18,7 +18,7 @@ exports.createReview = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
       });
     }
 
@@ -27,7 +27,7 @@ exports.createReview = async (req, res, next) => {
     if (existingReview) {
       return res.status(400).json({
         success: false,
-        message: 'You have already reviewed this product'
+        message: 'You have already reviewed this product',
       });
     }
 
@@ -38,7 +38,7 @@ exports.createReview = async (req, res, next) => {
         _id: orderId,
         user: userId,
         'items.product': productId,
-        status: 'completed'
+        status: 'completed',
       });
       isVerifiedPurchase = !!order;
     }
@@ -51,7 +51,7 @@ exports.createReview = async (req, res, next) => {
       rating,
       title,
       comment,
-      isVerifiedPurchase
+      isVerifiedPurchase,
     });
 
     // Populate user info
@@ -64,7 +64,7 @@ exports.createReview = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Create review error:', error);
@@ -82,9 +82,9 @@ exports.getProductReviews = async (req, res, next) => {
     const { productId } = req.params;
     const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
 
-    const query = { 
+    const query = {
       product: productId,
-      isApproved: true 
+      isApproved: true,
     };
 
     const reviews = await Review.find(query)
@@ -103,8 +103,8 @@ exports.getProductReviews = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total: count,
-        pages: Math.ceil(count / limit)
-      }
+        pages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     logger.error('Get product reviews error:', error);
@@ -126,13 +126,13 @@ exports.getReview = async (req, res, next) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Review not found'
+        message: 'Review not found',
       });
     }
 
     res.json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Get review error:', error);
@@ -166,8 +166,8 @@ exports.getUserReviews = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total: count,
-        pages: Math.ceil(count / limit)
-      }
+        pages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     logger.error('Get user reviews error:', error);
@@ -190,7 +190,7 @@ exports.updateReview = async (req, res, next) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Review not found'
+        message: 'Review not found',
       });
     }
 
@@ -198,7 +198,7 @@ exports.updateReview = async (req, res, next) => {
     if (review.user.toString() !== userId) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this review'
+        message: 'Not authorized to update this review',
       });
     }
 
@@ -217,7 +217,7 @@ exports.updateReview = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Update review error:', error);
@@ -240,7 +240,7 @@ exports.deleteReview = async (req, res, next) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Review not found'
+        message: 'Review not found',
       });
     }
 
@@ -248,7 +248,7 @@ exports.deleteReview = async (req, res, next) => {
     if (review.user.toString() !== userId && userRole !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this review'
+        message: 'Not authorized to delete this review',
       });
     }
 
@@ -262,7 +262,7 @@ exports.deleteReview = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Review deleted successfully'
+      message: 'Review deleted successfully',
     });
   } catch (error) {
     logger.error('Delete review error:', error);
@@ -286,13 +286,13 @@ exports.markHelpful = async (req, res, next) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Review not found'
+        message: 'Review not found',
       });
     }
 
     res.json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Mark helpful error:', error);
@@ -309,16 +309,14 @@ exports.approveReview = async (req, res, next) => {
   try {
     const { isApproved } = req.body;
 
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      { isApproved },
-      { new: true }
-    ).populate('user', 'name').populate('product', 'name');
+    const review = await Review.findByIdAndUpdate(req.params.id, { isApproved }, { new: true })
+      .populate('user', 'name')
+      .populate('product', 'name');
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Review not found'
+        message: 'Review not found',
       });
     }
 
@@ -326,7 +324,7 @@ exports.approveReview = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Approve review error:', error);
@@ -351,9 +349,9 @@ exports.getReviewStats = async (req, res, next) => {
           totalReviews: { $sum: 1 },
           averageRating: { $avg: '$rating' },
           ratings: {
-            $push: '$rating'
-          }
-        }
+            $push: '$rating',
+          },
+        },
       },
       {
         $project: {
@@ -364,45 +362,45 @@ exports.getReviewStats = async (req, res, next) => {
               $size: {
                 $filter: {
                   input: '$ratings',
-                  cond: { $eq: ['$$this', 5] }
-                }
-              }
+                  cond: { $eq: ['$$this', 5] },
+                },
+              },
             },
             4: {
               $size: {
                 $filter: {
                   input: '$ratings',
-                  cond: { $eq: ['$$this', 4] }
-                }
-              }
+                  cond: { $eq: ['$$this', 4] },
+                },
+              },
             },
             3: {
               $size: {
                 $filter: {
                   input: '$ratings',
-                  cond: { $eq: ['$$this', 3] }
-                }
-              }
+                  cond: { $eq: ['$$this', 3] },
+                },
+              },
             },
             2: {
               $size: {
                 $filter: {
                   input: '$ratings',
-                  cond: { $eq: ['$$this', 2] }
-                }
-              }
+                  cond: { $eq: ['$$this', 2] },
+                },
+              },
             },
             1: {
               $size: {
                 $filter: {
                   input: '$ratings',
-                  cond: { $eq: ['$$this', 1] }
-                }
-              }
-            }
-          }
-        }
-      }
+                  cond: { $eq: ['$$this', 1] },
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
     res.json({
@@ -410,8 +408,8 @@ exports.getReviewStats = async (req, res, next) => {
       data: stats[0] || {
         totalReviews: 0,
         averageRating: 0,
-        ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-      }
+        ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      },
     });
   } catch (error) {
     logger.error('Get review stats error:', error);
@@ -431,20 +429,20 @@ async function updateProductRating(productId) {
         $group: {
           _id: '$product',
           averageRating: { $avg: '$rating' },
-          numReviews: { $sum: 1 }
-        }
-      }
+          numReviews: { $sum: 1 },
+        },
+      },
     ]);
 
     if (stats.length > 0) {
       await Product.findByIdAndUpdate(productId, {
         averageRating: Math.round(stats[0].averageRating * 10) / 10,
-        numReviews: stats[0].numReviews
+        numReviews: stats[0].numReviews,
       });
     } else {
       await Product.findByIdAndUpdate(productId, {
         averageRating: 0,
-        numReviews: 0
+        numReviews: 0,
       });
     }
   } catch (error) {

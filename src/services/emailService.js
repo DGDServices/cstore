@@ -31,11 +31,11 @@ function initializeTransporter() {
     secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD
+      pass: process.env.SMTP_PASSWORD,
     },
     tls: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production'
-    }
+      rejectUnauthorized: process.env.NODE_ENV === 'production',
+    },
   });
 
   logger.info('Email transporter initialized');
@@ -54,12 +54,12 @@ function initializeTransporter() {
 async function sendEmail({ to, subject, html, text }) {
   try {
     const emailTransporter = initializeTransporter();
-    
+
     if (!emailTransporter) {
       logger.warn('Email not sent - service not configured');
       return {
         success: false,
-        message: 'Email service not configured'
+        message: 'Email service not configured',
       };
     }
 
@@ -68,22 +68,22 @@ async function sendEmail({ to, subject, html, text }) {
       to,
       subject,
       html,
-      text: text || stripHtml(html)
+      text: text || stripHtml(html),
     };
 
     const info = await emailTransporter.sendMail(mailOptions);
-    
+
     logger.info(`Email sent: ${info.messageId} to ${to}`);
-    
+
     return {
       success: true,
-      messageId: info.messageId
+      messageId: info.messageId,
     };
   } catch (error) {
     logger.error('Email send error:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -98,7 +98,7 @@ async function sendWelcomeEmail(email, name, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
   const subject = t('welcome.subject');
   const html = getWelcomeEmailTemplate(name, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -114,7 +114,7 @@ async function sendVerificationEmail(email, name, verificationToken, language = 
   const t = i18next.getFixedT(language, 'emails');
   const subject = t('verification.subject');
   const html = getVerificationEmailTemplate(name, verificationUrl, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -130,7 +130,7 @@ async function sendPasswordResetEmail(email, name, resetToken, language = 'en') 
   const t = i18next.getFixedT(language, 'emails');
   const subject = t('passwordReset.subject');
   const html = getPasswordResetEmailTemplate(name, resetUrl, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -144,7 +144,7 @@ async function sendOrderConfirmationEmail(email, order, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
   const subject = t('orderConfirmation.subject', { orderNumber: order.orderNumber || order._id });
   const html = getOrderConfirmationTemplate(order, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -159,7 +159,7 @@ async function sendPaymentConfirmationEmail(email, order, payment, language = 'e
   const t = i18next.getFixedT(language, 'emails');
   const subject = t('paymentConfirmation.subject', { orderNumber: order.orderNumber || order._id });
   const html = getPaymentConfirmationTemplate(order, payment, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -172,9 +172,11 @@ async function sendPaymentConfirmationEmail(email, order, payment, language = 'e
  */
 async function sendShippingNotificationEmail(email, order, trackingNumber, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  const subject = t('shippingNotification.subject', { orderNumber: order.orderNumber || order._id });
+  const subject = t('shippingNotification.subject', {
+    orderNumber: order.orderNumber || order._id,
+  });
   const html = getShippingNotificationTemplate(order, trackingNumber, language);
-  
+
   return await sendEmail({ to: email, subject, html });
 }
 
@@ -186,18 +188,18 @@ async function sendShippingNotificationEmail(email, order, trackingNumber, langu
  */
 async function sendAdminAlert(subject, message, data = {}) {
   const adminEmail = process.env.ADMIN_EMAIL;
-  
+
   if (!adminEmail) {
     logger.warn('Admin email not configured');
     return { success: false, message: 'Admin email not configured' };
   }
 
   const html = getAdminAlertTemplate(subject, message, data);
-  
-  return await sendEmail({ 
-    to: adminEmail, 
-    subject: `[CStore Alert] ${subject}`, 
-    html 
+
+  return await sendEmail({
+    to: adminEmail,
+    subject: `[CStore Alert] ${subject}`,
+    html,
   });
 }
 
@@ -206,7 +208,7 @@ async function sendAdminAlert(subject, message, data = {}) {
 function getWelcomeEmailTemplate(name, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
   const appUrl = process.env.APP_URL || 'http://localhost:3000';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -242,7 +244,7 @@ function getWelcomeEmailTemplate(name, language = 'en') {
 
 function getVerificationEmailTemplate(name, verificationUrl, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -279,7 +281,7 @@ function getVerificationEmailTemplate(name, verificationUrl, language = 'en') {
 
 function getPasswordResetEmailTemplate(name, resetUrl, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -316,13 +318,19 @@ function getPasswordResetEmailTemplate(name, resetUrl, language = 'en') {
 
 function getOrderConfirmationTemplate(order, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  const productsList = order.items ? order.items.map(item => `
+  const productsList = order.items
+    ? order.items
+        .map(
+          item => `
     <tr>
       <td>${item.product?.name || 'Product'}</td>
       <td>${item.quantity}</td>
       <td>$${(item.priceUSD * item.quantity).toFixed(2)}</td>
     </tr>
-  `).join('') : '';
+  `
+        )
+        .join('')
+    : '';
 
   return `
     <!DOCTYPE html>
@@ -384,7 +392,7 @@ function getOrderConfirmationTemplate(order, language = 'en') {
 
 function getPaymentConfirmationTemplate(order, payment, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -423,7 +431,7 @@ function getPaymentConfirmationTemplate(order, payment, language = 'en') {
 
 function getShippingNotificationTemplate(order, trackingNumber, language = 'en') {
   const t = i18next.getFixedT(language, 'emails');
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -444,10 +452,14 @@ function getShippingNotificationTemplate(order, trackingNumber, language = 'en')
           <h2>${t('shippingNotification.orderNumber', { orderNumber: order.orderNumber || order._id })}</h2>
           <p>${t('shippingNotification.body')}</p>
           
-          ${trackingNumber ? `
+          ${
+            trackingNumber
+              ? `
             <h3>${t('shippingNotification.trackingTitle')}</h3>
             <p><strong>${t('shippingNotification.trackingNumber')}:</strong> ${trackingNumber}</p>
-          ` : ''}
+          `
+              : ''
+          }
 
           <p>${t('shippingNotification.delivery')}</p>
           <p>${t('shippingNotification.closing')}</p>
@@ -460,10 +472,13 @@ function getShippingNotificationTemplate(order, trackingNumber, language = 'en')
 
 function getAdminAlertTemplate(subject, message, data) {
   const t = i18next.getFixedT('en', 'emails'); // Admin emails always in English
-  const dataHtml = Object.keys(data).length > 0 ? `
+  const dataHtml =
+    Object.keys(data).length > 0
+      ? `
     <h3>${t('adminAlert.additionalData')}</h3>
     <pre>${JSON.stringify(data, null, 2)}</pre>
-  ` : '';
+  `
+      : '';
 
   return `
     <!DOCTYPE html>
@@ -500,7 +515,10 @@ function getAdminAlertTemplate(subject, message, data) {
  * @returns {string} - Plain text
  */
 function stripHtml(html) {
-  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -510,7 +528,7 @@ function stripHtml(html) {
 async function verifyEmailConfig() {
   try {
     const emailTransporter = initializeTransporter();
-    
+
     if (!emailTransporter) {
       return false;
     }
@@ -533,5 +551,5 @@ module.exports = {
   sendPaymentConfirmationEmail,
   sendShippingNotificationEmail,
   sendAdminAlert,
-  verifyEmailConfig
+  verifyEmailConfig,
 };

@@ -20,15 +20,15 @@ const TMP_DIR = os.tmpdir();
 async function exportToCSV(data, headers, filename) {
   try {
     const filePath = path.join(TMP_DIR, filename);
-    
+
     const csvWriter = createObjectCsvWriter({
       path: filePath,
-      header: headers
+      header: headers,
     });
 
     await csvWriter.writeRecords(data);
     logger.info(`CSV export completed: ${filename}`);
-    
+
     return filePath;
   } catch (error) {
     logger.error('CSV export failed:', error);
@@ -52,7 +52,7 @@ async function exportProductsToCSV(products) {
     { id: 'isActive', title: 'Status' },
     { id: 'averageRating', title: 'Average Rating' },
     { id: 'numReviews', title: 'Number of Reviews' },
-    { id: 'createdAt', title: 'Created At' }
+    { id: 'createdAt', title: 'Created At' },
   ];
 
   const data = products.map(product => ({
@@ -65,7 +65,7 @@ async function exportProductsToCSV(products) {
     isActive: product.isActive ? 'Active' : 'Inactive',
     averageRating: product.averageRating || 0,
     numReviews: product.numReviews || 0,
-    createdAt: new Date(product.createdAt).toISOString()
+    createdAt: new Date(product.createdAt).toISOString(),
   }));
 
   return await exportToCSV(data, headers, `products-${Date.now()}.csv`);
@@ -85,7 +85,7 @@ async function exportOrdersToCSV(orders) {
     { id: 'dgdEscrowState', title: 'Escrow State' },
     { id: 'status', title: 'Status' },
     { id: 'itemCount', title: 'Items' },
-    { id: 'createdAt', title: 'Created At' }
+    { id: 'createdAt', title: 'Created At' },
   ];
 
   const data = orders.map(order => ({
@@ -96,7 +96,7 @@ async function exportOrdersToCSV(orders) {
     dgdEscrowState: order.dgdEscrowState || '',
     status: order.status,
     itemCount: order.items?.length || 0,
-    createdAt: new Date(order.createdAt).toISOString()
+    createdAt: new Date(order.createdAt).toISOString(),
   }));
 
   return await exportToCSV(data, headers, `orders-${Date.now()}.csv`);
@@ -112,14 +112,14 @@ async function exportUsersToCSV(users) {
     { id: 'name', title: 'Name' },
     { id: 'email', title: 'Email' },
     { id: 'role', title: 'Role' },
-    { id: 'createdAt', title: 'Created At' }
+    { id: 'createdAt', title: 'Created At' },
   ];
 
   const data = users.map(user => ({
     name: user.name,
     email: user.email,
     role: user.role,
-    createdAt: new Date(user.createdAt).toISOString()
+    createdAt: new Date(user.createdAt).toISOString(),
   }));
 
   return await exportToCSV(data, headers, `users-${Date.now()}.csv`);
@@ -166,13 +166,14 @@ async function exportProductsToPDF(products) {
       const rowHeight = 20;
       const pageHeight = 700;
 
-      products.forEach((product) => {
+      products.forEach(product => {
         if (y > pageHeight) {
           doc.addPage();
           y = 50;
         }
 
-        const name = product.name.length > 20 ? product.name.substring(0, 20) + '...' : product.name;
+        const name =
+          product.name.length > 20 ? product.name.substring(0, 20) + '...' : product.name;
         doc.text(name, col1X, y);
         doc.text(`$${product.priceUSD.toFixed(2)}`, col2X, y);
         doc.text(product.stock.toString(), col3X, y);
@@ -183,12 +184,9 @@ async function exportProductsToPDF(products) {
       });
 
       // Footer
-      doc.fontSize(8).text(
-        `Total Products: ${products.length}`,
-        50,
-        doc.page.height - 50,
-        { align: 'center' }
-      );
+      doc
+        .fontSize(8)
+        .text(`Total Products: ${products.length}`, 50, doc.page.height - 50, { align: 'center' });
 
       doc.end();
 
@@ -246,14 +244,17 @@ async function exportOrdersToPDF(orders) {
       const rowHeight = 20;
       const pageHeight = 700;
 
-      orders.forEach((order) => {
+      orders.forEach(order => {
         if (y > pageHeight) {
           doc.addPage();
           y = 50;
         }
 
         doc.text(order.orderNumber, col1X, y);
-        const email = order.customerEmail.length > 18 ? order.customerEmail.substring(0, 18) + '...' : order.customerEmail;
+        const email =
+          order.customerEmail.length > 18
+            ? order.customerEmail.substring(0, 18) + '...'
+            : order.customerEmail;
         doc.text(email, col2X, y);
         doc.text(`$${order.totalPriceUSD.toFixed(2)}`, col3X, y);
         doc.text(order.cryptocurrency, col4X, y);
@@ -264,12 +265,14 @@ async function exportOrdersToPDF(orders) {
 
       // Footer
       const totalRevenue = orders.reduce((sum, order) => sum + order.totalPriceUSD, 0);
-      doc.fontSize(8).text(
-        `Total Orders: ${orders.length} | Total Revenue: $${totalRevenue.toFixed(2)}`,
-        50,
-        doc.page.height - 50,
-        { align: 'center' }
-      );
+      doc
+        .fontSize(8)
+        .text(
+          `Total Orders: ${orders.length} | Total Revenue: $${totalRevenue.toFixed(2)}`,
+          50,
+          doc.page.height - 50,
+          { align: 'center' }
+        );
 
       doc.end();
 
@@ -292,5 +295,5 @@ module.exports = {
   exportOrdersToCSV,
   exportUsersToCSV,
   exportProductsToPDF,
-  exportOrdersToPDF
+  exportOrdersToPDF,
 };

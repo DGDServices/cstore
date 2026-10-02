@@ -13,8 +13,8 @@ try {
 class AuctionService {
   constructor() {
     this.redisClient = null;
-    this.AUCTION_BID_KEY = (auctionId) => `auction:${auctionId}:bids`;
-    this.AUCTION_PROXY_KEY = (auctionId) => `auction:${auctionId}:proxies`;
+    this.AUCTION_BID_KEY = auctionId => `auction:${auctionId}:bids`;
+    this.AUCTION_PROXY_KEY = auctionId => `auction:${auctionId}:proxies`;
   }
 
   initRedis(redisClient) {
@@ -30,7 +30,7 @@ class AuctionService {
       ...auctionData,
       seller: sellerId,
       currentPrice: auctionData.startingPrice,
-      status
+      status,
     });
 
     return auction;
@@ -66,8 +66,10 @@ class AuctionService {
       auction: auctionId,
       maxProxyBid: { $ne: null },
       isWinning: true,
-      status: { $in: ['active'] }
-    }).sort({ maxProxyBid: -1 }).limit(1);
+      status: { $in: ['active'] },
+    })
+      .sort({ maxProxyBid: -1 })
+      .limit(1);
 
     const currentLeaderProxy = existingProxies.length > 0 ? existingProxies[0] : null;
 
@@ -104,7 +106,7 @@ class AuctionService {
           bid: currentLeaderProxy,
           auction,
           extended: false,
-          proxyBidPlaced
+          proxyBidPlaced,
         };
       }
     }
@@ -128,7 +130,7 @@ class AuctionService {
       isProxy: false,
       isWinning: true,
       status: 'active',
-      ipAddress
+      ipAddress,
     });
 
     // Update auction stats
@@ -138,7 +140,7 @@ class AuctionService {
     // Count unique bidders
     const uniqueBiddersCount = await Bid.distinct('bidder', {
       auction: auctionId,
-      status: { $ne: 'retracted' }
+      status: { $ne: 'retracted' },
     });
     auction.uniqueBidders = uniqueBiddersCount.length;
 
@@ -164,8 +166,10 @@ class AuctionService {
       auction: auction._id,
       maxProxyBid: { $ne: null },
       isWinning: true,
-      status: 'active'
-    }).sort({ maxProxyBid: -1 }).limit(1);
+      status: 'active',
+    })
+      .sort({ maxProxyBid: -1 })
+      .limit(1);
 
     if (!existingProxies.length) {
       return newBid;
@@ -257,7 +261,7 @@ class AuctionService {
     const watchData = {
       auction: auctionId,
       user: userId,
-      ...preferences
+      ...preferences,
     };
 
     let watch;
@@ -304,7 +308,7 @@ class AuctionService {
     if (filters.search) {
       query.$or = [
         { title: { $regex: filters.search, $options: 'i' } },
-        { description: { $regex: filters.search, $options: 'i' } }
+        { description: { $regex: filters.search, $options: 'i' } },
       ];
     }
 
@@ -312,7 +316,7 @@ class AuctionService {
 
     const [auctions, total] = await Promise.all([
       Auction.find(query).sort(sortOrder).skip(skip).limit(limitNum),
-      Auction.countDocuments(query)
+      Auction.countDocuments(query),
     ]);
 
     return { auctions, total, page: pageNum, limit: limitNum };
@@ -369,7 +373,7 @@ class AuctionService {
       const nextBid = await Bid.findOne({
         auction: auction._id,
         status: 'active',
-        _id: { $ne: bid._id }
+        _id: { $ne: bid._id },
       }).sort({ amount: -1 });
 
       if (nextBid) {
@@ -392,7 +396,7 @@ class AuctionService {
         const now = new Date();
         const expiredAuctions = await Auction.find({
           status: 'active',
-          endTime: { $lt: now }
+          endTime: { $lt: now },
         });
 
         for (const auction of expiredAuctions) {
@@ -414,7 +418,7 @@ class AuctionService {
     const now = new Date();
     const scheduled = await Auction.find({
       status: 'scheduled',
-      startTime: { $lte: now }
+      startTime: { $lte: now },
     });
 
     for (const auction of scheduled) {

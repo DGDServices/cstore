@@ -18,8 +18,7 @@ class ComplianceReportingService {
    */
   async generateCTR(transactionId) {
     try {
-      const transaction = await Order.findById(transactionId)
-        .populate('user');
+      const transaction = await Order.findById(transactionId).populate('user');
 
       if (!transaction) {
         throw new Error('Transaction not found');
@@ -38,16 +37,16 @@ class ComplianceReportingService {
         customerInfo: {
           name: transaction.user.name,
           email: transaction.user.email,
-          country: transaction.user.country
+          country: transaction.user.country,
         },
         transactionDetails: {
           type: 'dgd_marketplace_order',
           settlementAsset: 'DGD',
           amountDGD: transaction.totalPrice,
           amountUSD: transaction.totalPriceUSD,
-          escrowState: transaction.dgdEscrowState
+          escrowState: transaction.dgdEscrowState,
         },
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       logger.info(`CTR generated: ${ctr.reportId}`);
@@ -64,9 +63,7 @@ class ComplianceReportingService {
    */
   async generateSAR(alertId, investigationDetails) {
     try {
-      const alert = await AMLAlert.findById(alertId)
-        .populate('user')
-        .populate('transaction');
+      const alert = await AMLAlert.findById(alertId).populate('user').populate('transaction');
 
       if (!alert) {
         throw new Error('Alert not found');
@@ -79,21 +76,23 @@ class ComplianceReportingService {
         suspiciousActivity: {
           type: alert.type,
           description: alert.description,
-          dateDetected: alert.createdAt
+          dateDetected: alert.createdAt,
         },
         subjectInfo: {
           name: alert.user.name,
           email: alert.user.email,
-          country: alert.user.country
+          country: alert.user.country,
         },
-        transactionInfo: alert.transaction ? {
-          id: alert.transaction._id,
-          date: alert.transaction.createdAt,
-          amount: alert.transaction.totalPriceUSD,
-          currency: 'USD'
-        } : null,
+        transactionInfo: alert.transaction
+          ? {
+              id: alert.transaction._id,
+              date: alert.transaction.createdAt,
+              amount: alert.transaction.totalPriceUSD,
+              currency: 'USD',
+            }
+          : null,
         investigation: investigationDetails,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       // Update alert status
@@ -124,26 +123,26 @@ class ComplianceReportingService {
           $match: {
             createdAt: {
               $gte: startOfDay,
-              $lte: endOfDay
+              $lte: endOfDay,
             },
-            status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
-          }
+            status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
+          },
         },
         {
           $group: {
             _id: 'USD',
             totalVolume: { $sum: '$totalPriceUSD' },
             transactionCount: { $sum: 1 },
-            avgTransactionSize: { $avg: '$totalPriceUSD' }
-          }
-        }
+            avgTransactionSize: { $avg: '$totalPriceUSD' },
+          },
+        },
       ]);
 
       const report = {
         reportType: 'DAILY_SUMMARY',
         date: startOfDay,
         summary,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       logger.info(`Daily summary report generated for ${startOfDay.toDateString()}`);
@@ -169,25 +168,25 @@ class ComplianceReportingService {
           $match: {
             createdAt: {
               $gte: startDate,
-              $lte: endDate
-            }
-          }
+              $lte: endDate,
+            },
+          },
         },
         {
           $group: {
             _id: '$status',
             count: { $sum: 1 },
-            totalVolume: { $sum: '$totalPriceUSD' }
-          }
-        }
+            totalVolume: { $sum: '$totalPriceUSD' },
+          },
+        },
       ]);
 
       // AML alerts
       const amlAlerts = await AMLAlert.countDocuments({
         createdAt: {
           $gte: startDate,
-          $lte: endDate
-        }
+          $lte: endDate,
+        },
       });
 
       // CTRs filed
@@ -195,8 +194,8 @@ class ComplianceReportingService {
         type: 'CTR_REQUIRED',
         createdAt: {
           $gte: startDate,
-          $lte: endDate
-        }
+          $lte: endDate,
+        },
       });
 
       // SARs filed
@@ -205,8 +204,8 @@ class ComplianceReportingService {
         status: 'filed',
         createdAt: {
           $gte: startDate,
-          $lte: endDate
-        }
+          $lte: endDate,
+        },
       });
 
       const report = {
@@ -215,15 +214,15 @@ class ComplianceReportingService {
           year,
           month,
           startDate,
-          endDate
+          endDate,
         },
         statistics: {
           transactions: transactionStats,
           amlAlerts,
           ctrs,
-          sars
+          sars,
         },
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       logger.info(`Monthly regulatory report generated for ${year}-${month}`);
@@ -251,9 +250,9 @@ class ComplianceReportingService {
         user: userId,
         createdAt: {
           $gte: startDate,
-          $lte: endDate
+          $lte: endDate,
         },
-        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
+        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
       });
 
       const totalVolume = transactions.reduce((sum, tx) => sum + tx.totalPriceUSD, 0);
@@ -270,9 +269,9 @@ class ComplianceReportingService {
           type: 'dgd_marketplace_order',
           amountUSD: tx.totalPriceUSD,
           amountDGD: tx.totalPrice,
-          escrowState: tx.dgdEscrowState
+          escrowState: tx.dgdEscrowState,
         })),
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       logger.info(`Tax report generated for user ${userId}, year ${taxYear}`);
@@ -302,7 +301,7 @@ class ComplianceReportingService {
         reportType: report.reportType,
         submittedAt: new Date(),
         status: 'submitted',
-        confirmationNumber: `FINCEN-${Date.now()}`
+        confirmationNumber: `FINCEN-${Date.now()}`,
       };
 
       logger.info(`Report submitted to FinCEN: ${submission.confirmationNumber}`);
@@ -322,21 +321,21 @@ class ComplianceReportingService {
       const stats = {
         period: {
           start: startDate,
-          end: endDate
+          end: endDate,
         },
         ctrs: await AMLAlert.countDocuments({
           type: 'CTR_REQUIRED',
-          createdAt: { $gte: startDate, $lte: endDate }
+          createdAt: { $gte: startDate, $lte: endDate },
         }),
         sars: await AMLAlert.countDocuments({
           type: 'SAR_REQUIRED',
           status: 'filed',
-          createdAt: { $gte: startDate, $lte: endDate }
+          createdAt: { $gte: startDate, $lte: endDate },
         }),
         totalAlerts: await AMLAlert.countDocuments({
-          createdAt: { $gte: startDate, $lte: endDate }
+          createdAt: { $gte: startDate, $lte: endDate },
         }),
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       return stats;
@@ -355,21 +354,21 @@ class ComplianceReportingService {
 
       const data = {
         pendingAlerts: await AMLAlert.countDocuments({
-          status: { $in: ['open', 'under_review'] }
+          status: { $in: ['open', 'under_review'] },
         }),
         recentCTRs: await AMLAlert.countDocuments({
           type: 'CTR_REQUIRED',
-          createdAt: { $gte: thirtyDaysAgo }
+          createdAt: { $gte: thirtyDaysAgo },
         }),
         recentSARs: await AMLAlert.countDocuments({
           type: 'SAR_REQUIRED',
-          createdAt: { $gte: thirtyDaysAgo }
+          createdAt: { $gte: thirtyDaysAgo },
         }),
         highRiskTransactions: await Order.countDocuments({
           totalPriceUSD: { $gte: 5000 },
-          createdAt: { $gte: thirtyDaysAgo }
+          createdAt: { $gte: thirtyDaysAgo },
         }),
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       return data;

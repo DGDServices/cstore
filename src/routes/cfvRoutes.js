@@ -2,7 +2,7 @@ const express = require('express');
 const {
   getAllCFVCoins,
   getCFVCoinBySymbol,
-  getCFVSummary
+  getCFVSummary,
 } = require('../controllers/cfvController');
 
 const router = express.Router();

@@ -10,23 +10,25 @@ const logger = require('../utils/logger');
  */
 exports.getWishlist = async (req, res, next) => {
   try {
-    let wishlist = await Wishlist.findOne({ user: req.user.id })
-      .populate('items.product', 'name price priceUSD currency image stock isActive');
+    let wishlist = await Wishlist.findOne({ user: req.user.id }).populate(
+      'items.product',
+      'name price priceUSD currency image stock isActive'
+    );
 
     if (!wishlist) {
       wishlist = await Wishlist.create({ user: req.user.id, items: [] });
     }
 
     // Filter out inactive products or products with 0 stock
-    wishlist.items = wishlist.items.filter(item => 
-      item.product && item.product.isActive && item.product.stock > 0
+    wishlist.items = wishlist.items.filter(
+      item => item.product && item.product.isActive && item.product.stock > 0
     );
 
     await wishlist.save();
 
     res.json({
       success: true,
-      data: wishlist
+      data: wishlist,
     });
   } catch (error) {
     logger.error('Get wishlist error:', error);
@@ -47,7 +49,7 @@ exports.addToWishlist = async (req, res, next) => {
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({
         success: false,
-        message: 'productId is required'
+        message: 'productId is required',
       });
     }
 
@@ -56,14 +58,14 @@ exports.addToWishlist = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
       });
     }
 
     if (!product.isActive) {
       return res.status(400).json({
         success: false,
-        message: 'Product is not available'
+        message: 'Product is not available',
       });
     }
 
@@ -74,20 +76,18 @@ exports.addToWishlist = async (req, res, next) => {
     }
 
     // Check if product already in wishlist
-    const existingItem = wishlist.items.find(
-      item => item.product.toString() === productId
-    );
+    const existingItem = wishlist.items.find(item => item.product.toString() === productId);
 
     if (existingItem) {
       return res.status(400).json({
         success: false,
-        message: 'Product already in wishlist'
+        message: 'Product already in wishlist',
       });
     }
 
     // Add new item
     wishlist.items.push({
-      product: productId
+      product: productId,
     });
 
     await wishlist.save();
@@ -97,7 +97,7 @@ exports.addToWishlist = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: wishlist
+      data: wishlist,
     });
   } catch (error) {
     logger.error('Add to wishlist error:', error);
@@ -119,13 +119,11 @@ exports.removeFromWishlist = async (req, res, next) => {
     if (!wishlist) {
       return res.status(404).json({
         success: false,
-        message: 'Wishlist not found'
+        message: 'Wishlist not found',
       });
     }
 
-    wishlist.items = wishlist.items.filter(
-      item => item.product.toString() !== productId
-    );
+    wishlist.items = wishlist.items.filter(item => item.product.toString() !== productId);
 
     await wishlist.save();
     await wishlist.populate('items.product', 'name price priceUSD currency image stock isActive');
@@ -134,7 +132,7 @@ exports.removeFromWishlist = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: wishlist
+      data: wishlist,
     });
   } catch (error) {
     logger.error('Remove from wishlist error:', error);
@@ -155,7 +153,7 @@ exports.clearWishlist = async (req, res, next) => {
     if (!wishlist) {
       return res.status(404).json({
         success: false,
-        message: 'Wishlist not found'
+        message: 'Wishlist not found',
       });
     }
 
@@ -167,7 +165,7 @@ exports.clearWishlist = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Wishlist cleared successfully',
-      data: wishlist
+      data: wishlist,
     });
   } catch (error) {
     logger.error('Clear wishlist error:', error);

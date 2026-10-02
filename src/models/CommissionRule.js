@@ -5,45 +5,45 @@ const commissionRuleSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     description: { type: String },
     applicableTo: {
       type: String,
       enum: ['all', 'category', 'seller_tier', 'product'],
       required: true,
-      default: 'all'
+      default: 'all',
     },
     categoryIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category'
-      }
+        ref: 'Category',
+      },
     ],
     sellerTier: {
       type: String,
-      enum: ['unverified', 'verified', 'business']
+      enum: ['unverified', 'verified', 'business'],
     },
     commissionType: {
       type: String,
       enum: ['percentage', 'flat', 'tiered'],
       required: true,
-      default: 'percentage'
+      default: 'percentage',
     },
     commissionPct: {
       type: Number,
       min: 0,
-      max: 100
+      max: 100,
     },
     flatFee: {
       type: Number,
-      min: 0
+      min: 0,
     },
     tiers: [
       {
         upToAmount: { type: Number },
-        commissionPct: { type: Number }
-      }
+        commissionPct: { type: Number },
+      },
     ],
     minFee: { type: Number, default: 0 },
     maxFee: { type: Number },
@@ -51,8 +51,8 @@ const commissionRuleSchema = new mongoose.Schema(
     priority: { type: Number, default: 0 },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
+      ref: 'User',
+    },
   },
   { timestamps: true }
 );

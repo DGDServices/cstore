@@ -22,7 +22,7 @@ const register = asyncHandler(async (req, res, next) => {
   const user = await User.create({
     name,
     email,
-    password
+    password,
   });
 
   // Generate tokens
@@ -32,7 +32,7 @@ const register = asyncHandler(async (req, res, next) => {
   logger.info(`New user registered: ${user.email}`);
   logAuthEvent(user._id.toString(), user.email, 'register', {
     ip: req.ip,
-    userAgent: req.headers['user-agent']
+    userAgent: req.headers['user-agent'],
   });
 
   res.status(201).json({
@@ -42,11 +42,11 @@ const register = asyncHandler(async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
       },
       token,
-      refreshToken
-    }
+      refreshToken,
+    },
   });
 });
 
@@ -76,7 +76,7 @@ const login = asyncHandler(async (req, res, next) => {
   logger.info(`User logged in: ${user.email}`);
   logAuthEvent(user._id.toString(), user.email, 'login', {
     ip: req.ip,
-    userAgent: req.headers['user-agent']
+    userAgent: req.headers['user-agent'],
   });
 
   res.json({
@@ -86,11 +86,11 @@ const login = asyncHandler(async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
       },
       token,
-      refreshToken
-    }
+      refreshToken,
+    },
   });
 });
 
@@ -111,9 +111,9 @@ const getMe = asyncHandler(async (req, res, next) => {
         preferredCurrency: user.preferredCurrency,
         preferredLanguage: user.preferredLanguage,
         country: user.country,
-        createdAt: user.createdAt
-      }
-    }
+        createdAt: user.createdAt,
+      },
+    },
   });
 });
 
@@ -121,7 +121,15 @@ const getMe = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateProfile = asyncHandler(async (req, res, next) => {
-  const { name, email, preferredCurrency, preferredLanguage, country, dgdPubkey, dgdPayoutAddress } = req.body;
+  const {
+    name,
+    email,
+    preferredCurrency,
+    preferredLanguage,
+    country,
+    dgdPubkey,
+    dgdPayoutAddress,
+  } = req.body;
 
   const user = await User.findById(req.user.id);
 
@@ -155,9 +163,9 @@ const updateProfile = asyncHandler(async (req, res, next) => {
         preferredLanguage: user.preferredLanguage,
         country: user.country,
         dgdPubkey: user.dgdPubkey,
-        dgdPayoutAddress: user.dgdPayoutAddress
-      }
-    }
+        dgdPayoutAddress: user.dgdPayoutAddress,
+      },
+    },
   });
 });
 
@@ -200,8 +208,8 @@ const updatePassword = asyncHandler(async (req, res, next) => {
     message: 'Password updated successfully. All other sessions have been logged out.',
     data: {
       token,
-      refreshToken
-    }
+      refreshToken,
+    },
   });
 });
 
@@ -225,12 +233,12 @@ const logout = asyncHandler(async (req, res, next) => {
     logger.info(`User logged out: ${req.user.email}`);
     logAuthEvent(req.user.id, req.user.email, 'logout', {
       ip: req.ip,
-      userAgent: req.headers['user-agent']
+      userAgent: req.headers['user-agent'],
     });
 
     res.json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
     });
   } catch (error) {
     logger.error(`Logout failed for user ${req.user.email}:`, error);
@@ -249,7 +257,7 @@ const logoutAll = asyncHandler(async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Logged out from all devices successfully'
+      message: 'Logged out from all devices successfully',
     });
   } catch (error) {
     logger.error(`Logout all failed for user ${req.user.email}:`, error);
@@ -264,5 +272,5 @@ module.exports = {
   logoutAll,
   getMe,
   updateProfile,
-  updatePassword
+  updatePassword,
 };

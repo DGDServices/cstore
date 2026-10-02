@@ -20,7 +20,7 @@ jest.mock('../src/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn()
+  debug: jest.fn(),
 }));
 
 // DB connection + per-test collection cleanup are owned by the global
@@ -37,7 +37,7 @@ describe('Compliance Services', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
-        country: 'US'
+        country: 'US',
       });
     });
 
@@ -52,8 +52,8 @@ describe('Compliance Services', () => {
           city: 'Test City',
           state: 'CA',
           country: 'US',
-          postalCode: '12345'
-        }
+          postalCode: '12345',
+        },
       };
 
       const result = await kycService.startVerification(testUser._id, userData);
@@ -70,12 +70,12 @@ describe('Compliance Services', () => {
     test('should calculate risk level correctly', () => {
       const lowRiskData = {
         dateOfBirth: new Date('1990-01-01'),
-        address: { country: 'US' }
+        address: { country: 'US' },
       };
 
       const highRiskData = {
         dateOfBirth: new Date('1990-01-01'),
-        address: { country: 'IR' }
+        address: { country: 'IR' },
       };
 
       const lowRisk = kycService.calculateRiskLevel(lowRiskData);
@@ -88,7 +88,7 @@ describe('Compliance Services', () => {
     test('should update verification status', async () => {
       const verification = await KYCVerification.create({
         user: testUser._id,
-        status: 'pending'
+        status: 'pending',
       });
 
       const result = await kycService.updateVerificationStatus(
@@ -107,7 +107,7 @@ describe('Compliance Services', () => {
       await KYCVerification.create({
         user: testUser._id,
         status: 'approved',
-        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       });
 
       const status = await kycService.checkVerificationStatus(testUser._id);
@@ -125,7 +125,7 @@ describe('Compliance Services', () => {
         email: 'aml@example.com',
         password: 'password123',
         name: 'AML Test User',
-        country: 'US'
+        country: 'US',
       });
     });
 
@@ -134,7 +134,7 @@ describe('Compliance Services', () => {
         _id: new mongoose.Types.ObjectId(),
         user: testUser._id,
         totalPriceUSD: 15000,
-        status: 'pending'
+        status: 'pending',
       };
 
       const result = await amlService.monitorTransaction(transaction);
@@ -156,12 +156,12 @@ describe('Compliance Services', () => {
           totalPriceUSD: 9500,
           dgdEscrowState: 'funded',
           status: 'paid',
-          createdAt: new Date()
+          createdAt: new Date(),
         });
       }
 
       const structuring = await amlService.detectStructuring(testUser._id, {
-        totalPriceUSD: 9500
+        totalPriceUSD: 9500,
       });
 
       expect(structuring).toBeDefined();
@@ -173,13 +173,13 @@ describe('Compliance Services', () => {
         user: testUser._id,
         type: 'LARGE_TRANSACTION',
         severity: 'medium',
-        status: 'open'
+        status: 'open',
       });
 
       const result = await amlService.resolveAlert(alert._id, {
         action: 'approved',
         notes: 'Transaction verified',
-        resolvedBy: testUser._id
+        resolvedBy: testUser._id,
       });
 
       expect(result.status).toBe('resolved');
@@ -195,14 +195,14 @@ describe('Compliance Services', () => {
         email: 'sanctions@example.com',
         password: 'password123',
         name: 'Sanctions Test',
-        country: 'US'
+        country: 'US',
       });
     });
 
     test('should clear low-risk user', async () => {
       const userData = {
         name: 'John Doe',
-        country: 'US'
+        country: 'US',
       };
 
       const result = await sanctionsService.screenUser(testUser._id, userData);
@@ -214,7 +214,7 @@ describe('Compliance Services', () => {
     test('should flag sanctioned country', async () => {
       const userData = {
         name: 'Test User',
-        country: 'IR' // Iran - sanctioned country
+        country: 'IR', // Iran - sanctioned country
       };
 
       const result = await sanctionsService.screenUser(testUser._id, userData);
@@ -227,7 +227,7 @@ describe('Compliance Services', () => {
       await SanctionsScreening.create({
         user: testUser._id,
         result: 'clear',
-        action: 'allow'
+        action: 'allow',
       });
 
       const history = await sanctionsService.getScreeningHistory(testUser._id);
@@ -245,7 +245,7 @@ describe('Compliance Services', () => {
         email: 'gdpr@example.com',
         password: 'password123',
         name: 'GDPR Test User',
-        country: 'GB'
+        country: 'GB',
       });
     });
 
@@ -260,7 +260,7 @@ describe('Compliance Services', () => {
     test('should handle rectification request', async () => {
       const updates = {
         name: 'Updated Name',
-        preferredCurrency: 'EUR'
+        preferredCurrency: 'EUR',
       };
 
       const result = await gdprService.handleRectificationRequest(testUser._id, updates);
@@ -294,7 +294,7 @@ describe('Compliance Services', () => {
       testUser = await User.create({
         email: 'consent@example.com',
         password: 'password123',
-        name: 'Consent Test User'
+        name: 'Consent Test User',
       });
     });
 
@@ -304,7 +304,7 @@ describe('Compliance Services', () => {
         version: '1.0',
         granted: true,
         ipAddress: '127.0.0.1',
-        userAgent: 'Test Agent'
+        userAgent: 'Test Agent',
       };
 
       const result = await consentManagement.recordConsent(testUser._id, consentData);
@@ -319,7 +319,7 @@ describe('Compliance Services', () => {
         user: testUser._id,
         consentType: 'privacy_policy',
         version: '1.0',
-        granted: true
+        granted: true,
       });
 
       const hasConsent = await consentManagement.hasConsent(testUser._id, 'privacy_policy');
@@ -332,7 +332,7 @@ describe('Compliance Services', () => {
         user: testUser._id,
         consentType: 'marketing',
         version: '1.0',
-        granted: true
+        granted: true,
       });
 
       const result = await consentManagement.revokeConsent(testUser._id, 'marketing');
@@ -346,7 +346,7 @@ describe('Compliance Services', () => {
         user: testUser._id,
         consentType: 'terms_of_service',
         version: '1.0',
-        granted: true
+        granted: true,
       });
 
       const consents = await consentManagement.getUserConsents(testUser._id);
@@ -370,7 +370,7 @@ describe('Compliance Services', () => {
       testUser = await User.create({
         email: 'audit@example.com',
         password: 'password123',
-        name: 'Audit Test User'
+        name: 'Audit Test User',
       });
     });
 
@@ -381,7 +381,7 @@ describe('Compliance Services', () => {
         category: 'auth',
         resource: 'authentication',
         status: 'success',
-        ipAddress: '127.0.0.1'
+        ipAddress: '127.0.0.1',
       });
 
       const logs = await auditTrail.getUserActivity(testUser._id);
@@ -407,7 +407,7 @@ describe('Compliance Services', () => {
         category: 'user',
         resource: 'profile',
         resourceId,
-        status: 'success'
+        status: 'success',
       });
 
       const trail = await auditTrail.getResourceAuditTrail('profile', resourceId);
@@ -421,7 +421,7 @@ describe('Compliance Services', () => {
         action: 'test_action',
         category: 'system',
         resource: 'test',
-        status: 'success'
+        status: 'success',
       });
 
       const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -441,7 +441,7 @@ describe('Compliance Services', () => {
       testUser = await User.create({
         email: 'case@example.com',
         password: 'password123',
-        name: 'Case Test User'
+        name: 'Case Test User',
       });
     });
 
@@ -450,7 +450,7 @@ describe('Compliance Services', () => {
         type: 'KYC',
         userId: testUser._id,
         priority: 'high',
-        description: 'Test case'
+        description: 'Test case',
       };
 
       const complianceCase = await ComplianceCase.create(caseData);
@@ -464,13 +464,13 @@ describe('Compliance Services', () => {
       const case1 = await ComplianceCase.create({
         type: 'AML',
         user: testUser._id,
-        description: 'Test case 1'
+        description: 'Test case 1',
       });
 
       const case2 = await ComplianceCase.create({
         type: 'AML',
         user: testUser._id,
-        description: 'Test case 2'
+        description: 'Test case 2',
       });
 
       expect(case1.caseNumber).toBeDefined();

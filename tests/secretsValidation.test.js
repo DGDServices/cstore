@@ -3,7 +3,7 @@ const {
   validateSecretStrength,
   isMongoAuthEnabled,
   isMongoTLSEnabled,
-  getSecuritySummary
+  getSecuritySummary,
 } = require('../src/utils/secretsValidation');
 
 describe('Secrets Validation', () => {
@@ -25,14 +25,14 @@ describe('Secrets Validation', () => {
       // 64 hex chars from a fixed seed: long and with many distinct characters
       const strongSecret = '9f3c1a7e4b0d6258c3e1f7a9b2d4c6e8a1f3b5d7c9e0a2b4c6d8e1f3a5b7c9d0';
       const result = validateSecretStrength(strongSecret);
-      
+
       expect(result.valid).toBe(true);
     });
 
     it('should reject short secrets', () => {
       const shortSecret = 'tooshort';
       const result = validateSecretStrength(shortSecret);
-      
+
       expect(result.valid).toBe(false);
       expect(result.reason).toContain('too short');
     });
@@ -40,7 +40,7 @@ describe('Secrets Validation', () => {
     it('should reject insecure defaults', () => {
       const result1 = validateSecretStrength('your-secret-key-change-in-production');
       const result2 = validateSecretStrength('default-password-12345');
-      
+
       expect(result1.valid).toBe(false);
       expect(result1.reason).toContain('insecure default');
       expect(result2.valid).toBe(false);
@@ -49,7 +49,7 @@ describe('Secrets Validation', () => {
     it('should reject low entropy secrets', () => {
       const lowEntropy = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 36 chars, all same
       const result = validateSecretStrength(lowEntropy);
-      
+
       expect(result.valid).toBe(false);
       expect(result.reason).toContain('entropy');
     });
@@ -58,7 +58,7 @@ describe('Secrets Validation', () => {
       const result1 = validateSecretStrength('');
       const result2 = validateSecretStrength(null);
       const result3 = validateSecretStrength(undefined);
-      
+
       expect(result1.valid).toBe(false);
       expect(result2.valid).toBe(false);
       expect(result3.valid).toBe(false);
@@ -68,9 +68,9 @@ describe('Secrets Validation', () => {
   describe('validateSecrets', () => {
     it('should skip validation in development', () => {
       process.env.NODE_ENV = 'development';
-      
+
       const results = validateSecrets();
-      
+
       expect(results.valid).toBe(true);
       expect(results.errors.length).toBe(0);
       expect(results.environment).toBe('development');
@@ -81,9 +81,9 @@ describe('Secrets Validation', () => {
       delete process.env.JWT_SECRET;
       delete process.env.JWT_REFRESH_SECRET;
       delete process.env.MONGODB_URI;
-      
+
       const results = validateSecrets();
-      
+
       expect(results.valid).toBe(false);
       expect(results.errors.length).toBeGreaterThan(0);
     });
@@ -94,22 +94,25 @@ describe('Secrets Validation', () => {
       process.env.JWT_REFRESH_SECRET = 'c'.repeat(40) + 'd'.repeat(10);
       process.env.MONGODB_URI = 'mongodb://localhost:27017/db';
       delete process.env.WEBHOOK_SECRET;
-      
+
       const results = validateSecrets();
-      
+
       expect(results.warnings.length).toBeGreaterThan(0);
     });
 
     it('should pass with all valid secrets', () => {
       process.env.NODE_ENV = 'production';
       process.env.JWT_SECRET = '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b';
-      process.env.JWT_REFRESH_SECRET = 'f0e1d2c3b4a5968778695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f809';
+      process.env.JWT_REFRESH_SECRET =
+        'f0e1d2c3b4a5968778695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f809';
       process.env.MONGODB_URI = 'mongodb://user:pass@localhost:27017/db';
-      process.env.WEBHOOK_SECRET = '0f1e2d3c4b5a69788796a5b4c3d2e1f0a1b2c3d4e5f60718293a4b5c6d7e8f90';
-      process.env.FIELD_ENCRYPTION_KEY = 'abcdef0123456789fedcba9876543210a1b2c3d4e5f60718293a4b5c6d7e8f90';
-      
+      process.env.WEBHOOK_SECRET =
+        '0f1e2d3c4b5a69788796a5b4c3d2e1f0a1b2c3d4e5f60718293a4b5c6d7e8f90';
+      process.env.FIELD_ENCRYPTION_KEY =
+        'abcdef0123456789fedcba9876543210a1b2c3d4e5f60718293a4b5c6d7e8f90';
+
       const results = validateSecrets();
-      
+
       expect(results.errors.length).toBe(0);
     });
   });
@@ -136,7 +139,7 @@ describe('Secrets Validation', () => {
 
     it('should handle missing MongoDB URI', () => {
       delete process.env.MONGODB_URI;
-      
+
       expect(isMongoAuthEnabled()).toBe(false);
       expect(isMongoTLSEnabled()).toBe(false);
     });
@@ -147,9 +150,9 @@ describe('Secrets Validation', () => {
       process.env.NODE_ENV = 'development';
       process.env.JWT_SECRET = 'test-secret';
       process.env.WEBHOOK_SECRET = 'test-webhook-secret';
-      
+
       const summary = getSecuritySummary();
-      
+
       expect(summary).toHaveProperty('environment');
       expect(summary).toHaveProperty('jwtConfigured');
       expect(summary).toHaveProperty('webhookSecurityEnabled');
@@ -164,35 +167,35 @@ describe('Secrets Validation', () => {
     it('should check JWT configuration', () => {
       process.env.JWT_SECRET = 'test-secret';
       const summary = getSecuritySummary();
-      
+
       expect(summary.jwtConfigured).toBe(true);
     });
 
     it('should check webhook security', () => {
       process.env.WEBHOOK_SECRET = 'test-webhook-secret';
       const summary = getSecuritySummary();
-      
+
       expect(summary.webhookSecurityEnabled).toBe(true);
     });
 
     it('should check Redis status', () => {
       process.env.REDIS_ENABLED = 'true';
       const summary = getSecuritySummary();
-      
+
       expect(summary.redisEnabled).toBe(true);
     });
 
     it('should check encryption status', () => {
       process.env.FIELD_ENCRYPTION_KEY = 'test-encryption-key';
       const summary = getSecuritySummary();
-      
+
       expect(summary.encryptionEnabled).toBe(true);
     });
 
     it('should check CORS configuration', () => {
       process.env.ALLOWED_ORIGINS = 'https://example.com';
       const summary = getSecuritySummary();
-      
+
       expect(summary.corsConfigured).toBe(true);
     });
   });

@@ -9,7 +9,7 @@ const {
   exportOrdersToCSV,
   exportUsersToCSV,
   exportProductsToPDF,
-  exportOrdersToPDF
+  exportOrdersToPDF,
 } = require('../services/exportService');
 const fs = require('fs');
 
@@ -21,12 +21,12 @@ const fs = require('fs');
 exports.getDashboardStats = async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     // Build date filter
     const dateFilter = {};
     if (startDate) dateFilter.$gte = new Date(startDate);
     if (endDate) dateFilter.$lte = new Date(endDate);
-    
+
     const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
 
     // Get counts
@@ -38,19 +38,19 @@ exports.getDashboardStats = async (req, res, next) => {
       pendingOrders,
       confirmedOrders,
       activeProducts,
-      totalReviews
+      totalReviews,
     ] = await Promise.all([
       User.countDocuments(),
       Product.countDocuments(),
       Order.countDocuments(dateQuery),
       Order.aggregate([
         { $match: { status: 'confirmed', ...dateQuery } },
-        { $group: { _id: null, total: { $sum: '$totalPriceUSD' } } }
+        { $group: { _id: null, total: { $sum: '$totalPriceUSD' } } },
       ]),
       Order.countDocuments({ status: 'pending', ...dateQuery }),
       Order.countDocuments({ status: 'confirmed', ...dateQuery }),
       Product.countDocuments({ isActive: true }),
-      Review.countDocuments(dateQuery)
+      Review.countDocuments(dateQuery),
     ]);
 
     // Get recent orders
@@ -68,8 +68,8 @@ exports.getDashboardStats = async (req, res, next) => {
         $group: {
           _id: '$items.product',
           totalSold: { $sum: '$items.quantity' },
-          revenue: { $sum: { $multiply: ['$items.quantity', '$items.priceUSD'] } }
-        }
+          revenue: { $sum: { $multiply: ['$items.quantity', '$items.priceUSD'] } },
+        },
       },
       { $sort: { totalSold: -1 } },
       { $limit: 5 },
@@ -78,17 +78,17 @@ exports.getDashboardStats = async (req, res, next) => {
           from: 'products',
           localField: '_id',
           foreignField: '_id',
-          as: 'product'
-        }
+          as: 'product',
+        },
       },
       { $unwind: '$product' },
       {
         $project: {
           name: '$product.name',
           totalSold: 1,
-          revenue: 1
-        }
-      }
+          revenue: 1,
+        },
+      },
     ]);
 
     res.json({
@@ -102,11 +102,11 @@ exports.getDashboardStats = async (req, res, next) => {
           pendingOrders,
           confirmedOrders,
           totalRevenue: totalRevenue[0]?.total || 0,
-          totalReviews
+          totalReviews,
         },
         recentOrders,
-        topProducts
-      }
+        topProducts,
+      },
     });
   } catch (error) {
     logger.error('Get dashboard stats error:', error);
@@ -122,13 +122,13 @@ exports.getDashboardStats = async (req, res, next) => {
 exports.getUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
-    
+
     const query = {};
     if (role) query.role = role;
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -148,8 +148,8 @@ exports.getUsers = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total: count,
-        pages: Math.ceil(count / limit)
-      }
+        pages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     logger.error('Get users error:', error);
@@ -165,11 +165,11 @@ exports.getUsers = async (req, res, next) => {
 exports.getUserDetails = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -187,8 +187,8 @@ exports.getUserDetails = async (req, res, next) => {
       data: {
         user,
         orders,
-        reviewCount
-      }
+        reviewCount,
+      },
     });
   } catch (error) {
     logger.error('Get user details error:', error);
@@ -204,24 +204,22 @@ exports.getUserDetails = async (req, res, next) => {
 exports.updateUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
-    
+
     if (!['user', 'admin'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be "user" or "admin"'
+        message: 'Invalid role. Must be "user" or "admin"',
       });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    ).select('-password');
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select(
+      '-password'
+    );
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -229,7 +227,7 @@ exports.updateUserRole = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     logger.error('Update user role error:', error);
@@ -245,11 +243,11 @@ exports.updateUserRole = async (req, res, next) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -257,7 +255,7 @@ exports.deleteUser = async (req, res, next) => {
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete your own account'
+        message: 'Cannot delete your own account',
       });
     }
 
@@ -267,7 +265,7 @@ exports.deleteUser = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deleted successfully',
     });
   } catch (error) {
     logger.error('Delete user error:', error);
@@ -283,7 +281,7 @@ exports.deleteUser = async (req, res, next) => {
 exports.getSalesAnalytics = async (req, res, next) => {
   try {
     const { period = '30d' } = req.query;
-    
+
     // Calculate date range
     let startDate = new Date();
     switch (period) {
@@ -308,19 +306,19 @@ exports.getSalesAnalytics = async (req, res, next) => {
       {
         $match: {
           status: 'confirmed',
-          createdAt: { $gte: startDate }
-        }
+          createdAt: { $gte: startDate },
+        },
       },
       {
         $group: {
           _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
           },
           totalOrders: { $sum: 1 },
-          totalRevenue: { $sum: '$totalPriceUSD' }
-        }
+          totalRevenue: { $sum: '$totalPriceUSD' },
+        },
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
     ]);
 
     // Sales by settlement asset (DGD only)
@@ -328,16 +326,16 @@ exports.getSalesAnalytics = async (req, res, next) => {
       {
         $match: {
           status: 'confirmed',
-          createdAt: { $gte: startDate }
-        }
+          createdAt: { $gte: startDate },
+        },
       },
       {
         $group: {
           _id: '$settlementAsset',
           totalOrders: { $sum: 1 },
-          totalRevenue: { $sum: '$totalPriceUSD' }
-        }
-      }
+          totalRevenue: { $sum: '$totalPriceUSD' },
+        },
+      },
     ]);
 
     // Average order value
@@ -345,15 +343,15 @@ exports.getSalesAnalytics = async (req, res, next) => {
       {
         $match: {
           status: 'confirmed',
-          createdAt: { $gte: startDate }
-        }
+          createdAt: { $gte: startDate },
+        },
       },
       {
         $group: {
           _id: null,
-          avgValue: { $avg: '$totalPriceUSD' }
-        }
-      }
+          avgValue: { $avg: '$totalPriceUSD' },
+        },
+      },
     ]);
 
     res.json({
@@ -362,8 +360,8 @@ exports.getSalesAnalytics = async (req, res, next) => {
         period,
         salesByDate,
         salesByCrypto,
-        averageOrderValue: avgOrderValue[0]?.avgValue || 0
-      }
+        averageOrderValue: avgOrderValue[0]?.avgValue || 0,
+      },
     });
   } catch (error) {
     logger.error('Get sales analytics error:', error);
@@ -379,18 +377,18 @@ exports.getSalesAnalytics = async (req, res, next) => {
 exports.getProductAnalytics = async (req, res, next) => {
   try {
     // Low stock products
-    const lowStockProducts = await Product.find({ 
+    const lowStockProducts = await Product.find({
       stock: { $lte: 10, $gt: 0 },
-      isActive: true 
+      isActive: true,
     })
       .select('name stock price')
       .sort('stock')
       .limit(10);
 
     // Out of stock products
-    const outOfStockProducts = await Product.find({ 
+    const outOfStockProducts = await Product.find({
       stock: 0,
-      isActive: true 
+      isActive: true,
     })
       .select('name price')
       .limit(10);
@@ -402,8 +400,8 @@ exports.getProductAnalytics = async (req, res, next) => {
         $group: {
           _id: '$product',
           reviewCount: { $sum: 1 },
-          avgRating: { $avg: '$rating' }
-        }
+          avgRating: { $avg: '$rating' },
+        },
       },
       { $sort: { reviewCount: -1 } },
       { $limit: 10 },
@@ -412,17 +410,17 @@ exports.getProductAnalytics = async (req, res, next) => {
           from: 'products',
           localField: '_id',
           foreignField: '_id',
-          as: 'product'
-        }
+          as: 'product',
+        },
       },
       { $unwind: '$product' },
       {
         $project: {
           name: '$product.name',
           reviewCount: 1,
-          avgRating: { $round: ['$avgRating', 1] }
-        }
-      }
+          avgRating: { $round: ['$avgRating', 1] },
+        },
+      },
     ]);
 
     res.json({
@@ -430,8 +428,8 @@ exports.getProductAnalytics = async (req, res, next) => {
       data: {
         lowStockProducts,
         outOfStockProducts,
-        mostReviewedProducts
-      }
+        mostReviewedProducts,
+      },
     });
   } catch (error) {
     logger.error('Get product analytics error:', error);
@@ -447,16 +445,16 @@ exports.getProductAnalytics = async (req, res, next) => {
 exports.getSystemHealth = async (req, res, next) => {
   try {
     const mongoose = require('mongoose');
-    
+
     // Database status
     const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-    
+
     // Email service status
-    const emailStatus = await verifyEmailConfig() ? 'configured' : 'not configured';
-    
+    const emailStatus = (await verifyEmailConfig()) ? 'configured' : 'not configured';
+
     // Memory usage
     const memoryUsage = process.memoryUsage();
-    
+
     // System uptime
     const uptime = process.uptime();
 
@@ -465,22 +463,22 @@ exports.getSystemHealth = async (req, res, next) => {
       data: {
         database: {
           status: dbStatus,
-          name: mongoose.connection.name
+          name: mongoose.connection.name,
         },
         email: {
-          status: emailStatus
+          status: emailStatus,
         },
         system: {
           uptime: Math.floor(uptime),
           memory: {
             rss: Math.round(memoryUsage.rss / 1024 / 1024) + ' MB',
             heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB',
-            heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB'
+            heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB',
           },
           nodeVersion: process.version,
-          environment: process.env.NODE_ENV || 'development'
-        }
-      }
+          environment: process.env.NODE_ENV || 'development',
+        },
+      },
     });
   } catch (error) {
     logger.error('Get system health error:', error);
@@ -496,7 +494,7 @@ exports.getSystemHealth = async (req, res, next) => {
 exports.getPendingReviews = async (req, res, next) => {
   try {
     const { page = 1, limit = 20 } = req.query;
-    
+
     const reviews = await Review.find({ isApproved: false })
       .populate('user', 'name email')
       .populate('product', 'name image')
@@ -513,8 +511,8 @@ exports.getPendingReviews = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total: count,
-        pages: Math.ceil(count / limit)
-      }
+        pages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     logger.error('Get pending reviews error:', error);
@@ -557,25 +555,25 @@ exports.getActivityLog = async (req, res, next) => {
       ...recentOrders.map(o => ({
         type: 'order',
         timestamp: o.createdAt,
-        data: o
+        data: o,
       })),
       ...recentReviews.map(r => ({
         type: 'review',
         timestamp: r.createdAt,
-        data: r
+        data: r,
       })),
       ...recentUsers.map(u => ({
         type: 'user_registration',
         timestamp: u.createdAt,
-        data: u
-      }))
+        data: u,
+      })),
     ]
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, limit);
 
     res.json({
       success: true,
-      data: activities
+      data: activities,
     });
   } catch (error) {
     logger.error('Get activity log error:', error);
@@ -595,7 +593,7 @@ exports.reorderProducts = async (req, res, next) => {
     if (!productOrders || !Array.isArray(productOrders)) {
       return res.status(400).json({
         success: false,
-        message: 'productOrders array is required'
+        message: 'productOrders array is required',
       });
     }
 
@@ -603,8 +601,8 @@ exports.reorderProducts = async (req, res, next) => {
     const bulkOps = productOrders.map(({ productId, sortOrder }) => ({
       updateOne: {
         filter: { _id: productId },
-        update: { $set: { sortOrder } }
-      }
+        update: { $set: { sortOrder } },
+      },
     }));
 
     await Product.bulkWrite(bulkOps);
@@ -613,7 +611,7 @@ exports.reorderProducts = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Products reordered successfully'
+      message: 'Products reordered successfully',
     });
   } catch (error) {
     logger.error('Product reorder error:', error);
@@ -634,7 +632,7 @@ exports.exportProductsCSV = async (req, res, next) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
       ];
     }
     if (category) {
@@ -648,12 +646,12 @@ exports.exportProductsCSV = async (req, res, next) => {
 
     const filePath = await exportProductsToCSV(products);
 
-    res.download(filePath, `products-${Date.now()}.csv`, (err) => {
+    res.download(filePath, `products-${Date.now()}.csv`, err => {
       if (err) {
         logger.error('File download error:', err);
       }
       // Clean up file after download
-      fs.unlink(filePath, (unlinkErr) => {
+      fs.unlink(filePath, unlinkErr => {
         if (unlinkErr) logger.error('File cleanup error:', unlinkErr);
       });
     });
@@ -676,7 +674,7 @@ exports.exportProductsPDF = async (req, res, next) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
       ];
     }
     if (category) {
@@ -690,12 +688,12 @@ exports.exportProductsPDF = async (req, res, next) => {
 
     const filePath = await exportProductsToPDF(products);
 
-    res.download(filePath, `products-${Date.now()}.pdf`, (err) => {
+    res.download(filePath, `products-${Date.now()}.pdf`, err => {
       if (err) {
         logger.error('File download error:', err);
       }
       // Clean up file after download
-      fs.unlink(filePath, (unlinkErr) => {
+      fs.unlink(filePath, unlinkErr => {
         if (unlinkErr) logger.error('File cleanup error:', unlinkErr);
       });
     });
@@ -724,18 +722,16 @@ exports.exportOrdersCSV = async (req, res, next) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
+    const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
 
     const filePath = await exportOrdersToCSV(orders);
 
-    res.download(filePath, `orders-${Date.now()}.csv`, (err) => {
+    res.download(filePath, `orders-${Date.now()}.csv`, err => {
       if (err) {
         logger.error('File download error:', err);
       }
       // Clean up file after download
-      fs.unlink(filePath, (unlinkErr) => {
+      fs.unlink(filePath, unlinkErr => {
         if (unlinkErr) logger.error('File cleanup error:', unlinkErr);
       });
     });
@@ -764,18 +760,16 @@ exports.exportOrdersPDF = async (req, res, next) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
+    const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
 
     const filePath = await exportOrdersToPDF(orders);
 
-    res.download(filePath, `orders-${Date.now()}.pdf`, (err) => {
+    res.download(filePath, `orders-${Date.now()}.pdf`, err => {
       if (err) {
         logger.error('File download error:', err);
       }
       // Clean up file after download
-      fs.unlink(filePath, (unlinkErr) => {
+      fs.unlink(filePath, unlinkErr => {
         if (unlinkErr) logger.error('File cleanup error:', unlinkErr);
       });
     });
@@ -801,7 +795,7 @@ exports.exportUsersCSV = async (req, res, next) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -812,12 +806,12 @@ exports.exportUsersCSV = async (req, res, next) => {
 
     const filePath = await exportUsersToCSV(users);
 
-    res.download(filePath, `users-${Date.now()}.csv`, (err) => {
+    res.download(filePath, `users-${Date.now()}.csv`, err => {
       if (err) {
         logger.error('File download error:', err);
       }
       // Clean up file after download
-      fs.unlink(filePath, (unlinkErr) => {
+      fs.unlink(filePath, unlinkErr => {
         if (unlinkErr) logger.error('File cleanup error:', unlinkErr);
       });
     });

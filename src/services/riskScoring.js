@@ -11,7 +11,7 @@ class RiskScoringService {
       frequency: 0.2,
       userHistory: 0.2,
       geography: 0.15,
-      timePattern: 0.15
+      timePattern: 0.15,
     };
   }
 
@@ -25,11 +25,11 @@ class RiskScoringService {
         frequency: await this.scoreFrequency(user._id, userHistory),
         userHistory: this.scoreUserHistory(userHistory),
         geography: this.scoreGeography(user.country),
-        timePattern: this.scoreTimePattern(transaction, userHistory)
+        timePattern: this.scoreTimePattern(transaction, userHistory),
       };
 
       // Calculate weighted total
-      const totalScore = 
+      const totalScore =
         scores.amount * this.weights.amount +
         scores.frequency * this.weights.frequency +
         scores.userHistory * this.weights.userHistory +
@@ -42,7 +42,7 @@ class RiskScoringService {
         totalScore: Math.round(totalScore),
         riskLevel,
         breakdown: scores,
-        factors: this.identifyRiskFactors(scores)
+        factors: this.identifyRiskFactors(scores),
       };
     } catch (error) {
       logger.error(`Error calculating transaction risk: ${error.message}`);
@@ -82,7 +82,7 @@ class RiskScoringService {
     } else if (recentTransactions.length > 2) {
       return 30; // Normal frequency
     }
-    
+
     return 15; // Low frequency
   }
 
@@ -94,14 +94,18 @@ class RiskScoringService {
       return 40; // No history = medium-high risk
     }
 
-    const completedTransactions = userHistory.filter(tx => ['paid', 'processing', 'shipped', 'delivered'].includes(tx.status)).length;
-    const failedTransactions = userHistory.filter(tx => ['cancelled', 'refunded'].includes(tx.status)).length;
-    
+    const completedTransactions = userHistory.filter(tx =>
+      ['paid', 'processing', 'shipped', 'delivered'].includes(tx.status)
+    ).length;
+    const failedTransactions = userHistory.filter(tx =>
+      ['cancelled', 'refunded'].includes(tx.status)
+    ).length;
+
     const successRate = completedTransactions / (completedTransactions + failedTransactions);
 
     if (successRate > 0.95) return 10; // Excellent history
     if (successRate > 0.85) return 20; // Good history
-    if (successRate > 0.70) return 40; // Fair history
+    if (successRate > 0.7) return 40; // Fair history
     return 70; // Poor history
   }
 
@@ -204,20 +208,26 @@ class RiskScoringService {
 
       const profile = {
         userId,
-        accountAge: Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (24 * 60 * 60 * 1000)),
+        accountAge: Math.floor(
+          (Date.now() - new Date(user.createdAt).getTime()) / (24 * 60 * 60 * 1000)
+        ),
         totalTransactions: transactions.length,
         totalVolume: transactions.reduce((sum, tx) => sum + (tx.totalPriceUSD || 0), 0),
-        averageTransactionSize: transactions.length > 0 
-          ? transactions.reduce((sum, tx) => sum + (tx.totalPriceUSD || 0), 0) / transactions.length 
-          : 0,
-        failureRate: transactions.length > 0
-          ? transactions.filter(tx => ['cancelled', 'refunded'].includes(tx.status)).length / transactions.length
-          : 0,
+        averageTransactionSize:
+          transactions.length > 0
+            ? transactions.reduce((sum, tx) => sum + (tx.totalPriceUSD || 0), 0) /
+              transactions.length
+            : 0,
+        failureRate:
+          transactions.length > 0
+            ? transactions.filter(tx => ['cancelled', 'refunded'].includes(tx.status)).length /
+              transactions.length
+            : 0,
         alertCount: alerts.length,
         criticalAlerts: alerts.filter(a => a.severity === 'critical').length,
         geography: user.country,
         riskScore: 0,
-        riskLevel: 'low'
+        riskLevel: 'low',
       };
 
       // Calculate overall risk score
@@ -253,28 +263,25 @@ class RiskScoringService {
    */
   getRiskRecommendations(riskScore, riskLevel) {
     const recommendations = {
-      low: [
-        'Standard monitoring',
-        'Normal transaction limits apply'
-      ],
+      low: ['Standard monitoring', 'Normal transaction limits apply'],
       medium: [
         'Enhanced monitoring recommended',
         'Review unusual patterns',
-        'Consider transaction limits'
+        'Consider transaction limits',
       ],
       high: [
         'Manual review required',
         'Enhanced due diligence',
         'Reduced transaction limits',
-        'More frequent monitoring'
+        'More frequent monitoring',
       ],
       critical: [
         'Immediate manual review required',
         'Transaction approval required',
         'Enhanced due diligence mandatory',
         'Consider account restrictions',
-        'Escalate to compliance officer'
-      ]
+        'Escalate to compliance officer',
+      ],
     };
 
     return recommendations[riskLevel] || recommendations.low;

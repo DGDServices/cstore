@@ -33,21 +33,21 @@ class BuyBoxService {
 
     return {
       score,
-      breakdown: { priceScore, ratingScore, fulfillmentScore, defectScore }
+      breakdown: { priceScore, ratingScore, fulfillmentScore, defectScore },
     };
   }
 
   async selectBuyBoxWinner(productId) {
     const offers = await SellerProduct.find({
       product: productId,
-      isActive: true
+      isActive: true,
     }).populate({
       path: 'seller',
-      match: { verificationStatus: 'verified', isSuspended: false }
+      match: { verificationStatus: 'verified', isSuspended: false },
     });
 
     // Filter out offers where seller didn't match population conditions
-    const eligible = offers.filter((o) => o.seller !== null);
+    const eligible = offers.filter(o => o.seller !== null);
 
     if (eligible.length === 0) {
       await SellerProduct.updateMany({ product: productId }, { isBuyBoxWinner: false });
@@ -57,17 +57,21 @@ class BuyBoxService {
     // Determine price rank for price component (40%)
     const sorted = [...eligible].sort((a, b) => a.priceUSD - b.priceUSD);
 
-    const scoredOffers = eligible.map((offer) => {
-      const rank = sorted.findIndex((o) => o._id.toString() === offer._id.toString());
+    const scoredOffers = eligible.map(offer => {
+      const rank = sorted.findIndex(o => o._id.toString() === offer._id.toString());
       const priceScore = eligible.length === 1 ? 40 : 40 - (rank / (eligible.length - 1)) * 40;
 
       const base = this.calculateBuyBoxScore(offer, offer.seller);
-      const totalScore = priceScore + base.breakdown.ratingScore + base.breakdown.fulfillmentScore + base.breakdown.defectScore;
+      const totalScore =
+        priceScore +
+        base.breakdown.ratingScore +
+        base.breakdown.fulfillmentScore +
+        base.breakdown.defectScore;
 
       return {
         offer,
         score: totalScore,
-        breakdown: { ...base.breakdown, priceScore }
+        breakdown: { ...base.breakdown, priceScore },
       };
     });
 
@@ -85,7 +89,9 @@ class BuyBoxService {
       })
     );
 
-    logger.info(`Buy box winner selected for product ${productId}: seller ${winner.offer.seller._id}`);
+    logger.info(
+      `Buy box winner selected for product ${productId}: seller ${winner.offer.seller._id}`
+    );
     return winner.offer;
   }
 

@@ -12,7 +12,7 @@ class PrivacyControlsService {
       shareDataWithThirdParties: false,
       marketingEmails: false,
       transactionHistory: 'private',
-      analyticsTracking: false
+      analyticsTracking: false,
     };
   }
 
@@ -34,7 +34,7 @@ class PrivacyControlsService {
 
       return {
         success: true,
-        settings: user.privacySettings
+        settings: user.privacySettings,
       };
     } catch (error) {
       logger.error(`Error initializing privacy settings: ${error.message}`);
@@ -72,7 +72,7 @@ class PrivacyControlsService {
       // Merge with existing settings
       user.privacySettings = {
         ...user.privacySettings,
-        ...settings
+        ...settings,
       };
 
       await user.save();
@@ -81,7 +81,7 @@ class PrivacyControlsService {
 
       return {
         success: true,
-        settings: user.privacySettings
+        settings: user.privacySettings,
       };
     } catch (error) {
       logger.error(`Error updating privacy settings: ${error.message}`);
@@ -135,7 +135,7 @@ class PrivacyControlsService {
 
       return {
         success: true,
-        message: 'User data has been anonymized'
+        message: 'User data has been anonymized',
       };
     } catch (error) {
       logger.error(`Error anonymizing user data: ${error.message}`);
@@ -153,12 +153,9 @@ class PrivacyControlsService {
       const UserConsent = require('../models/UserConsent');
 
       const user = await User.findById(userId).select('-password');
-      const transactions = await Order.find({ user: userId })
-        .select('-__v');
-      const kyc = await KYCVerification.findOne({ user: userId })
-        .select('-__v');
-      const consents = await UserConsent.find({ user: userId })
-        .select('-__v');
+      const transactions = await Order.find({ user: userId }).select('-__v');
+      const kyc = await KYCVerification.findOne({ user: userId }).select('-__v');
+      const consents = await UserConsent.find({ user: userId }).select('-__v');
 
       const exportData = {
         personal_information: user,
@@ -166,7 +163,7 @@ class PrivacyControlsService {
         kyc_verification: kyc,
         consents,
         exported_at: new Date(),
-        export_format: 'JSON'
+        export_format: 'JSON',
       };
 
       logger.info(`User data exported for ${userId}`);
@@ -195,7 +192,7 @@ class PrivacyControlsService {
 
       return {
         success: true,
-        restrictions
+        restrictions,
       };
     } catch (error) {
       logger.error(`Error restricting data processing: ${error.message}`);
@@ -209,7 +206,7 @@ class PrivacyControlsService {
   async checkPrivacyCompliance(userId) {
     try {
       const consentManagement = require('./consentManagement');
-      
+
       const requiredConsents = await consentManagement.checkRequiredConsents(userId);
       const settings = await this.getPrivacySettings(userId);
 
@@ -217,7 +214,7 @@ class PrivacyControlsService {
         hasRequiredConsents: requiredConsents.hasAllRequired,
         missingConsents: requiredConsents.missing,
         privacySettingsConfigured: !!settings,
-        compliant: requiredConsents.hasAllRequired && !!settings
+        compliant: requiredConsents.hasAllRequired && !!settings,
       };
 
       return compliance;
