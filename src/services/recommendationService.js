@@ -56,9 +56,9 @@ class RecommendationService {
       const similarUserOrders = await Order.aggregate([
         {
           $match: {
-            user: { $ne: userId, $exists: true },
+            user: { $ne: new mongoose.Types.ObjectId(String(userId)), $exists: true },
             status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
-            'items.product': { $in: Array.from(purchasedProductIds).map(id => mongoose.Types.ObjectId(id)) }
+            'items.product': { $in: Array.from(purchasedProductIds).map(id => new mongoose.Types.ObjectId(id)) }
           }
         },
         { $unwind: '$items' },
@@ -98,7 +98,7 @@ class RecommendationService {
 
       // Fetch full product details
       const recommendations = await Product.find({
-        _id: { $in: uniqueIds },
+        _id: { $in: uniqueIds, $nin: Array.from(purchasedProductIds) },
         isActive: true
       })
         .populate('category', 'name slug')

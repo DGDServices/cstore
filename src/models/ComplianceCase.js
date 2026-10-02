@@ -61,8 +61,9 @@ const complianceCaseSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Auto-generate case number
-complianceCaseSchema.pre('save', async function(next) {
+// Auto-generate case number. Runs on 'validate' (not 'save') because
+// `caseNumber` is required and validation happens before save hooks.
+complianceCaseSchema.pre('validate', async function(next) {
   if (!this.caseNumber) {
     const year = new Date().getFullYear();
     const count = await this.constructor.countDocuments({

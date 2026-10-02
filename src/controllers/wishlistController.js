@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
 const logger = require('../utils/logger');
@@ -42,6 +43,13 @@ exports.addToWishlist = async (req, res, next) => {
   try {
     const { productId } = req.body;
     const userId = req.user.id;
+
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'productId is required'
+      });
+    }
 
     // Validate product
     const product = await Product.findById(productId);

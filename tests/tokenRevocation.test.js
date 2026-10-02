@@ -1,3 +1,6 @@
+// Without Redis, revocation needs the opt-in in-process store (dev/test only).
+process.env.TOKEN_REVOCATION_LOCAL_STORE = 'true';
+
 const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/models/User');

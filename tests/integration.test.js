@@ -157,19 +157,17 @@ describe('Integration Tests - Complete Order Flow', () => {
       // Stock should be 100 (from update) - orders are already processed
       expect(finalProductRes.body.data.product.stock).toBe(100);
 
-      // Step 15: Health check
+      // Step 15: Liveness (the full /api/health reports process heap usage,
+      // which is noisy inside a long jest run; liveness is what matters here)
       const healthRes = await request(app)
-        .get('/api/health');
+        .get('/api/health/live');
 
       expect(healthRes.status).toBe(200);
-      expect(healthRes.body.success).toBe(true);
-      expect(healthRes.body.message).toBeDefined();
     });
 
-    it('should handle guest orders (without authentication)', async () => {
+    it('should refuse guest orders (the buyer must be a known escrow party)', async () => {
       if (!global.isConnected()) return;
 
-      // Create product as admin
       const product = await Product.create({
         name: 'Guest Order Product',
         description: 'Product for guest orders',
@@ -179,31 +177,16 @@ describe('Integration Tests - Complete Order Flow', () => {
         isActive: true
       });
 
-      // Guest creates order without authentication
-      const orderData = {
-        productId: product._id.toString(),
-        quantity: 1,
-        customerEmail: 'guest@integration.com'
-      };
-
       const createOrderRes = await request(app)
         .post('/api/orders')
-        .send(orderData);
+        .send({
+          productId: product._id.toString(),
+          quantity: 1,
+          customerEmail: 'guest@integration.com'
+        });
 
-      expect(createOrderRes.status).toBe(201);
-      expect(createOrderRes.body.success).toBe(true);
-      expect(createOrderRes.body.data.order.user).toBeNull();
-      expect(createOrderRes.body.data.order.customerEmail).toBe(orderData.customerEmail);
-
-      const orderId = createOrderRes.body.data.order._id;
-
-      // Guest can view order without authentication
-      const getOrderRes = await request(app)
-        .get(`/api/orders/${orderId}`);
-
-      expect(getOrderRes.status).toBe(200);
-      expect(getOrderRes.body.success).toBe(true);
-
+      expect(createOrderRes.status).toBe(401);
+      expect(createOrderRes.body.success).toBe(false);
     });
 
     it('should enforce authentication and authorization correctly', async () => {

@@ -1,3 +1,6 @@
+// The compliance services read their enable flags at require time.
+process.env.AML_ENABLED = 'true';
+
 const mongoose = require('mongoose'); // for mongoose.Types.ObjectId in test fixtures
 const KYCVerification = require('../src/models/KYCVerification');
 const AMLAlert = require('../src/models/AMLAlert');

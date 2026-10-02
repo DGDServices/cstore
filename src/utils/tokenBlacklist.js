@@ -34,6 +34,38 @@ const degradedDecision = (reason) => {
   return failClosed; // closed → treat as revoked (deny); open → not revoked (allow)
 };
 
+/**
+ * In-process fallback store, opt-in via TOKEN_REVOCATION_LOCAL_STORE=true,
+ * used only when Redis is unavailable AND the process is a single-instance
+ * dev/test server. It makes logout, logout-all
+ * and password-change revocation actually work without Redis in development
+ * and in the test suite. It is never used in production: a per-process store
+ * cannot revoke a token across instances, so production keeps the fail-mode
+ * policy above.
+ */
+const useLocalStore = () =>
+  process.env.TOKEN_REVOCATION_LOCAL_STORE === 'true' &&
+  ['test', 'development'].includes(process.env.NODE_ENV) &&
+  !isRedisAvailable();
+const localStore = {
+  tokens: new Map(),   // token -> expiry epoch ms
+  users: new Map(),    // userId -> revokedAt epoch ms
+  sweep() {
+    const now = Date.now();
+    for (const [k, exp] of this.tokens) if (exp <= now) this.tokens.delete(k);
+  }
+};
+
+/**
+ * JWT `iat` has one-second resolution while revocation timestamps are in
+ * milliseconds. Everything issued in or before the revocation second is
+ * revoked. The replacement token handed out on password change is therefore
+ * minted with an `iat` one second past the revocation (see utils/jwt.js
+ * `issuedAt`), so it survives its own revocation.
+ */
+const issuedBeforeRevocation = (tokenIssuedAtSec, revokedAtMs) =>
+  tokenIssuedAtSec <= Math.floor(revokedAtMs / 1000);
+
 class TokenBlacklist {
   /**
    * Add a token to the blacklist
@@ -41,7 +73,7 @@ class TokenBlacklist {
    */
   async addToBlacklist(token) {
     try {
-      if (!isRedisAvailable()) {
+      if (!isRedisAvailable() && !useLocalStore()) {
         logger.warn('Redis not available, cannot blacklist token');
         return false;
       }
@@ -62,6 +94,12 @@ class TokenBlacklist {
         return true;
       }
       
+      if (useLocalStore()) {
+        localStore.sweep();
+        localStore.tokens.set(token, decoded.exp * 1000);
+        return true;
+      }
+
       // Store token in Redis with TTL
       const key = `blacklist:${token}`;
       const redisClient = getRedisClient();
@@ -90,6 +128,10 @@ class TokenBlacklist {
    */
   async isBlacklisted(token) {
     try {
+      if (useLocalStore()) {
+        localStore.sweep();
+        return localStore.tokens.has(token);
+      }
       if (!isRedisAvailable()) {
         return degradedDecision('redis_unavailable');
       }
@@ -111,12 +153,16 @@ class TokenBlacklist {
    */
   async revokeUserTokens(userId, timestamp = null) {
     try {
-      if (!isRedisAvailable()) {
+      if (!isRedisAvailable() && !useLocalStore()) {
         logger.warn('Redis not available, cannot revoke user tokens');
         return false;
       }
 
       const revokedAt = timestamp || Date.now();
+      if (useLocalStore()) {
+        localStore.users.set(String(userId), revokedAt);
+        return true;
+      }
       const key = `user:${userId}:revoked`;
       const redisClient = getRedisClient();
       
@@ -139,6 +185,10 @@ class TokenBlacklist {
    */
   async areUserTokensRevoked(userId, tokenIssuedAt) {
     try {
+      if (useLocalStore()) {
+        const revokedAt = localStore.users.get(String(userId));
+        return revokedAt ? issuedBeforeRevocation(tokenIssuedAt, revokedAt) : false;
+      }
       if (!isRedisAvailable()) {
         return degradedDecision('redis_unavailable');
       }
@@ -152,7 +202,7 @@ class TokenBlacklist {
       }
 
       // If token was issued before the revocation timestamp, it's invalid
-      return tokenIssuedAt * 1000 < parseInt(revokedAt);
+      return issuedBeforeRevocation(tokenIssuedAt, parseInt(revokedAt));
     } catch (error) {
       logger.error('Error checking user token revocation:', error);
       return degradedDecision('redis_error');
@@ -165,6 +215,10 @@ class TokenBlacklist {
    */
   async clearUserRevocation(userId) {
     try {
+      if (useLocalStore()) {
+        localStore.users.delete(String(userId));
+        return true;
+      }
       if (!isRedisAvailable()) {
         logger.warn('Redis not available, cannot clear user revocation');
         return false;

@@ -4,6 +4,21 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 // Don't try to connect via the app in test mode
 process.env.SKIP_DB_CONNECTION = 'true';
 
+// Tests exercise auth routes many times per file; the default of 5 attempts
+// per 15 minutes trips the limiter mid-suite when jest runs in-band.
+process.env.AUTH_RATE_LIMIT_MAX = process.env.AUTH_RATE_LIMIT_MAX || '1000';
+
+// Every test file gets the same process.env it started with. Several suites
+// set NODE_ENV / feature flags and not all of them restore, which under
+// --runInBand leaks into later files (services read flags at require time).
+const envSnapshot = { ...process.env };
+afterAll(() => {
+  for (const key of Object.keys(process.env)) {
+    if (!(key in envSnapshot)) delete process.env[key];
+  }
+  Object.assign(process.env, envSnapshot);
+});
+
 let isConnected = false;
 let mongoServer;
 

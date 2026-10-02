@@ -22,7 +22,8 @@ describe('Secrets Validation', () => {
 
   describe('validateSecretStrength', () => {
     it('should accept strong secrets', () => {
-      const strongSecret = 'a'.repeat(32) + 'b'.repeat(20); // 52 chars, high entropy
+      // 64 hex chars from a fixed seed: long and with many distinct characters
+      const strongSecret = '9f3c1a7e4b0d6258c3e1f7a9b2d4c6e8a1f3b5d7c9e0a2b4c6d8e1f3a5b7c9d0';
       const result = validateSecretStrength(strongSecret);
       
       expect(result.valid).toBe(true);
@@ -101,11 +102,11 @@ describe('Secrets Validation', () => {
 
     it('should pass with all valid secrets', () => {
       process.env.NODE_ENV = 'production';
-      process.env.JWT_SECRET = 'a'.repeat(40) + 'b'.repeat(10);
-      process.env.JWT_REFRESH_SECRET = 'c'.repeat(40) + 'd'.repeat(10);
+      process.env.JWT_SECRET = '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b';
+      process.env.JWT_REFRESH_SECRET = 'f0e1d2c3b4a5968778695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f809';
       process.env.MONGODB_URI = 'mongodb://user:pass@localhost:27017/db';
-      process.env.WEBHOOK_SECRET = 'e'.repeat(40) + 'f'.repeat(10);
-      process.env.FIELD_ENCRYPTION_KEY = 'g'.repeat(40) + 'h'.repeat(10);
+      process.env.WEBHOOK_SECRET = '0f1e2d3c4b5a69788796a5b4c3d2e1f0a1b2c3d4e5f60718293a4b5c6d7e8f90';
+      process.env.FIELD_ENCRYPTION_KEY = 'abcdef0123456789fedcba9876543210a1b2c3d4e5f60718293a4b5c6d7e8f90';
       
       const results = validateSecrets();
       

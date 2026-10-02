@@ -5,16 +5,22 @@ const JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
 const JWT_REFRESH_EXPIRE = process.env.JWT_REFRESH_EXPIRE || '30d';
 
-// Generate access token
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, {
+// Generate access token.
+// `issuedAt` (epoch seconds) lets a caller date the token explicitly; used
+// after a revoke-all so the replacement token post-dates the revocation.
+const generateToken = (userId, { issuedAt } = {}) => {
+  const payload = { id: userId };
+  if (issuedAt) payload.iat = issuedAt;
+  return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRE
   });
 };
 
 // Generate refresh token
-const generateRefreshToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_REFRESH_SECRET, {
+const generateRefreshToken = (userId, { issuedAt } = {}) => {
+  const payload = { id: userId };
+  if (issuedAt) payload.iat = issuedAt;
+  return jwt.sign(payload, JWT_REFRESH_SECRET, {
     expiresIn: JWT_REFRESH_EXPIRE
   });
 };

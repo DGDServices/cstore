@@ -3,6 +3,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 const elasticsearchService = require('../services/elasticsearchService');
+const recommendationService = require('../services/recommendationService');
 
 // @desc    Get all products
 // @route   GET /api/products
@@ -223,10 +224,68 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Search suggestions (autocomplete)
+// @route   GET /api/products/suggestions?q=&limit=
+// @access  Public
+const getSuggestions = asyncHandler(async (req, res, next) => {
+  const q = String(req.query.q || '').trim();
+  const limit = Math.min(Number(req.query.limit) || 5, 20);
+  if (q.length < 2) {
+    return res.json({ success: true, data: { suggestions: [] } });
+  }
+  let suggestions = await elasticsearchService.getSuggestions(q, limit);
+  if (!suggestions || suggestions.length === 0) {
+    // Fallback when Elasticsearch is unavailable: prefix match on product names.
+    const products = await Product.find({ isActive: true, name: { $regex: `^${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, $options: 'i' } })
+      .select('name')
+      .limit(limit)
+      .lean();
+    suggestions = products.map(p => p.name);
+  }
+  res.json({ success: true, data: { suggestions } });
+});
+
+// @desc    Personalised recommendations for the signed-in user
+// @route   GET /api/products/recommendations?limit=
+// @access  Private
+const getRecommendations = asyncHandler(async (req, res, next) => {
+  const limit = Math.min(Number(req.query.limit) || 10, 50);
+  const recommendations = await recommendationService.getRecommendationsForUser(req.user.id, limit);
+  res.json({ success: true, data: { recommendations } });
+});
+
+// @desc    Related products (same category)
+// @route   GET /api/products/:id/related?limit=
+// @access  Public
+const getRelatedProducts = asyncHandler(async (req, res, next) => {
+  const limit = Math.min(Number(req.query.limit) || 6, 50);
+  const product = await Product.findById(req.params.id).select('_id');
+  if (!product) {
+    return next(new AppError('Product not found', 404));
+  }
+  const products = await recommendationService.getRelatedProducts(req.params.id, limit);
+  res.json({ success: true, data: { products } });
+});
+
+// @desc    Re-index all products into Elasticsearch
+// @route   POST /api/products/sync-elasticsearch
+// @access  Private/Admin
+const syncElasticsearch = asyncHandler(async (req, res, next) => {
+  const synced = await elasticsearchService.syncAllProducts(Product);
+  res.json({
+    success: synced,
+    message: synced ? 'Products synced to Elasticsearch' : 'Elasticsearch not available; nothing synced'
+  });
+});
+
 module.exports = {
   getProducts,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
+  getSuggestions,
+  getRecommendations,
+  getRelatedProducts,
+  syncElasticsearch
 };

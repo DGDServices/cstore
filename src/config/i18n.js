@@ -12,6 +12,11 @@ i18next
     
     // Supported languages
     supportedLngs: ['en', 'es', 'fr', 'de', 'zh'],
+
+    // Load every supported language at init (synchronously, via the fs backend)
+    // so getFixedT('es') etc. work immediately instead of lazily after first use.
+    preload: ['en', 'es', 'fr', 'de', 'zh'],
+    initImmediate: false,
     
     // Allow only languages defined in supportedLngs
     nonExplicitSupportedLngs: false,

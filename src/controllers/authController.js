@@ -180,17 +180,20 @@ const updatePassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   // Revoke all existing tokens for this user
+  const revokedAt = Date.now();
   try {
-    await tokenBlacklist.revokeUserTokens(user._id.toString());
+    await tokenBlacklist.revokeUserTokens(user._id.toString(), revokedAt);
     logger.info(`Password updated and all tokens revoked for user: ${user.email}`);
   } catch (error) {
     logger.error(`Failed to revoke tokens for user ${user.email}:`, error);
     // Continue even if token revocation fails
   }
 
-  // Generate new tokens
-  const token = generateToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+  // Generate new tokens, dated one second after the revocation so they are
+  // not caught by it (JWT iat has one-second resolution).
+  const issuedAt = Math.floor(revokedAt / 1000) + 1;
+  const token = generateToken(user._id, { issuedAt });
+  const refreshToken = generateRefreshToken(user._id, { issuedAt });
 
   res.json({
     success: true,

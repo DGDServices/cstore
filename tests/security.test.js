@@ -96,11 +96,14 @@ describe('Security Middleware Tests', () => {
 
   describe('CORS', () => {
     it('should set CORS headers', async () => {
+      // CORS is an allow-list; the header is only set for a request that
+      // carries an allowed Origin (origin-less requests are not browsers).
       const res = await request(app)
         .get('/api/health')
+        .set('Origin', 'http://localhost:3000')
         .expect(200);
-      
-      expect(res.headers['access-control-allow-origin']).toBeDefined();
+
+      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
     });
   });
 
