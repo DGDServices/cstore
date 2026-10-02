@@ -30,78 +30,9 @@ describe('Webhook Signature Verification', () => {
     return hmac.digest('hex');
   };
 
-  describe('POST /api/webhooks/payment', () => {
-    it('should accept webhook with valid signature', async () => {
-      const signature = generateSignature(validPayload);
-
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .set('X-Webhook-Signature', signature)
-        .send(validPayload);
-
-      // Accept both 200, 400, and 404 (payment not found or DB unavailable is OK for test)
-      // 400 can occur when database is not available in test environment
-      expect([200, 400, 404]).toContain(res.statusCode);
-    });
-
-    it('should reject webhook with invalid signature', async () => {
-      const invalidSignature = 'a'.repeat(64); // Invalid 64-char hex string
-
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .set('X-Webhook-Signature', invalidSignature)
-        .send(validPayload);
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.success).toBe(false);
-      expect(res.body.error).toContain('Invalid webhook signature');
-    });
-
-    it('should reject webhook without signature', async () => {
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .send(validPayload);
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
-
-    it('should accept signature with sha256= prefix', async () => {
-      const signature = generateSignature(validPayload);
-
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .set('X-Webhook-Signature', `sha256=${signature}`)
-        .send(validPayload);
-
-      // Accept both 200, 400, and 404 (payment not found or DB unavailable is OK for test)
-      // 400 can occur when database is not available in test environment
-      expect([200, 400, 404]).toContain(res.statusCode);
-    });
-
-    it('should reject webhook with signature for different payload', async () => {
-      const differentPayload = { ...validPayload, amount: 999 };
-      const signature = generateSignature(differentPayload);
-
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .set('X-Webhook-Signature', signature)
-        .send(validPayload); // Send different payload than signature
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
-
-    it('should reject webhook with malformed signature', async () => {
-      const res = await request(app)
-        .post('/api/webhooks/payment')
-        .set('X-Webhook-Signature', 'not-a-valid-signature')
-        .send(validPayload);
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.success).toBe(false);
-    });
-  });
+  // The legacy /api/webhooks/payment route (multi-coin payment webhooks) was
+  // removed with the legacy settlement code (D5). The signature utility below
+  // is still used by the generic webhookAuth middleware.
 
   describe('Webhook Verification Utility', () => {
     it('should generate valid signature', () => {

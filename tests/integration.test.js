@@ -3,7 +3,6 @@ const app = require('../src/app');
 const User = require('../src/models/User');
 const Product = require('../src/models/Product');
 const Order = require('../src/models/Order');
-const Payment = require('../src/models/Payment');
 const { generateToken } = require('../src/utils/jwt');
 
 describe('Integration Tests - Complete Order Flow', () => {
@@ -34,7 +33,7 @@ describe('Integration Tests - Complete Order Flow', () => {
   });
 
   describe('Complete Order Flow', () => {
-    it('should complete full order lifecycle: create product -> create order -> confirm payment -> update status', async () => {
+    it('should complete full order lifecycle: create product -> create order -> update status', async () => {
       if (!global.isConnected()) return;
 
       // Step 1: Admin creates a product
@@ -123,29 +122,6 @@ describe('Integration Tests - Complete Order Flow', () => {
       expect(getMyOrdersRes.body.success).toBe(true);
       expect(getMyOrdersRes.body.data.orders.length).toBeGreaterThan(0);
 
-      // Step 8: Confirm payment
-      const paymentData = {
-        orderId: orderId,
-        transactionHash: '0xintegration1234567890abcdef1234567890abcdef1234567890abcdef12'
-      };
-
-      const confirmPaymentRes = await request(app)
-        .post('/api/payments/confirm')
-        .send(paymentData);
-
-      expect(confirmPaymentRes.status).toBe(200);
-      expect(confirmPaymentRes.body.success).toBe(true);
-      expect(confirmPaymentRes.body.data.payment.status).toBe('confirmed');
-      expect(confirmPaymentRes.body.data.order.status).toBe('paid');
-
-      // Step 9: Get payment by order
-      const getPaymentRes = await request(app)
-        .get(`/api/payments/order/${orderId}`);
-
-      expect(getPaymentRes.status).toBe(200);
-      expect(getPaymentRes.body.success).toBe(true);
-      expect(getPaymentRes.body.data.payment.transactionHash).toBe(paymentData.transactionHash);
-
       // Step 10: Admin views all orders
       const getAllOrdersRes = await request(app)
         .get('/api/orders')
@@ -164,15 +140,6 @@ describe('Integration Tests - Complete Order Flow', () => {
       expect(updateStatusRes.status).toBe(200);
       expect(updateStatusRes.body.success).toBe(true);
       expect(updateStatusRes.body.data.order.status).toBe('shipped');
-
-      // Step 12: Admin views all payments
-      const getAllPaymentsRes = await request(app)
-        .get('/api/payments')
-        .set('Authorization', `Bearer ${adminToken}`);
-
-      expect(getAllPaymentsRes.status).toBe(200);
-      expect(getAllPaymentsRes.body.success).toBe(true);
-      expect(getAllPaymentsRes.body.data.payments.length).toBeGreaterThan(0);
 
       // Step 13: Admin updates product
       const updateProductRes = await request(app)
@@ -241,16 +208,6 @@ describe('Integration Tests - Complete Order Flow', () => {
       expect(getOrderRes.status).toBe(200);
       expect(getOrderRes.body.success).toBe(true);
 
-      // Confirm payment as guest
-      const confirmPaymentRes = await request(app)
-        .post('/api/payments/confirm')
-        .send({
-          orderId: orderId,
-          transactionHash: '0xguest1234567890abcdef1234567890abcdef1234567890abcdef123456'
-        });
-
-      expect(confirmPaymentRes.status).toBe(200);
-      expect(confirmPaymentRes.body.success).toBe(true);
     });
 
     it('should enforce authentication and authorization correctly', async () => {
@@ -300,12 +257,6 @@ describe('Integration Tests - Complete Order Flow', () => {
 
       expect(ordersRes.status).toBe(403);
 
-      // Try to view all payments as regular user
-      const paymentsRes = await request(app)
-        .get('/api/payments')
-        .set('Authorization', `Bearer ${userToken}`);
-
-      expect(paymentsRes.status).toBe(403);
     });
 
     it('should handle product filtering and search', async () => {

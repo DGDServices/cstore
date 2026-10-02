@@ -230,68 +230,10 @@ function showPaymentSection() {
     const paymentSection = document.getElementById('payment-section');
     paymentSection.classList.remove('hidden');
 
-    // DGD orders settle through a non-custodial multisig escrow (the buyer never
-    // pays a platform-controlled address). Route them to the escrow signing flow.
-    if (currentOrder.cryptocurrency === 'DGD') {
-        showDgdEscrowFlow();
-        return;
-    }
-
-    const paymentDetails = document.getElementById('payment-details');
-    paymentDetails.innerHTML = `
-        <div class="order-summary">
-            <h3>Order Summary</h3>
-            <div class="order-item">
-                <span>Product:</span>
-                <strong>${currentOrder.productName}</strong>
-            </div>
-            <div class="order-item">
-                <span>Quantity:</span>
-                <strong>${currentOrder.quantity}</strong>
-            </div>
-            <div class="order-item">
-                <span>Payment Method:</span>
-                <strong>${currentOrder.cryptocurrency}</strong>
-            </div>
-            <div class="order-item">
-                <span>Total:</span>
-                <strong>${currentOrder.totalPrice} ${currentOrder.cryptocurrency} (~$${currentOrder.totalPriceUSD})</strong>
-            </div>
-        </div>
-        
-        <div class="payment-instructions">
-            <h3>Payment Instructions</h3>
-            <ol>
-                <li>Send exactly <strong>${currentOrder.totalPrice} ${currentOrder.cryptocurrency}</strong> to the address below</li>
-                <li>After sending, enter your transaction hash</li>
-                <li>Your order will be confirmed once payment is verified</li>
-            </ol>
-        </div>
-        
-        <div class="form-group">
-            <label>Payment Address:</label>
-            <div class="payment-address">${currentOrder.paymentAddress}</div>
-        </div>
-        
-        <form id="payment-form">
-            <div class="form-group">
-                <label for="transaction-hash">Transaction Hash:</label>
-                <input type="text" id="transaction-hash" name="transactionHash" 
-                       placeholder="Enter your transaction hash" required>
-            </div>
-            
-            <button type="submit" class="btn">Confirm Payment</button>
-            <button type="button" class="btn back-button" onclick="goBackToProducts()">
-                Cancel Order
-            </button>
-        </form>
-    `;
-    
-    // Setup payment form submission
-    document.getElementById('payment-form').onsubmit = async (e) => {
-        e.preventDefault();
-        await confirmPayment();
-    };
+    // The marketplace settles in DGD only. Orders fund a party-owned multisig
+    // escrow (the buyer never pays a platform-controlled address) and are
+    // released by the parties signing a payout PSBT in their own wallets.
+    showDgdEscrowFlow();
 }
 
 // ── DGD non-custodial escrow flow ──────────────────────────────────────────
@@ -415,34 +357,6 @@ function mountDgdPanel() {
 }
 
 // Confirm payment
-async function confirmPayment() {
-    const transactionHash = document.getElementById('transaction-hash').value;
-    
-    try {
-        const response = await fetch(`${API_URL}/payments/confirm`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                orderId: currentOrder.id,
-                transactionHash: transactionHash
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showSuccessMessage();
-        } else {
-            showError(data.message || 'Failed to confirm payment');
-        }
-    } catch (error) {
-        console.error('Error confirming payment:', error);
-        showError('Failed to confirm payment. Please try again.');
-    }
-}
-
 // Show success message
 function showSuccessMessage() {
     const paymentDetails = document.getElementById('payment-details');

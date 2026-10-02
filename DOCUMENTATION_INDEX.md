@@ -221,13 +221,8 @@ Choose your role to get started quickly:
 - **[docs/api/API_ENDPOINTS.md](docs/api/API_ENDPOINTS.md)** - Complete endpoint reference
   - Authentication, Users, Products, Orders, Payments, Admin endpoints
 
-### Blockchain & Cryptocurrency APIs
-- **[docs/api/BITCOIN_RPC.md](docs/api/BITCOIN_RPC.md)** - Bitcoin Core RPC integration
-- **[docs/api/LIGHTNING_NETWORK.md](docs/api/LIGHTNING_NETWORK.md)** - Lightning Network support
-- **[docs/api/MULTI_CRYPTOCURRENCY.md](docs/api/MULTI_CRYPTOCURRENCY.md)** - Multi-currency support (BTC, ETH, LTC, XRP)
-- **[docs/api/CURRENCY_API.md](docs/api/CURRENCY_API.md)** - Currency conversion and pricing
-- **[docs/api/MULTI_SIG_WALLET.md](docs/api/MULTI_SIG_WALLET.md)** - Multi-signature wallet API
-- **[docs/api/MULTI_SIG_EXAMPLES.md](docs/api/MULTI_SIG_EXAMPLES.md)** - Multi-sig usage examples
+### DGD Settlement
+- **[docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md)** - Non-custodial DGD escrow: open → fund → propose → sign → release
 
 ### Search & Discovery
 - **[docs/api/ELASTICSEARCH.md](docs/api/ELASTICSEARCH.md)** - Search API (fuzzy search, typo tolerance)
@@ -275,7 +270,6 @@ Choose your role to get started quickly:
 
 ### Examples & Usage Guides
 - **[examples/README.md](examples/README.md)** - Usage examples directory
-- **[examples/multi-currency-usage.md](examples/multi-currency-usage.md)** - Multi-currency examples
 - **[examples/elasticsearch-usage.md](examples/elasticsearch-usage.md)** - Search examples
 
 ---
@@ -311,9 +305,6 @@ Historical implementation summaries and technical notes (maintained for referenc
 - **[docs/implementation/API_IMPLEMENTATION_SUMMARY.md](docs/implementation/API_IMPLEMENTATION_SUMMARY.md)** - API implementation
 - **[docs/implementation/SECURITY_IMPLEMENTATION_SUMMARY.md](docs/implementation/SECURITY_IMPLEMENTATION_SUMMARY.md)** - Security implementation
 - **[docs/implementation/K8S_IMPLEMENTATION_SUMMARY.md](docs/implementation/K8S_IMPLEMENTATION_SUMMARY.md)** - K8s implementation
-- **[docs/implementation/LIGHTNING_IMPLEMENTATION_SUMMARY.md](docs/implementation/LIGHTNING_IMPLEMENTATION_SUMMARY.md)** - Lightning Network
-- **[docs/implementation/MULTI_SIG_IMPLEMENTATION.md](docs/implementation/MULTI_SIG_IMPLEMENTATION.md)** - Multi-sig wallets
-- **[docs/implementation/MULTI_CURRENCY_IMPLEMENTATION.md](docs/implementation/MULTI_CURRENCY_IMPLEMENTATION.md)** - Multi-currency
 - **[docs/implementation/I18N_IMPLEMENTATION.md](docs/implementation/I18N_IMPLEMENTATION.md)** - Internationalization
 - **[docs/implementation/ELASTICSEARCH_INTEGRATION.md](docs/implementation/ELASTICSEARCH_INTEGRATION.md)** - Search integration
 - **[docs/implementation/PRODUCT_QA_IMPLEMENTATION.md](docs/implementation/PRODUCT_QA_IMPLEMENTATION.md)** - QA implementation

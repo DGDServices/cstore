@@ -32,7 +32,6 @@ import {
   Logout,
   AccountCircle,
   RateReview,
-  Print,
 } from '@mui/icons-material';
 import { logout } from '../../store/authSlice';
 import type { AppDispatch, RootState } from '../../store';
@@ -63,11 +62,6 @@ const Layout = ({ children }: LayoutProps) => {
     { text: 'System', icon: <Settings />, path: '/system' },
   ];
 
-  const podMenuItems = [
-    { text: 'POD Products', icon: <Print />, path: '/pod/products' },
-    { text: 'POD Orders', icon: <ShoppingCart />, path: '/pod/orders' },
-  ];
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -95,23 +89,6 @@ const Layout = ({ children }: LayoutProps) => {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton onClick={() => {
-              navigate(item.path);
-              if (isMobile) setMobileOpen(false);
-            }}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: 'text.secondary' }}>
-        Print-on-Demand
-      </Typography>
-      <List>
-        {podMenuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton onClick={() => {
               navigate(item.path);

@@ -555,59 +555,13 @@ authRouter.use(rateLimit({
 
 ---
 
-## ⛓ Blockchain Integration
+## ⛓ DGD Settlement
 
-### Bitcoin Core RPC Integration
-
-```
-Application
-    ↓
-[Bitcoin RPC Client]
-    ↓ (JSON-RPC over HTTP)
-[Bitcoin Core Node]
-    ↓
-Bitcoin Network
-```
-
-**Key Operations**:
-- `getnewaddress()` - Generate payment addresses
-- `getreceivedbyaddress()` - Check payment received
-- `sendtoaddress()` - Send Bitcoin payments
-- `gettransaction()` - Verify transactions
-
-**Implementation**:
-```javascript
-const bitcoin = require('bitcoin-core');
-
-const client = new bitcoin({
-  network: 'mainnet',
-  host: process.env.BITCOIN_RPC_HOST,
-  port: process.env.BITCOIN_RPC_PORT,
-  username: process.env.BITCOIN_RPC_USER,
-  password: process.env.BITCOIN_RPC_PASS
-});
-
-// Generate address for order
-const address = await client.getNewAddress('order_' + orderId);
-```
-
-### Lightning Network Integration
-
-```
-Application
-    ↓
-[LND gRPC Client]
-    ↓ (gRPC)
-[Lightning Network Daemon (LND)]
-    ↓
-Lightning Network
-```
-
-**Key Operations**:
-- `AddInvoice()` - Create Lightning invoice
-- `LookupInvoice()` - Check invoice status
-- `SendPaymentSync()` - Send Lightning payment
-- `ListChannels()` - Manage Lightning channels
+Settlement is DGD-only and non-custodial. `src/config/dgd.js`, `src/services/dgdCoreClient.js`,
+`src/controllers/dgdEscrowController.js` and `src/routes/dgdEscrowRoutes.js` bridge to the external
+`dgd-core` service, which talks to the DGD node and assembles PSBTs; the platform holds no keys.
+Full flow: `docs/DGD_ESCROW_SIGNING.md`. The Bitcoin Core RPC and Lightning Network integrations
+inherited from Cryptons.com were removed in October 2026 (decision D5).
 
 ### Webhook Architecture
 
@@ -886,8 +840,7 @@ describe('Product API', () => {
 
 ### Design Documents
 - **[Feature Implementation](docs/features/FEATURE_IMPLEMENTATION_SUMMARY.md)** - Feature technical specs
-- **[Blockchain Integration](docs/api/BITCOIN_RPC.md)** - Blockchain architecture
-- **[Lightning Network](docs/api/LIGHTNING_NETWORK.md)** - Lightning implementation
+- **[DGD Escrow Signing](docs/DGD_ESCROW_SIGNING.md)** - Non-custodial settlement flow
 
 ### Getting Started
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Development setup
