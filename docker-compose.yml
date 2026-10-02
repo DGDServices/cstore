@@ -71,9 +71,6 @@ services:
       MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/cryptons?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      BTC_ADDRESS: ${BTC_ADDRESS}
-      ETH_ADDRESS: ${ETH_ADDRESS}
-      USDT_ADDRESS: ${USDT_ADDRESS}
       SEED_DATA: ${SEED_DATA:-true}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-false}
@@ -104,9 +101,6 @@ services:
       MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/cryptons?authSource=admin
       JWT_SECRET: ${JWT_SECRET:-dev-secret}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret}
-      BTC_ADDRESS: ${BTC_ADDRESS}
-      ETH_ADDRESS: ${ETH_ADDRESS}
-      USDT_ADDRESS: ${USDT_ADDRESS}
       SEED_DATA: "true"
       LOG_LEVEL: debug
       ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-false}

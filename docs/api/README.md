@@ -19,12 +19,6 @@ This directory contains comprehensive API documentation for Cryptons.com, includ
   - Example requests/responses
 
 ### Integration Guides
-- **BITCOIN_RPC.md** - Bitcoin RPC integration
-- **LIGHTNING_NETWORK.md** - Lightning Network integration
-- **CURRENCY_API.md** - Multi-currency API integration
-- **MULTI_CRYPTOCURRENCY.md** - Multiple cryptocurrency support
-- **MULTI_SIG_WALLET.md** - Multi-signature wallet API
-- **MULTI_SIG_EXAMPLES.md** - Multi-sig usage examples
 
 ### Specialized APIs
 - **ELASTICSEARCH.md** - Search API integration
@@ -64,7 +58,6 @@ curl -X GET https://api.cryptons.com/api/products \
 1. **API.md** - Start here for API overview
 2. **API_ENDPOINTS.md** - Detailed endpoint reference
 3. Specific integration guides as needed
-4. **MULTI_SIG_EXAMPLES.md** - For blockchain integrations
 
 ## 🔒 Security Considerations
 

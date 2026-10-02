@@ -7,62 +7,6 @@ const logger = require('../utils/logger');
  */
 
 /**
- * Verify Printify webhook signature
- */
-exports.verifyPrintifyWebhook = (req, res, next) => {
-  try {
-    const signature = req.headers['x-printify-signature'];
-    const webhookSecret = process.env.PRINTIFY_WEBHOOK_SECRET;
-
-    // Skip verification in development if configured
-    if (process.env.NODE_ENV === 'development' && process.env.SKIP_WEBHOOK_VERIFICATION === 'true') {
-      logger.warn('Webhook verification skipped in development mode');
-      return next();
-    }
-
-    if (!webhookSecret) {
-      logger.error('Printify webhook secret not configured');
-      return res.status(500).json({
-        success: false,
-        error: 'Webhook verification not configured'
-      });
-    }
-
-    if (!signature) {
-      logger.warn('Webhook received without signature');
-      return res.status(401).json({
-        success: false,
-        error: 'Missing webhook signature'
-      });
-    }
-
-    // Verify signature
-    const payload = JSON.stringify(req.body);
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(payload)
-      .digest('hex');
-
-    if (signature !== expectedSignature) {
-      logger.warn('Invalid webhook signature received');
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid webhook signature'
-      });
-    }
-
-    logger.info('Printify webhook signature verified');
-    next();
-  } catch (error) {
-    logger.error('Webhook verification error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Webhook verification failed'
-    });
-  }
-};
-
-/**
  * Verify exchange webhook signature (generic)
  */
 exports.verifyExchangeWebhook = (exchangeName) => {

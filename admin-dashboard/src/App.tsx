@@ -12,8 +12,6 @@ import Users from './pages/Users';
 import Reviews from './pages/Reviews';
 import Analytics from './pages/Analytics';
 import SystemHealth from './pages/SystemHealth';
-import PodProducts from './pages/PodProducts';
-import PodOrders from './pages/PodOrders';
 
 const theme = createTheme({
   palette: {
@@ -47,8 +45,6 @@ function App() {
                       <Route path="/reviews" element={<Reviews />} />
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/system" element={<SystemHealth />} />
-                      <Route path="/pod/products" element={<PodProducts />} />
-                      <Route path="/pod/orders" element={<PodOrders />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Layout>

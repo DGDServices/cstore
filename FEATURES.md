@@ -147,109 +147,14 @@ below remain in the codebase but are deprecated — see the banner above.)*
 
 ---
 
-## 💰 Cryptocurrency Features
+## 💰 DGD Settlement
 
-### Multi-Cryptocurrency Support
-
-**Supported Cryptocurrencies:**
-- **Bitcoin (BTC)** - Full integration with Bitcoin Core RPC
-- **Litecoin (LTC)** - Alternative payment option
-- **Ripple (XRP)** - Fast international transfers
-- **Lightning Network** - Instant Bitcoin payments
-
-**Capabilities:**
-- Real-time cryptocurrency price conversion
-- Blockchain transaction verification
-- Payment address generation
-- Webhook notifications for payments
-- Transaction monitoring and status updates
-
-**Documentation:**
-- [Bitcoin RPC Integration](docs/api/BITCOIN_RPC.md)
-- [Multi-Cryptocurrency Guide](docs/api/MULTI_CRYPTOCURRENCY.md)
-- [Lightning Network](docs/api/LIGHTNING_NETWORK.md)
-
-### Lightning Network Integration
-
-**Capabilities:**
-- Instant Bitcoin transactions
-- Low transaction fees
-- Invoice generation and payment
-- Channel management
-- Real-time payment updates
-
-**Features:**
-- Generate Lightning invoices
-- Monitor payment status
-- Automatic settlement
-- Channel balance monitoring
-- Routing optimization
-
-**API Endpoints:**
-- `POST /api/lightning/invoice` - Create Lightning invoice
-- `GET /api/lightning/invoice/:id` - Check invoice status
-- `POST /api/lightning/pay` - Pay Lightning invoice
-
-**Documentation:** [docs/api/LIGHTNING_NETWORK.md](docs/api/LIGHTNING_NETWORK.md)
-
-### Multi-Signature Wallets
-
-**Capabilities:**
-- Create multi-sig wallets (2-of-3, 3-of-5, etc.)
-- Transaction proposal system
-- Multi-party approval workflow
-- Enhanced security for large transactions
-- Audit trail for all approvals
-
-**Use Cases:**
-- Escrow services
-- Corporate treasury management
-- Shared wallets for partners
-- Enhanced security for high-value transactions
-
-**API Endpoints:**
-- `POST /api/multisig/wallets` - Create multi-sig wallet
-- `POST /api/multisig/transactions` - Propose transaction
-- `POST /api/multisig/transactions/:id/approve` - Approve transaction
-- `GET /api/multisig/wallets/:id` - Get wallet details
-
-**Documentation:** [docs/api/MULTI_SIG_WALLET.md](docs/api/MULTI_SIG_WALLET.md)
-
-### Escrow Service
-
-**Capabilities:**
-- Create escrow transactions with milestone support
-- Fund, release, and refund escrow funds
-- Dispute filing and resolution workflow
-- Milestone-based payment release
-- Admin statistics and management
-
-**API Endpoints:**
-- `POST /api/escrow` - Create escrow
-- `POST /api/escrow/:id/fund` - Fund escrow
-- `POST /api/escrow/:id/release` - Release funds
-- `POST /api/escrow/:id/refund` - Refund escrow
-- `POST /api/escrow/:id/dispute` - File dispute
-- `POST /api/escrow/:id/resolve` - Resolve dispute (admin)
-
-**Documentation:** [docs/ESCROW_SYSTEM_README.md](docs/ESCROW_SYSTEM_README.md)
-
-### Crypto-to-Fiat Conversion
-
-**Capabilities:**
-- Initiate crypto-to-fiat conversions
-- Multi-exchange rate comparison (Coinbase, Kraken, Binance)
-- Automatic best-rate selection
-- Conversion history and status tracking
-- Admin approval workflows for large amounts
-- Configurable daily limits and slippage protection
-
-**API Endpoints:**
-- `POST /api/conversions/initiate` - Start conversion
-- `GET /api/conversions/:id/status` - Check conversion status
-- `GET /api/conversions/history` - View conversion history
-
-**Documentation:** [docs/CONVERSION_SYSTEM.md](docs/CONVERSION_SYSTEM.md)
+The marketplace settles in **DGD only**, through the non-custodial party-owned
+multisig escrow at `/api/dgd-escrow` (see `docs/DGD_ESCROW_SIGNING.md`). The
+multi-cryptocurrency, Lightning Network, custodial escrow, multi-signature
+wallet, crypto-to-fiat conversion, multi-currency pricing and regional payment
+features inherited from the Cryptons.com codebase were removed in October 2026
+(decision D5); their history remains in git.
 
 ### Crypto Fair Value (CFV) Metrics
 
@@ -262,24 +167,6 @@ below remain in the codebase but are deprecated — see the banner above.)*
 - `GET /api/cfv/coins` - Get all CFV coin data
 - `GET /api/cfv/coins/:symbol` - Get CFV data for a specific coin
 - `GET /api/cfv/summary` - Get CFV summary
-
----
-
-## 🖨 Print-on-Demand (Printify Integration)
-
-**Capabilities:**
-- Full Printify API integration for print-on-demand products
-- Product catalog sync from Printify
-- Automatic order submission to production
-- Webhook handling for order status updates
-- Payment method configuration (Stripe/PayPal)
-
-**API Endpoints:**
-- `GET /api/printify/products` - List POD products
-- `POST /api/printify/orders` - Submit POD order
-- `POST /api/printify/webhooks` - Receive Printify webhooks
-
-**Documentation:** [docs/POD_SETUP_GUIDE.md](docs/POD_SETUP_GUIDE.md) | [docs/PRINTIFY_API.md](docs/PRINTIFY_API.md)
 
 ---
 
@@ -375,34 +262,6 @@ Modern React-based admin interface for platform management.
 - Date and time formatting
 - Number formatting by locale
 - Currency symbol display
-
-### Multi-Currency Support
-
-**Supported Currencies:**
-- USD, EUR, GBP, JPY, CNY, CAD, AUD, CHF, SEK, NZD
-
-**Capabilities:**
-- Real-time exchange rate updates
-- Historical exchange rate data
-- Automatic price conversion
-- Currency-aware formatting
-- Admin currency management
-
-**API Endpoints:**
-- `GET /api/currencies` - List supported currencies
-- `POST /api/currencies/convert` - Convert between currencies
-- `GET /api/currencies/rates` - Get current exchange rates
-
-### Regional Payment Methods
-
-**Supported Payment Methods:**
-- SEPA (Europe)
-- iDEAL (Netherlands)
-- Bancontact (Belgium)
-- Alipay (China)
-- WeChat Pay (China)
-- PIX (Brazil)
-- And 10+ more regional options
 
 ---
 

@@ -242,11 +242,6 @@ class SecretsManager {
         smtp_user: 'SMTP_USER',
         smtp_password: 'SMTP_PASSWORD'
       },
-      'cryptons/blockchain': {
-        btc_address: 'BTC_ADDRESS',
-        eth_address: 'ETH_ADDRESS',
-        usdt_address: 'USDT_ADDRESS'
-      },
       'cryptons/encryption': {
         field_key: 'FIELD_ENCRYPTION_KEY',
         webhook_secret: 'WEBHOOK_SECRET'

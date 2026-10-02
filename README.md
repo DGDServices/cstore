@@ -10,8 +10,8 @@
 A peer-to-peer marketplace platform for the Digital Gold (DGD) platform —
 **DGD-only**, **non-custodial**, single-price (oracle). Orders settle through
 party-owned multisig escrow (the platform holds no key); auctions, seller
-marketplace, consumer-to-consumer listings, content moderation, print-on-demand,
-and a comprehensive KYC/AML compliance framework round out the marketplace.
+marketplace, consumer-to-consumer listings, content moderation,
+and a KYC/AML compliance framework round out the marketplace.
 Built with Node.js, Express, MongoDB, and React.
 
 > **Project identity.** This project is **DGD Marketplace** (developed by DGDServices). It is built on top of the inherited **Cryptons.com** platform codebase, which remains the substrate for the e-commerce, payments, and compliance features. Internal infrastructure identifiers (log service names `cryptons-api`/`cryptons-audit`, Vault secret paths `cryptons/*`, cache prefix `cryptons:`, the default seed admin) intentionally retain the `cryptons` name to avoid breaking monitoring, secret-store, and cache contracts — they are internal and not user-facing. See [docs/IDENTITY.md](docs/IDENTITY.md) for the full decision record.
@@ -32,12 +32,12 @@ canonical funds path is the **non-custodial DGD escrow** (`/api/dgd-escrow` →
 - **No crypto→fiat** — DGD circulates; crypto-to-fiat conversion is disabled by
   design (white paper §9).
 
-> **Legacy (non-DGD) features below are retained in the codebase but are NOT
-> part of the DGD-only path:** multi-currency pricing, direct BTC/LTC/XRP
-> payments, Lightning Network, custodial escrow (`/api/escrow`), and the
-> crypto-to-fiat / exchange integrations (`/api/conversion`, `/api/exchange`,
-> `/api/currency`, `/api/regional-payments`). These conflict with the invariants
-> above and are slated to be disabled/removed; treat them as deprecated.
+> **Legacy (non-DGD) code removed, October 2026 (decision D5):** multi-currency
+> pricing, direct BTC/LTC/XRP payments, Lightning Network, custodial escrow
+> (`/api/escrow`), multi-signature wallets (`/api/multisig`), crypto-to-fiat /
+> exchange integrations, regional fiat payments, and print-on-demand. The
+> history is in git. The last pieces (legacy `escrowService` behind order
+> creation, `currencyService`, `ConversionTransaction`) go with the order rewrite.
 
 ---
 
@@ -111,23 +111,12 @@ npm test
 ✅ Wishlist functionality  
 ✅ Multi-language support (5 languages)  
 ✅ Recommendation engine  
-⚠️ Multi-currency pricing (10+ currencies) — *legacy; DGD-only uses the single oracle price*  
-⚠️ Regional payment methods (15+ options) — *legacy; not part of the DGD-only path*  
 
 ### DGD settlement (canonical)
 ✅ **DGD non-custodial escrow** (`/api/dgd-escrow`) — party-owned 2-of-3 multisig; the platform holds **no key**  
 ✅ External-wallet PSBT signing (DGD-QT) — open → fund → propose → sign → release, with refund + arbitrator mediation  
 ✅ Single price from the signed DGD **oracle** (no bid/ask)  
 ✅ Crypto Fair Value (CFV) metrics  
-
-### Legacy crypto & finance *(deprecated under DGD-only — retained in the codebase, not the DGD path)*
-⚠️ Bitcoin, Litecoin, XRP direct integration  
-⚠️ Lightning Network for instant payments (LND) + channel monitoring  
-⚠️ Custodial escrow service (`/api/escrow`) with milestone/dispute support  
-⚠️ Crypto-to-fiat conversion + exchange integration (Coinbase, Kraken, Binance) — **disabled by design (white paper §9)**  
-⚠️ Multi-exchange balance tracking  
-✅ Multi-signature wallet primitives (reused by DGD 2-of-3 escrow)  
-✅ Blockchain transaction verification + payment webhooks (signature-verified)  
 
 ### Marketplace (v3.0)
 ✅ **Auction system** – timed auctions, bids, and auction watch lists  
@@ -146,11 +135,6 @@ npm test
 ✅ Prohibited item rules engine  
 ✅ Content moderation audit log  
 ✅ Authority reporting service  
-
-### Print-on-Demand (Printify)
-✅ Printify API integration for POD products  
-✅ Automatic order submission to production  
-✅ Product sync and webhook handling  
 
 ### Admin Dashboard
 ✅ React 19 + TypeScript management interface (Vite)  
@@ -208,20 +192,10 @@ npm test
 | `/api/categories` | Category management (hierarchical) |
 | `/api/cart` | Shopping cart (persistent) |
 | `/api/orders` | Order lifecycle management |
-| `/api/payments` | Payment processing — ⚠️ *legacy direct/custodial path; DGD orders use `/api/dgd-escrow`* |
 | `/api/reviews` | Reviews and ratings |
 | `/api/wishlist` | User wishlists |
-| `/api/multisig` | Multi-signature wallet operations (primitive reused by DGD 2-of-3 escrow) |
-| `/api/lightning` | ⚠️ *Legacy* — Lightning Network payments and channels (not the DGD path) |
-| `/api/escrow` | ⚠️ *Legacy custodial escrow* — superseded by non-custodial `/api/dgd-escrow` |
 | `/api/dgd-escrow` | **DGD non-custodial multisig escrow signing** (open, fund-check, propose-release, payout-PSBT, sign, dispute, refund, arbitrator mediate) — platform holds no key; the canonical DGD funds path; see [docs/DGD_ESCROW_SIGNING.md](docs/DGD_ESCROW_SIGNING.md) |
 | `/api/cfv` | Crypto Fair Value metrics |
-| `/api/printify` | Print-on-demand (Printify) |
-| `/api/webhooks` | Blockchain and payment webhooks |
-| `/api/currency` | ⚠️ *Legacy* — currency rates and exchange (DGD-only uses the single oracle price) |
-| `/api/conversion` | 🚫 *Disabled by design* — crypto-to-fiat conversion (white paper §9: DGD circulates) |
-| `/api/exchange` | 🚫 *Disabled by design* — exchange balances (Coinbase/Kraken/Binance) |
-| `/api/regional-payments` | ⚠️ *Legacy* — regional fiat payment methods (not the DGD path) |
 | `/api/admin` | Admin management interface |
 | `/api/auctions` | Auction system and bids |
 | `/api/sellers` | Seller onboarding and products |
@@ -263,8 +237,7 @@ npm test
 
 **Backend**: Node.js 18+, Express 5, MongoDB (Mongoose 8), Redis (ioredis), Elasticsearch  
 **Frontend**: React 19, TypeScript, Material-UI v6, Redux Toolkit, Vite  
-**Blockchain**: DGD (Bitcoin-fork) JSON-RPC + non-custodial multisig escrow (PSBT). ⚠️ *Legacy:* Bitcoin Core RPC, Lightning Network (LND), XRP Ledger (xrpl), Web3/Ethereum  
-**Integrations**: Printify (POD). ⚠️ *Legacy / disabled under DGD-only:* Coinbase/Kraken/Binance exchanges, Stripe, PayPal  
+**Blockchain**: DGD (Bitcoin Core fork) via the external `dgd-core` service — non-custodial 2-of-3 multisig escrow, PSBT signing in DGD-QT  
 **Compliance**: Jumio, Onfido, Sumsub (KYC); OFAC/UN/EU sanctions; PhotoDNA, AWS Rekognition, Azure Content Safety, OpenAI Moderation, Perspective API  
 **Secrets**: HashiCorp Vault, AWS Secrets Manager  
 **Infrastructure**: Docker, Kubernetes, GitHub Actions, Prometheus, Grafana, Winston  

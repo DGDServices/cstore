@@ -1,6 +1,5 @@
 const Escrow = require('../models/Escrow');
 const logger = require('../utils/logger');
-const { verifyTransaction } = require('./blockchainService');
 
 /**
  * Escrow Service
@@ -77,21 +76,9 @@ class EscrowService {
         throw new Error(`Cannot fund escrow with status: ${escrow.status}`);
       }
       
-      // Verify the transaction when blockchain verification is enabled
-      let verification = { verified: true };
-      if (process.env.VERIFY_BLOCKCHAIN === 'true') {
-        verification = await verifyTransaction(
-          escrow.cryptocurrency,
-          transactionHash,
-          escrow.depositAddress,
-          escrow.amount
-        );
-      }
-      
-      if (!verification.verified) {
-        throw new Error(verification.error || 'Transaction verification failed');
-      }
-      
+      // Legacy on-chain verification removed with the multi-coin code (D5);
+      // this service is itself removed in the order-rewrite PR.
+
       // Update escrow status
       escrow.depositTransactionHash = transactionHash;
       escrow.status = 'funded';
