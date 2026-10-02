@@ -18,7 +18,7 @@ const DGF_CFV_COINS = [
   { symbol: 'NEAR', name: 'NEAR Protocol' },
   { symbol: 'ICP', name: 'Internet Computer' },
   { symbol: 'XCH', name: 'Chia' },
-  { symbol: 'DGD', name: 'Digital Gold' }
+  { symbol: 'DGD', name: 'Digital Gold' },
 ];
 
 /** The one and only settlement asset. */
@@ -28,5 +28,5 @@ const SETTLEMENT_CURRENCY_SYMBOLS = SETTLEMENT_CURRENCIES.map(coin => coin.symbo
 module.exports = {
   DGF_CFV_COINS,
   SETTLEMENT_CURRENCIES,
-  SETTLEMENT_CURRENCY_SYMBOLS
+  SETTLEMENT_CURRENCY_SYMBOLS,
 };

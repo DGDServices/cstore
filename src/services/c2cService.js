@@ -12,9 +12,17 @@ try {
 }
 
 const ALLOWED_UPDATE_FIELDS = [
-  'title', 'description', 'images', 'price', 'isNegotiable',
-  'condition', 'location', 'tags', 'preferredContactMethod',
-  'paymentMethod', 'safeExchangePreferred'
+  'title',
+  'description',
+  'images',
+  'price',
+  'isNegotiable',
+  'condition',
+  'location',
+  'tags',
+  'preferredContactMethod',
+  'paymentMethod',
+  'safeExchangePreferred',
 ];
 
 class C2CService {
@@ -22,18 +30,20 @@ class C2CService {
     const listing = await C2CListing.create({
       ...listingData,
       seller: sellerId,
-      status: 'pending_moderation'
+      status: 'pending_moderation',
     });
 
     // Fire-and-forget content moderation
     if (contentModerationService) {
       const imageUrls = (listing.images || []).map(i => i.url).filter(Boolean);
-      contentModerationService.moderateContent(
-        'listing',
-        listing._id,
-        { text: `${listing.title} ${listing.description}`, imageUrls },
-        sellerId
-      ).catch(err => logger.error('Content moderation error for listing:', err));
+      contentModerationService
+        .moderateContent(
+          'listing',
+          listing._id,
+          { text: `${listing.title} ${listing.description}`, imageUrls },
+          sellerId
+        )
+        .catch(err => logger.error('Content moderation error for listing:', err));
     }
 
     return listing;
@@ -72,12 +82,14 @@ class C2CService {
 
       if (contentModerationService) {
         const imageUrls = (listing.images || []).map(i => i.url).filter(Boolean);
-        contentModerationService.moderateContent(
-          'listing',
-          listing._id,
-          { text: `${listing.title} ${listing.description}`, imageUrls },
-          sellerId
-        ).catch(err => logger.error('Content moderation error on update:', err));
+        contentModerationService
+          .moderateContent(
+            'listing',
+            listing._id,
+            { text: `${listing.title} ${listing.description}`, imageUrls },
+            sellerId
+          )
+          .catch(err => logger.error('Content moderation error on update:', err));
       }
     }
 
@@ -86,14 +98,7 @@ class C2CService {
   }
 
   async searchListings(filters = {}, userCoords, page = 1, limit = 20) {
-    const {
-      category,
-      condition,
-      minPrice,
-      maxPrice,
-      search,
-      radiusKm = 50
-    } = filters;
+    const { category, condition, minPrice, maxPrice, search, radiusKm = 50 } = filters;
 
     page = parseInt(page, 10) || 1;
     limit = parseInt(limit, 10) || 20;
@@ -103,7 +108,10 @@ class C2CService {
       // Use aggregation with $geoNear when coordinates provided
       const geoNearStage = {
         $geoNear: {
-          near: { type: 'Point', coordinates: [parseFloat(userCoords[0]), parseFloat(userCoords[1])] },
+          near: {
+            type: 'Point',
+            coordinates: [parseFloat(userCoords[0]), parseFloat(userCoords[1])],
+          },
           distanceField: 'distance',
           maxDistance: radiusKm * 1000,
           spherical: true,
@@ -112,23 +120,27 @@ class C2CService {
             moderationStatus: 'approved',
             ...(category && { category }),
             ...(condition && { condition }),
-            ...(minPrice !== undefined || maxPrice !== undefined ? {
-              price: {
-                ...(minPrice !== undefined && { $gte: parseFloat(minPrice) }),
-                ...(maxPrice !== undefined && { $lte: parseFloat(maxPrice) })
-              }
-            } : {})
-          }
-        }
+            ...(minPrice !== undefined || maxPrice !== undefined
+              ? {
+                  price: {
+                    ...(minPrice !== undefined && { $gte: parseFloat(minPrice) }),
+                    ...(maxPrice !== undefined && { $lte: parseFloat(maxPrice) }),
+                  },
+                }
+              : {}),
+          },
+        },
       };
 
       const pipeline = [
         geoNearStage,
         { $sort: { lastBumpedAt: -1, createdAt: -1 } },
-        { $facet: {
-          data: [{ $skip: skip }, { $limit: limit }],
-          total: [{ $count: 'count' }]
-        }}
+        {
+          $facet: {
+            data: [{ $skip: skip }, { $limit: limit }],
+            total: [{ $count: 'count' }],
+          },
+        },
       ];
 
       const [result] = await C2CListing.aggregate(pipeline);
@@ -151,19 +163,15 @@ class C2CService {
     }
 
     const [listings, total] = await Promise.all([
-      C2CListing.find(query)
-        .sort({ lastBumpedAt: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      C2CListing.countDocuments(query)
+      C2CListing.find(query).sort({ lastBumpedAt: -1, createdAt: -1 }).skip(skip).limit(limit),
+      C2CListing.countDocuments(query),
     ]);
 
     return { listings, total, page, limit };
   }
 
   async getListing(listingId, _viewerUserId) {
-    const listing = await C2CListing.findById(listingId)
-      .populate('seller', 'name createdAt');
+    const listing = await C2CListing.findById(listingId).populate('seller', 'name createdAt');
 
     if (!listing) {
       const err = new Error('Listing not found');
@@ -172,8 +180,9 @@ class C2CService {
     }
 
     // Increment viewCount fire-and-forget
-    C2CListing.findByIdAndUpdate(listingId, { $inc: { viewCount: 1 } })
-      .catch(err => logger.error('Failed to increment viewCount:', err));
+    C2CListing.findByIdAndUpdate(listingId, { $inc: { viewCount: 1 } }).catch(err =>
+      logger.error('Failed to increment viewCount:', err)
+    );
 
     return listing;
   }
@@ -255,7 +264,7 @@ class C2CService {
       currency: listing.currency || 'USD',
       message,
       status: 'pending',
-      expiresAt: new Date(Date.now() + fortyEightHours)
+      expiresAt: new Date(Date.now() + fortyEightHours),
     };
 
     // Check for existing open offer
@@ -274,11 +283,12 @@ class C2CService {
         seller: listing.seller,
         offerChain: [offerEntry],
         currentAmount: amount,
-        status: 'open'
+        status: 'open',
       });
       // Increment listing offerCount fire-and-forget
-      C2CListing.findByIdAndUpdate(listingId, { $inc: { offerCount: 1 } })
-        .catch(err => logger.error('Failed to increment offerCount:', err));
+      C2CListing.findByIdAndUpdate(listingId, { $inc: { offerCount: 1 } }).catch(err =>
+        logger.error('Failed to increment offerCount:', err)
+      );
     }
 
     await offer.save();
@@ -300,12 +310,12 @@ class C2CService {
       sender: buyerId,
       content: `Offer of ${listing.currency || 'USD'} ${amount}${message ? ': ' + message : ''}`,
       contentType: 'offer_card',
-      offerRef: offer._id
+      offerRef: offer._id,
     });
 
     await Conversation.findByIdAndUpdate(conversation._id, {
       $inc: { messageCount: 1 },
-      lastMessage: { content: `Offer: ${amount}`, sender: buyerId, sentAt: new Date() }
+      lastMessage: { content: `Offer: ${amount}`, sender: buyerId, sentAt: new Date() },
     });
 
     offer.conversation = conversation._id;
@@ -372,7 +382,7 @@ class C2CService {
         currency: latest.currency || 'USD',
         message,
         status: 'pending',
-        expiresAt: new Date(Date.now() + fortyEightHours)
+        expiresAt: new Date(Date.now() + fortyEightHours),
       });
       offer.currentAmount = counterAmount;
     } else {
@@ -385,21 +395,22 @@ class C2CService {
 
     // Send message in conversation
     if (offer.conversation) {
-      const content = response === 'counter'
-        ? `Counter offer: ${counterAmount}${message ? ' - ' + message : ''}`
-        : `Offer ${response}ed`;
+      const content =
+        response === 'counter'
+          ? `Counter offer: ${counterAmount}${message ? ' - ' + message : ''}`
+          : `Offer ${response}ed`;
 
       await Message.create({
         conversation: offer.conversation,
         sender: userId,
         content,
         contentType: response === 'counter' ? 'offer_card' : 'system',
-        offerRef: offer._id
+        offerRef: offer._id,
       });
 
       await Conversation.findByIdAndUpdate(offer.conversation, {
         $inc: { messageCount: 1 },
-        lastMessage: { content, sender: userId, sentAt: new Date() }
+        lastMessage: { content, sender: userId, sentAt: new Date() },
       });
     }
 
@@ -416,7 +427,7 @@ class C2CService {
 
     const [listings, total] = await Promise.all([
       C2CListing.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      C2CListing.countDocuments(query)
+      C2CListing.countDocuments(query),
     ]);
 
     return { listings, total, page, limit };
@@ -425,8 +436,10 @@ class C2CService {
   async getListingOffers(listingId, userId) {
     const offers = await Offer.find({
       listing: listingId,
-      $or: [{ buyer: userId }, { seller: userId }]
-    }).populate('buyer', 'name').populate('seller', 'name');
+      $or: [{ buyer: userId }, { seller: userId }],
+    })
+      .populate('buyer', 'name')
+      .populate('seller', 'name');
 
     return offers;
   }
@@ -436,7 +449,7 @@ class C2CService {
     const participantIds = participants.map(p => p.toString()).sort();
 
     const query = {
-      participants: { $all: participantIds, $size: participantIds.length }
+      participants: { $all: participantIds, $size: participantIds.length },
     };
     if (relatedData.listingId) query.relatedListing = relatedData.listingId;
 
@@ -447,7 +460,7 @@ class C2CService {
         type,
         relatedListing: relatedData.listingId,
         relatedAuction: relatedData.auctionId,
-        relatedOffer: relatedData.offerId
+        relatedOffer: relatedData.offerId,
       });
     }
     return conversation;

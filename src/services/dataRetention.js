@@ -21,16 +21,23 @@ class DataRetentionService {
         policy.retentionPeriodDays = retentionDays;
         policy.description = options.description || policy.description;
         policy.legalBasis = options.legalBasis || policy.legalBasis;
-        policy.deleteAfterExpiry = options.deleteAfterExpiry !== undefined ? options.deleteAfterExpiry : policy.deleteAfterExpiry;
-        policy.archiveBeforeDelete = options.archiveBeforeDelete !== undefined ? options.archiveBeforeDelete : policy.archiveBeforeDelete;
+        policy.deleteAfterExpiry =
+          options.deleteAfterExpiry !== undefined
+            ? options.deleteAfterExpiry
+            : policy.deleteAfterExpiry;
+        policy.archiveBeforeDelete =
+          options.archiveBeforeDelete !== undefined
+            ? options.archiveBeforeDelete
+            : policy.archiveBeforeDelete;
       } else {
         policy = new DataRetentionPolicy({
           dataType,
           retentionPeriodDays: retentionDays,
           description: options.description,
           legalBasis: options.legalBasis,
-          deleteAfterExpiry: options.deleteAfterExpiry !== undefined ? options.deleteAfterExpiry : true,
-          archiveBeforeDelete: options.archiveBeforeDelete || false
+          deleteAfterExpiry:
+            options.deleteAfterExpiry !== undefined ? options.deleteAfterExpiry : true,
+          archiveBeforeDelete: options.archiveBeforeDelete || false,
         });
       }
 
@@ -52,7 +59,7 @@ class DataRetentionService {
     try {
       const policy = await DataRetentionPolicy.findOne({
         dataType,
-        status: 'active'
+        status: 'active',
       });
 
       return policy;
@@ -68,10 +75,12 @@ class DataRetentionService {
   async shouldPurgeData(dataType, dataDate) {
     try {
       const policy = await this.getRetentionPolicy(dataType);
-      
+
       if (!policy) {
         // Use default retention period
-        const retentionDate = new Date(Date.now() - this.defaultRetentionDays * 24 * 60 * 60 * 1000);
+        const retentionDate = new Date(
+          Date.now() - this.defaultRetentionDays * 24 * 60 * 60 * 1000
+        );
         return dataDate < retentionDate;
       }
 
@@ -90,7 +99,7 @@ class DataRetentionService {
     try {
       const AuditLog = require('../models/AuditLog');
       const policy = await this.getRetentionPolicy('audit_logs');
-      
+
       if (!policy || !policy.deleteAfterExpiry) {
         logger.info('Audit log purging not enabled');
         return { deleted: 0 };
@@ -99,14 +108,14 @@ class DataRetentionService {
       const retentionDate = new Date(Date.now() - policy.retentionPeriodDays * 24 * 60 * 60 * 1000);
 
       const result = await AuditLog.deleteMany({
-        createdAt: { $lt: retentionDate }
+        createdAt: { $lt: retentionDate },
       });
 
       logger.info(`Purged ${result.deletedCount} expired audit logs`);
 
       return {
         deleted: result.deletedCount,
-        retentionDate
+        retentionDate,
       };
     } catch (error) {
       logger.error(`Error purging audit logs: ${error.message}`);
@@ -120,7 +129,7 @@ class DataRetentionService {
   async archiveExpiredData(dataType) {
     try {
       const policy = await this.getRetentionPolicy(dataType);
-      
+
       if (!policy || !policy.archiveBeforeDelete) {
         return { archived: 0 };
       }
@@ -129,10 +138,10 @@ class DataRetentionService {
 
       // In production, this would move data to archive storage
       // For now, just log the action
-      
+
       return {
         archived: 0,
-        message: 'Archive functionality not implemented'
+        message: 'Archive functionality not implemented',
       };
     } catch (error) {
       logger.error(`Error archiving data: ${error.message}`);
@@ -152,10 +161,10 @@ class DataRetentionService {
           dataType: p.dataType,
           retentionDays: p.retentionPeriodDays,
           deleteAfterExpiry: p.deleteAfterExpiry,
-          archiveBeforeDelete: p.archiveBeforeDelete
+          archiveBeforeDelete: p.archiveBeforeDelete,
         })),
         defaultRetentionDays: this.defaultRetentionDays,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
 
       return summary;
@@ -176,36 +185,36 @@ class DataRetentionService {
           retentionPeriodDays: 2555, // 7 years (regulatory requirement)
           description: 'Audit logs must be retained for 7 years',
           legalBasis: 'Financial regulations require 7-year retention',
-          deleteAfterExpiry: false
+          deleteAfterExpiry: false,
         },
         {
           dataType: 'transaction_records',
           retentionPeriodDays: 2555, // 7 years
           description: 'Transaction records for regulatory compliance',
           legalBasis: 'AML/BSA regulations',
-          deleteAfterExpiry: false
+          deleteAfterExpiry: false,
         },
         {
           dataType: 'kyc_documents',
           retentionPeriodDays: 1825, // 5 years
           description: 'KYC verification documents',
           legalBasis: 'AML regulations',
-          deleteAfterExpiry: false
+          deleteAfterExpiry: false,
         },
         {
           dataType: 'user_sessions',
           retentionPeriodDays: 90,
           description: 'User session data',
           legalBasis: 'Security and fraud prevention',
-          deleteAfterExpiry: true
+          deleteAfterExpiry: true,
         },
         {
           dataType: 'marketing_data',
           retentionPeriodDays: 730, // 2 years
           description: 'Marketing consent and communications',
           legalBasis: 'GDPR compliance',
-          deleteAfterExpiry: true
-        }
+          deleteAfterExpiry: true,
+        },
       ];
 
       for (const policyData of defaultPolicies) {
@@ -220,7 +229,7 @@ class DataRetentionService {
 
       return {
         success: true,
-        initialized: defaultPolicies.length
+        initialized: defaultPolicies.length,
       };
     } catch (error) {
       logger.error(`Error initializing default policies: ${error.message}`);
@@ -237,7 +246,7 @@ class DataRetentionService {
 
       const results = {
         auditLogs: await this.purgeAuditLogs(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       logger.info('Data retention cleanup completed');

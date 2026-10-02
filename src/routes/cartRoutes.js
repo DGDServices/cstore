@@ -8,7 +8,7 @@ const {
   updateCartItem,
   removeFromCart,
   clearCart,
-  validateCart
+  validateCart,
 } = require('../controllers/cartController');
 
 // All cart routes require authentication

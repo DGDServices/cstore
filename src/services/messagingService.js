@@ -14,7 +14,7 @@ class MessagingService {
     const participantIds = participants.map(p => p.toString()).sort();
 
     const query = {
-      participants: { $all: participantIds, $size: participantIds.length }
+      participants: { $all: participantIds, $size: participantIds.length },
     };
     if (relatedData.listingId) query.relatedListing = relatedData.listingId;
     if (relatedData.auctionId) query.relatedAuction = relatedData.auctionId;
@@ -27,7 +27,7 @@ class MessagingService {
       type,
       relatedListing: relatedData.listingId,
       relatedAuction: relatedData.auctionId,
-      relatedOffer: relatedData.offerId
+      relatedOffer: relatedData.offerId,
     });
 
     return { conversation, isNew: true };
@@ -45,7 +45,10 @@ class MessagingService {
       err.statusCode = 403;
       throw err;
     }
-    if (conversation.blockedBy && conversation.blockedBy.some(b => b.toString() === senderId.toString())) {
+    if (
+      conversation.blockedBy &&
+      conversation.blockedBy.some(b => b.toString() === senderId.toString())
+    ) {
       const err = new Error('You are blocked from this conversation');
       err.statusCode = 403;
       throw err;
@@ -56,22 +59,19 @@ class MessagingService {
       sender: senderId,
       content,
       contentType,
-      metadata
+      metadata,
     });
 
     // Fire-and-forget content moderation for text messages
     if (contentType === 'text' && contentModerationService) {
-      contentModerationService.moderateContent(
-        'message',
-        message._id,
-        { text: content },
-        senderId
-      ).catch(err => logger.error('Content moderation error for message:', err));
+      contentModerationService
+        .moderateContent('message', message._id, { text: content }, senderId)
+        .catch(err => logger.error('Content moderation error for message:', err));
     }
 
     await Conversation.findByIdAndUpdate(conversationId, {
       $inc: { messageCount: 1 },
-      lastMessage: { content, sender: senderId, sentAt: new Date() }
+      lastMessage: { content, sender: senderId, sentAt: new Date() },
     });
 
     return message;
@@ -104,7 +104,7 @@ class MessagingService {
 
     const query = {
       participants: userId,
-      archivedBy: { $ne: userId }
+      archivedBy: { $ne: userId },
     };
 
     const [conversations, total] = await Promise.all([
@@ -113,7 +113,7 @@ class MessagingService {
         .skip(skip)
         .limit(limit)
         .populate('participants', 'name'),
-      Conversation.countDocuments(query)
+      Conversation.countDocuments(query),
     ]);
 
     return { conversations, total, page, limit };
@@ -156,7 +156,10 @@ class MessagingService {
     if (unreadIds.length > 0) {
       Message.updateMany(
         { _id: { $in: unreadIds } },
-        { $addToSet: { readBy: { user: userId, readAt: new Date() } }, $set: { isRead: true, readAt: new Date() } }
+        {
+          $addToSet: { readBy: { user: userId, readAt: new Date() } },
+          $set: { isRead: true, readAt: new Date() },
+        }
       ).catch(err => logger.error('Failed to mark messages as read:', err));
     }
 
@@ -179,11 +182,11 @@ class MessagingService {
     const result = await Message.updateMany(
       {
         conversation: conversationId,
-        'readBy.user': { $ne: userId }
+        'readBy.user': { $ne: userId },
       },
       {
         $addToSet: { readBy: { user: userId, readAt: new Date() } },
-        $set: { isRead: true, readAt: new Date() }
+        $set: { isRead: true, readAt: new Date() },
       }
     );
 

@@ -90,9 +90,19 @@ exports.updateSellerProduct = async (req, res, next) => {
     if (!sellerProduct) return next(new AppError('Product listing not found', 404));
 
     const allowed = [
-      'sellerSku', 'price', 'priceUSD', 'currency', 'stock', 'condition',
-      'conditionNotes', 'fulfillmentType', 'isActive', 'shippingOptions',
-      'handlingTime', 'images', 'notes'
+      'sellerSku',
+      'price',
+      'priceUSD',
+      'currency',
+      'stock',
+      'condition',
+      'conditionNotes',
+      'fulfillmentType',
+      'isActive',
+      'shippingOptions',
+      'handlingTime',
+      'images',
+      'notes',
     ];
     for (const key of allowed) {
       if (req.body[key] !== undefined) sellerProduct[key] = req.body[key];
@@ -183,9 +193,19 @@ exports.getCommissionRules = async (req, res, next) => {
 exports.createCommissionRule = async (req, res, next) => {
   try {
     const allowed = [
-      'name', 'description', 'applicableTo', 'categoryIds', 'sellerTier',
-      'commissionType', 'commissionPct', 'flatFee', 'tiers', 'minFee', 'maxFee',
-      'isActive', 'priority'
+      'name',
+      'description',
+      'applicableTo',
+      'categoryIds',
+      'sellerTier',
+      'commissionType',
+      'commissionPct',
+      'flatFee',
+      'tiers',
+      'minFee',
+      'maxFee',
+      'isActive',
+      'priority',
     ];
     const data = { createdBy: req.user.id };
     for (const key of allowed) {
@@ -201,9 +221,19 @@ exports.createCommissionRule = async (req, res, next) => {
 exports.updateCommissionRule = async (req, res, next) => {
   try {
     const allowed = [
-      'name', 'description', 'applicableTo', 'categoryIds', 'sellerTier',
-      'commissionType', 'commissionPct', 'flatFee', 'tiers', 'minFee', 'maxFee',
-      'isActive', 'priority'
+      'name',
+      'description',
+      'applicableTo',
+      'categoryIds',
+      'sellerTier',
+      'commissionType',
+      'commissionPct',
+      'flatFee',
+      'tiers',
+      'minFee',
+      'maxFee',
+      'isActive',
+      'priority',
     ];
     const updates = {};
     for (const key of allowed) {
@@ -211,7 +241,7 @@ exports.updateCommissionRule = async (req, res, next) => {
     }
     const rule = await CommissionRule.findByIdAndUpdate(req.params.id, updates, {
       new: true,
-      runValidators: true
+      runValidators: true,
     });
     if (!rule) return next(new AppError('Commission rule not found', 404));
     res.status(200).json({ success: true, data: rule });

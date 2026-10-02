@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * Security Verification Script
- * 
+ *
  * This script verifies that all security measures are properly implemented
  * without requiring a database connection.
  */
 
 console.log('🔒 CStore Security Verification\n');
-console.log('=' .repeat(60));
+console.log('='.repeat(60));
 
 let passCount = 0;
 let failCount = 0;
@@ -47,7 +47,7 @@ try {
   check('Validation Middleware', typeof validation.validate === 'function');
   const schemaCount = Object.keys(validation.schemas).length;
   check('Validation Schemas', schemaCount > 0, `${schemaCount} schemas defined`);
-  
+
   // Check specific schemas
   const schemas = validation.schemas;
   check('Register Schema', !!schemas.register);
@@ -65,7 +65,7 @@ try {
   check('Error Handler', typeof errorHandler.errorHandler === 'function');
   check('AppError Class', typeof errorHandler.AppError === 'function');
   check('Async Handler', typeof errorHandler.asyncHandler === 'function');
-  
+
   // Test AppError creation
   const testError = new errorHandler.AppError('Test error', 400);
   check('AppError Creation', testError.message === 'Test error' && testError.statusCode === 400);
@@ -93,7 +93,7 @@ try {
   check('Generate Refresh Token', typeof jwt.generateRefreshToken === 'function');
   check('Verify Token', typeof jwt.verifyToken === 'function');
   check('Verify Refresh Token', typeof jwt.verifyRefreshToken === 'function');
-  
+
   // Test token generation
   const testToken = jwt.generateToken('testUserId123');
   check('Token Generation', typeof testToken === 'string' && testToken.length > 0);
@@ -126,10 +126,10 @@ console.log('-'.repeat(60));
 try {
   // Suppress database errors for this test
   process.env.SKIP_DB_CONNECTION = 'true';
-  
+
   const app = require('../src/app');
   check('Express App', typeof app === 'function');
-  
+
   // Verify middleware is used in app.js by checking the file content
   const fs = require('fs');
   const appContent = fs.readFileSync(__dirname + '/../src/app.js', 'utf8');
@@ -150,11 +150,11 @@ try {
   // Check auth routes use validation
   const authRoutes = require('../src/routes/authRoutes');
   check('Auth Routes', typeof authRoutes === 'function');
-  
+
   // Check product routes exist
   const productRoutes = require('../src/routes/productRoutes');
   check('Product Routes', typeof productRoutes === 'function');
-  
+
   // Check order routes exist
   const orderRoutes = require('../src/routes/orderRoutes');
   check('Order Routes', typeof orderRoutes === 'function');
@@ -168,11 +168,18 @@ try {
   // Verify User model has password hashing by checking the file content
   const fs = require('fs');
   const userModelContent = fs.readFileSync(__dirname + '/../src/models/User.js', 'utf8');
-  
+
   check('User Model Exists', userModelContent.length > 0);
   check('Bcrypt Import', userModelContent.includes("require('bcryptjs')"));
-  check('Pre-save Hook', userModelContent.includes("userSchema.pre('save'") && userModelContent.includes('bcrypt.hash'));
-  check('matchPassword Method', userModelContent.includes('userSchema.methods.matchPassword') && userModelContent.includes('bcrypt.compare'));
+  check(
+    'Pre-save Hook',
+    userModelContent.includes("userSchema.pre('save'") && userModelContent.includes('bcrypt.hash')
+  );
+  check(
+    'matchPassword Method',
+    userModelContent.includes('userSchema.methods.matchPassword') &&
+      userModelContent.includes('bcrypt.compare')
+  );
   check('Password Select:false', userModelContent.includes('select: false'));
 } catch (error) {
   check('User Model Security', false, `Error: ${error.message}`);

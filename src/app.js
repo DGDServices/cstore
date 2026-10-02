@@ -19,7 +19,7 @@ const {
   authLimiter,
   sanitizeData,
   xssClean,
-  preventParamPollution
+  preventParamPollution,
 } = require('./middleware/security');
 const { enforceHttps, secureSessionCookies } = require('./middleware/httpsEnforcement');
 const elasticsearchService = require('./services/elasticsearchService');
@@ -81,7 +81,6 @@ if (process.env.ELASTICSEARCH_ENABLED === 'true') {
   });
 }
 
-
 // Security middleware
 app.use(securityHeaders);
 app.use(limiter);
@@ -105,20 +104,20 @@ logger.info(`CORS configured for environment: ${process.env.NODE_ENV || 'develop
 app.use((req, res, next) => {
   req.startTime = Date.now();
   req.correlationId = loggingService.generateCorrelationId();
-  
+
   // Track response
   const originalSend = res.send;
-  res.send = function(data) {
+  res.send = function (data) {
     const duration = Date.now() - req.startTime;
-    
+
     // Record metrics
     monitoringService.recordRequest(req.method, req.path, res.statusCode, duration);
     performanceService.recordEndpoint(req.method, req.path, duration, res.statusCode);
     loggingService.logRequest(req, res, duration);
-    
+
     return originalSend.call(this, data);
   };
-  
+
   next();
 });
 
@@ -126,11 +125,13 @@ app.use((req, res, next) => {
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
-  app.use(morgan('combined', {
-    stream: {
-      write: (message) => logger.info(message.trim())
-    }
-  }));
+  app.use(
+    morgan('combined', {
+      stream: {
+        write: message => logger.info(message.trim()),
+      },
+    })
+  );
 }
 
 // Static files
@@ -164,13 +165,13 @@ app.use('/api/messages', messagingRoutes);
 app.get('/api/health', async (req, res) => {
   const health = await healthService.runHealthChecks();
   const statusCode = health.status === 'healthy' ? 200 : health.status === 'degraded' ? 200 : 503;
-  
+
   res.status(statusCode).json({
     success: health.status !== 'unhealthy',
     ...health,
     message: req.t('message.serverRunning'),
     environment: process.env.NODE_ENV || 'development',
-    language: req.language
+    language: req.language,
   });
 });
 
@@ -211,7 +212,7 @@ app.get('/api/performance', (req, res) => {
   res.json({
     success: true,
     report,
-    recommendations
+    recommendations,
   });
 });
 
@@ -229,7 +230,7 @@ app.get(/^\/admin(?:\/.*)?$/, (req, res) => {
 app.use((req, res, next) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
   });
 });
 

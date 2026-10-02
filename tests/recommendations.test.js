@@ -21,7 +21,7 @@ describe('Product Recommendations API', () => {
       name: 'Test User',
       email: 'test@example.com',
       password: 'password123',
-      role: 'user'
+      role: 'user',
     });
     userToken = generateToken(testUser._id);
 
@@ -29,13 +29,13 @@ describe('Product Recommendations API', () => {
     testCategory1 = await Category.create({
       name: 'Electronics',
       slug: 'electronics',
-      description: 'Electronic products'
+      description: 'Electronic products',
     });
 
     testCategory2 = await Category.create({
       name: 'Books',
       slug: 'books',
-      description: 'Books and literature'
+      description: 'Books and literature',
     });
 
     // Create test products
@@ -48,7 +48,7 @@ describe('Product Recommendations API', () => {
         stock: 10,
         category: testCategory1._id,
         averageRating: 4.5,
-        numReviews: 10
+        numReviews: 10,
       },
       {
         name: 'Mouse',
@@ -58,7 +58,7 @@ describe('Product Recommendations API', () => {
         stock: 50,
         category: testCategory1._id,
         averageRating: 4.0,
-        numReviews: 5
+        numReviews: 5,
       },
       {
         name: 'Keyboard',
@@ -68,7 +68,7 @@ describe('Product Recommendations API', () => {
         stock: 20,
         category: testCategory1._id,
         averageRating: 4.8,
-        numReviews: 15
+        numReviews: 15,
       },
       {
         name: 'Book 1',
@@ -78,8 +78,8 @@ describe('Product Recommendations API', () => {
         stock: 100,
         category: testCategory2._id,
         averageRating: 4.2,
-        numReviews: 8
-      }
+        numReviews: 8,
+      },
     ]);
   });
 
@@ -91,24 +91,26 @@ describe('Product Recommendations API', () => {
       const otherUser = await User.create({
         name: 'Other User',
         email: 'other@example.com',
-        password: 'password123'
+        password: 'password123',
       });
 
       await Order.create({
         user: otherUser._id,
         customerEmail: 'other@example.com',
-        items: [{
-          product: products[0]._id,
-          productName: products[0].name,
-          quantity: 2,
-          price: products[0].price,
-          priceUSD: products[0].priceUSD
-        }],
+        items: [
+          {
+            product: products[0]._id,
+            productName: products[0].name,
+            quantity: 2,
+            price: products[0].price,
+            priceUSD: products[0].priceUSD,
+          },
+        ],
         totalPrice: products[0].price * 2,
         totalPriceUSD: products[0].priceUSD * 2,
         cryptocurrency: 'BTC',
         paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-        status: 'paid'
+        status: 'paid',
       });
 
       const res = await request(app)
@@ -128,25 +130,27 @@ describe('Product Recommendations API', () => {
       await Order.create({
         user: testUser._id,
         customerEmail: testUser.email,
-        items: [{
-          product: products[0]._id, // Laptop
-          productName: products[0].name,
-          quantity: 1,
-          price: products[0].price,
-          priceUSD: products[0].priceUSD
-        }],
+        items: [
+          {
+            product: products[0]._id, // Laptop
+            productName: products[0].name,
+            quantity: 1,
+            price: products[0].price,
+            priceUSD: products[0].priceUSD,
+          },
+        ],
         totalPrice: products[0].price,
         totalPriceUSD: products[0].priceUSD,
         cryptocurrency: 'BTC',
         paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-        status: 'paid'
+        status: 'paid',
       });
 
       // Create another user who bought similar products
       const similarUser = await User.create({
         name: 'Similar User',
         email: 'similar@example.com',
-        password: 'password123'
+        password: 'password123',
       });
 
       await Order.create({
@@ -158,21 +162,21 @@ describe('Product Recommendations API', () => {
             productName: products[0].name,
             quantity: 1,
             price: products[0].price,
-            priceUSD: products[0].priceUSD
+            priceUSD: products[0].priceUSD,
           },
           {
             product: products[2]._id, // Keyboard (should be recommended)
             productName: products[2].name,
             quantity: 1,
             price: products[2].price,
-            priceUSD: products[2].priceUSD
-          }
+            priceUSD: products[2].priceUSD,
+          },
         ],
         totalPrice: products[0].price + products[2].price,
         totalPriceUSD: products[0].priceUSD + products[2].priceUSD,
         cryptocurrency: 'BTC',
         paymentAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-        status: 'paid'
+        status: 'paid',
       });
 
       const res = await request(app)
@@ -183,7 +187,7 @@ describe('Product Recommendations API', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.recommendations).toBeDefined();
       expect(res.body.data.recommendations.length).toBeGreaterThan(0);
-      
+
       // Should not recommend already purchased product (Laptop)
       const recommendedIds = res.body.data.recommendations.map(p => p._id.toString());
       expect(recommendedIds).not.toContain(products[0]._id.toString());
@@ -204,8 +208,7 @@ describe('Product Recommendations API', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get('/api/products/recommendations');
+      const res = await request(app).get('/api/products/recommendations');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -216,14 +219,13 @@ describe('Product Recommendations API', () => {
     it('should return related products from same category', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get(`/api/products/${products[0]._id}/related`);
+      const res = await request(app).get(`/api/products/${products[0]._id}/related`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.products).toBeDefined();
       expect(Array.isArray(res.body.data.products)).toBe(true);
-      
+
       // All related products should be from same category (Electronics)
       res.body.data.products.forEach(product => {
         if (product.category) {
@@ -244,11 +246,10 @@ describe('Product Recommendations API', () => {
         description: 'Product without category',
         price: 0.001,
         priceUSD: 50,
-        stock: 10
+        stock: 10,
       });
 
-      const res = await request(app)
-        .get(`/api/products/${productNoCategory._id}/related`);
+      const res = await request(app).get(`/api/products/${productNoCategory._id}/related`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -258,8 +259,7 @@ describe('Product Recommendations API', () => {
     it('should respect limit parameter', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get(`/api/products/${products[0]._id}/related?limit=1`);
+      const res = await request(app).get(`/api/products/${products[0]._id}/related?limit=1`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -269,8 +269,7 @@ describe('Product Recommendations API', () => {
     it('should not require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .get(`/api/products/${products[0]._id}/related`);
+      const res = await request(app).get(`/api/products/${products[0]._id}/related`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

@@ -11,14 +11,14 @@ const request = require('supertest');
 // Mock DgdCoreClient BEFORE requiring app
 jest.mock('../src/services/dgdCoreClient', () => {
   const mockClient = {
-    openEscrow:      jest.fn(),
-    getEscrow:       jest.fn(),
-    checkFunding:    jest.fn(),
-    proposeRelease:  jest.fn(),
-    getPayoutPsbt:   jest.fn(),
-    signPayout:      jest.fn(),
-    openDispute:     jest.fn(),
-    proposeRefund:   jest.fn(),
+    openEscrow: jest.fn(),
+    getEscrow: jest.fn(),
+    checkFunding: jest.fn(),
+    proposeRelease: jest.fn(),
+    getPayoutPsbt: jest.fn(),
+    signPayout: jest.fn(),
+    openDispute: jest.fn(),
+    proposeRefund: jest.fn(),
     proposeMediation: jest.fn(),
   };
   return { DgdCoreClient: jest.fn(() => mockClient), mockClient };
@@ -48,8 +48,8 @@ jest.mock('../src/models/User', () => {
   const store = { byId: {} };
   return {
     __store: store,
-    findById: jest.fn((id) => ({ select: () => Promise.resolve(store.byId[id] || null) })),
-    findOne:  jest.fn(() => ({ select: () => Promise.resolve(null) })),
+    findById: jest.fn(id => ({ select: () => Promise.resolve(store.byId[id] || null) })),
+    findOne: jest.fn(() => ({ select: () => Promise.resolve(null) })),
   };
 });
 
@@ -58,7 +58,7 @@ jest.mock('../src/models/Product', () => {
   const store = { byId: {} };
   return {
     __store: store,
-    findById: jest.fn((id) => ({ select: () => Promise.resolve(store.byId[id] || null) })),
+    findById: jest.fn(id => ({ select: () => Promise.resolve(store.byId[id] || null) })),
     updateOne: jest.fn().mockResolvedValue({ acknowledged: true }),
   };
 });
@@ -67,7 +67,10 @@ jest.mock('../src/models/Product', () => {
 // protect sets a fixed user; an optional `x-test-role` header lets a test
 // promote that user (e.g. to 'admin' for arbitrator-only mediation).
 jest.mock('../src/middleware/auth', () => ({
-  protect:   (req, _res, next) => { req.user = { id: 'user-1', role: req.headers['x-test-role'] }; next(); },
+  protect: (req, _res, next) => {
+    req.user = { id: 'user-1', role: req.headers['x-test-role'] };
+    next();
+  },
   authorize: () => (_req, _res, next) => next(),
 }));
 
@@ -125,15 +128,14 @@ describe('DGD Escrow Signing API', () => {
   it('POST /api/dgd-escrow/:id/open calls openEscrow and persists the address', async () => {
     mockClient.openEscrow.mockResolvedValue({
       state: 'created',
-      multisig: { address: 'dgd1multisig123' }
+      multisig: { address: 'dgd1multisig123' },
     });
-    const res = await request(app)
-      .post('/api/dgd-escrow/order-1/open')
-      .set(auth)
-      .send({
-        buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB',
-        sellerPubkey: 'pkS', sellerPayoutAddress: 'addrS',
-      });
+    const res = await request(app).post('/api/dgd-escrow/order-1/open').set(auth).send({
+      buyerPubkey: 'pkB',
+      buyerPayoutAddress: 'addrB',
+      sellerPubkey: 'pkS',
+      sellerPayoutAddress: 'addrS',
+    });
     expect(res.status).toBe(200);
     expect(mockClient.openEscrow).toHaveBeenCalledTimes(1);
     const call = mockClient.openEscrow.mock.calls[0][0];
@@ -141,8 +143,8 @@ describe('DGD Escrow Signing API', () => {
   });
 
   it('open resolves seller keys from the product seller profile when not in the body', async () => {
-    productStore.byId['prod-1']   = { seller: 'seller-1' };
-    userStore.byId['seller-1']    = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    productStore.byId['prod-1'] = { seller: 'seller-1' };
+    userStore.byId['seller-1'] = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
     mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
     const res = await request(app)
       .post('/api/dgd-escrow/order-1/open')
@@ -164,15 +166,14 @@ describe('DGD Escrow Signing API', () => {
 
   it('open forwards an arbitrator (2-of-3) when one is provided', async () => {
     productStore.byId['prod-1'] = { seller: 'seller-1' };
-    userStore.byId['seller-1']  = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    userStore.byId['seller-1'] = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
     mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
-    const res = await request(app)
-      .post('/api/dgd-escrow/order-1/open')
-      .set(auth)
-      .send({
-        buyerPubkey: 'pkB', buyerPayoutAddress: 'addrB',
-        arbitratorPubkey: 'apk', arbitratorPayoutAddress: 'aaddr',
-      });
+    const res = await request(app).post('/api/dgd-escrow/order-1/open').set(auth).send({
+      buyerPubkey: 'pkB',
+      buyerPayoutAddress: 'addrB',
+      arbitratorPubkey: 'apk',
+      arbitratorPayoutAddress: 'aaddr',
+    });
     expect(res.status).toBe(200);
     const call = mockClient.openEscrow.mock.calls[0][0];
     expect(call.arbitrator).toEqual({ pubkey: 'apk', payoutAddress: 'aaddr' });
@@ -180,7 +181,7 @@ describe('DGD Escrow Signing API', () => {
 
   it('open uses order.dgdExpectedSats as the amount when not provided', async () => {
     productStore.byId['prod-1'] = { seller: 'seller-1' };
-    userStore.byId['seller-1']  = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
+    userStore.byId['seller-1'] = { dgdPubkey: 'spk', dgdPayoutAddress: 'saddr' };
     mockClient.openEscrow.mockResolvedValue({ state: 'created', multisig: { address: 'm' } });
     await request(app)
       .post('/api/dgd-escrow/order-1/open')
@@ -219,22 +220,32 @@ describe('DGD Escrow Signing API', () => {
   });
 
   it('POST .../propose-release calls proposeRelease for the user role', async () => {
-    mockClient.proposeRelease.mockResolvedValue({ state: 'funded', proposal: { kind: 'release', signatures: {} } });
+    mockClient.proposeRelease.mockResolvedValue({
+      state: 'funded',
+      proposal: { kind: 'release', signatures: {} },
+    });
     const res = await request(app)
       .post('/api/dgd-escrow/order-1/propose-release')
       .set(auth)
       .send({ role: 'seller' });
     expect(res.status).toBe(200);
-    expect(mockClient.proposeRelease).toHaveBeenCalledWith('order-1', 'seller', undefined, 'order-1:seller:release');
+    expect(mockClient.proposeRelease).toHaveBeenCalledWith(
+      'order-1',
+      'seller',
+      undefined,
+      'order-1:seller:release'
+    );
   });
 
   it('POST .../check-funding marks order paid when funded', async () => {
     const Order = require('../src/models/Order');
-    Order.findById.mockResolvedValue({ ...Order._mockOrder, status: 'pending', save: jest.fn().mockResolvedValue(true) });
+    Order.findById.mockResolvedValue({
+      ...Order._mockOrder,
+      status: 'pending',
+      save: jest.fn().mockResolvedValue(true),
+    });
     mockClient.checkFunding.mockResolvedValue({ state: 'funded' });
-    const res = await request(app)
-      .post('/api/dgd-escrow/order-1/check-funding')
-      .set(auth);
+    const res = await request(app).post('/api/dgd-escrow/order-1/check-funding').set(auth);
     expect(res.status).toBe(200);
     expect(res.body.escrow.state).toBe('funded');
   });
@@ -246,17 +257,29 @@ describe('DGD Escrow Signing API', () => {
       .set(auth)
       .send({ role: 'buyer', reason: 'item never arrived' });
     expect(res.status).toBe(200);
-    expect(mockClient.openDispute).toHaveBeenCalledWith('order-1', 'buyer', 'item never arrived', 'order-1:buyer:dispute');
+    expect(mockClient.openDispute).toHaveBeenCalledWith(
+      'order-1',
+      'buyer',
+      'item never arrived',
+      'order-1:buyer:dispute'
+    );
   });
 
   it('POST .../refund proposes a cancel-refund for the user role', async () => {
-    mockClient.proposeRefund.mockResolvedValue({ state: 'funded', proposal: { kind: 'refund', signatures: {} } });
+    mockClient.proposeRefund.mockResolvedValue({
+      state: 'funded',
+      proposal: { kind: 'refund', signatures: {} },
+    });
     const res = await request(app)
       .post('/api/dgd-escrow/order-1/refund')
       .set(auth)
       .send({ role: 'buyer' });
     expect(res.status).toBe(200);
-    expect(mockClient.proposeRefund).toHaveBeenCalledWith('order-1', 'buyer', 'order-1:buyer:refund');
+    expect(mockClient.proposeRefund).toHaveBeenCalledWith(
+      'order-1',
+      'buyer',
+      'order-1:buyer:refund'
+    );
   });
 
   it('POST .../refund returns 400 for an invalid role', async () => {
@@ -278,23 +301,32 @@ describe('DGD Escrow Signing API', () => {
   });
 
   it('POST .../mediate lets an admin arbitrator propose a payout split', async () => {
-    mockClient.proposeMediation.mockResolvedValue({ state: 'disputed', proposal: { kind: 'mediation', signatures: {} } });
+    mockClient.proposeMediation.mockResolvedValue({
+      state: 'disputed',
+      proposal: { kind: 'mediation', signatures: {} },
+    });
     const outputs = [
       { address: 'addrB', amount: '60000000' },
       { address: 'addrS', amount: '39990000' },
     ];
     const res = await request(app)
       .post('/api/dgd-escrow/order-1/mediate')
-      .set(auth).set('x-test-role', 'admin')
+      .set(auth)
+      .set('x-test-role', 'admin')
       .send({ outputs, note: 'split 60/40 per evidence' });
     expect(res.status).toBe(200);
-    expect(mockClient.proposeMediation).toHaveBeenCalledWith('order-1', outputs, 'split 60/40 per evidence');
+    expect(mockClient.proposeMediation).toHaveBeenCalledWith(
+      'order-1',
+      outputs,
+      'split 60/40 per evidence'
+    );
   });
 
   it('POST .../mediate returns 400 when outputs are missing/empty', async () => {
     const res = await request(app)
       .post('/api/dgd-escrow/order-1/mediate')
-      .set(auth).set('x-test-role', 'admin')
+      .set(auth)
+      .set('x-test-role', 'admin')
       .send({ note: 'no outputs' });
     expect(res.status).toBe(400);
     expect(mockClient.proposeMediation).not.toHaveBeenCalled();

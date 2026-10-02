@@ -18,9 +18,9 @@ describe('Elasticsearch Service', () => {
         priceUSD: 50,
         stock: 10,
         isActive: true,
-        featured: false
+        featured: false,
       });
-      
+
       // Should return false if not enabled
       if (!elasticsearchService.isEnabled()) {
         expect(result).toBe(false);
@@ -33,7 +33,7 @@ describe('Elasticsearch Service', () => {
       const results = await elasticsearchService.searchProducts({
         search: 'test',
         page: 1,
-        limit: 10
+        limit: 10,
       });
 
       // Should return null if not available
@@ -56,7 +56,7 @@ describe('Elasticsearch Service', () => {
   describe('Index Management', () => {
     it('should handle index creation gracefully', async () => {
       const result = await elasticsearchService.createProductsIndex();
-      
+
       // Should return boolean
       expect(typeof result).toBe('boolean');
     });
@@ -73,12 +73,12 @@ describe('Elasticsearch Service', () => {
           isActive: true,
           featured: false,
           createdAt: new Date(),
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       ];
 
       const result = await elasticsearchService.bulkIndexProducts(products);
-      
+
       // Should return boolean
       expect(typeof result).toBe('boolean');
     });
@@ -87,16 +87,16 @@ describe('Elasticsearch Service', () => {
   describe('CRUD Operations', () => {
     it('should handle update operations gracefully', async () => {
       const result = await elasticsearchService.updateProduct('test-id', {
-        name: 'Updated Product'
+        name: 'Updated Product',
       });
-      
+
       // Should return boolean
       expect(typeof result).toBe('boolean');
     });
 
     it('should handle delete operations gracefully', async () => {
       const result = await elasticsearchService.deleteProduct('test-id');
-      
+
       // Should return boolean
       expect(typeof result).toBe('boolean');
     });
@@ -105,7 +105,7 @@ describe('Elasticsearch Service', () => {
   describe('Sync Operations', () => {
     it('should handle sync all products gracefully', async () => {
       const result = await elasticsearchService.syncAllProducts(Product);
-      
+
       // Should return boolean
       expect(typeof result).toBe('boolean');
     });

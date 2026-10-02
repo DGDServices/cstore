@@ -17,7 +17,7 @@ const {
   exportProductsPDF,
   exportOrdersCSV,
   exportOrdersPDF,
-  exportUsersCSV
+  exportUsersCSV,
 } = require('../controllers/adminController');
 
 // All admin routes require admin authorization
@@ -43,7 +43,6 @@ router.get('/reviews/pending', getPendingReviews);
 // System
 router.get('/system/health', getSystemHealth);
 
-
 // Product Management
 router.put('/products/reorder', reorderProducts);
 
@@ -53,6 +52,5 @@ router.get('/products/export/pdf', exportProductsPDF);
 router.get('/orders/export/csv', exportOrdersCSV);
 router.get('/orders/export/pdf', exportOrdersPDF);
 router.get('/users/export/csv', exportUsersCSV);
-
 
 module.exports = router;

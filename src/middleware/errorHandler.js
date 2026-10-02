@@ -14,28 +14,29 @@ class AppError extends Error {
 }
 
 // Handle Mongoose validation errors
-const handleValidationError = (err) => {
+const handleValidationError = err => {
   const errors = Object.values(err.errors).map(e => e.message);
   const message = `Invalid input data. ${errors.join('. ')}`;
   return new AppError(message, 400);
 };
 
 // Handle Mongoose duplicate key errors
-const handleDuplicateKeyError = (err) => {
+const handleDuplicateKeyError = err => {
   const field = Object.keys(err.keyValue)[0];
   const message = `Duplicate field value: ${field}. Please use another value.`;
   return new AppError(message, 400);
 };
 
 // Handle Mongoose cast errors
-const handleCastError = (err) => {
+const handleCastError = err => {
   const message = `Invalid ${err.path}: ${err.value}`;
   return new AppError(message, 400);
 };
 
 // Handle JWT errors
 const handleJWTError = () => new AppError('Invalid token. Please log in again.', 401);
-const handleJWTExpiredError = () => new AppError('Your token has expired. Please log in again.', 401);
+const handleJWTExpiredError = () =>
+  new AppError('Your token has expired. Please log in again.', 401);
 
 // Send error in development
 const sendErrorDev = (err, res) => {
@@ -44,7 +45,7 @@ const sendErrorDev = (err, res) => {
     status: err.status,
     error: err,
     message: err.message,
-    stack: err.stack
+    stack: err.stack,
   });
 };
 
@@ -54,11 +55,11 @@ const sendErrorProd = (err, res, req) => {
   if (err.isOperational) {
     // Sanitize error message to prevent information leakage
     const sanitizedMessage = sanitizeErrorMessage(err.message, err.statusCode);
-    
+
     res.status(err.statusCode).json({
       success: false,
       status: err.status,
-      message: sanitizedMessage
+      message: sanitizedMessage,
     });
   } else {
     // Programming or unknown error: don't leak error details
@@ -68,9 +69,9 @@ const sendErrorProd = (err, res, req) => {
       url: req.originalUrl,
       method: req.method,
       ip: req.ip,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
-    
+
     // Log security event for suspicious errors
     if (err.statusCode === 403 || err.statusCode === 401) {
       logSecurityEvent(AUDIT_EVENTS.UNAUTHORIZED_ATTEMPT, {
@@ -79,14 +80,14 @@ const sendErrorProd = (err, res, req) => {
         path: req.path,
         method: req.method,
         ip: req.ip,
-        userId: req.user?.id
+        userId: req.user?.id,
       });
     }
-    
+
     res.status(500).json({
       success: false,
       status: 'error',
-      message: 'An error occurred. Please try again later.'
+      message: 'An error occurred. Please try again later.',
     });
   }
 };
@@ -108,13 +109,11 @@ const sanitizeErrorMessage = (message, statusCode) => {
     /redis/i,
     /database/i,
     /connection string/i,
-    /internal server/i
+    /internal server/i,
   ];
 
   // Check if message contains sensitive information
-  const containsSensitiveInfo = sensitivePatterns.some(pattern => 
-    pattern.test(message)
-  );
+  const containsSensitiveInfo = sensitivePatterns.some(pattern => pattern.test(message));
 
   if (containsSensitiveInfo) {
     // Return generic message based on status code
@@ -144,7 +143,7 @@ const errorHandler = (err, req, res, next) => {
     path: req.path,
     method: req.method,
     ip: req.ip,
-    userId: req.user?.id
+    userId: req.user?.id,
   });
 
   if (process.env.NODE_ENV === 'development') {
@@ -165,7 +164,7 @@ const errorHandler = (err, req, res, next) => {
 };
 
 // Async handler wrapper to catch errors in async functions
-const asyncHandler = (fn) => (req, res, next) => {
+const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 

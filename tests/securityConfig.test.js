@@ -8,7 +8,7 @@ const {
   getSecretsConfig,
   getRateLimitConfig,
   validateSecurityConfig,
-  getSecurityConfig
+  getSecurityConfig,
 } = require('../config/security');
 
 describe('Security Configuration', () => {
@@ -298,7 +298,9 @@ describe('Security Configuration', () => {
       const validation = validateSecurityConfig();
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain('FIELD_ENCRYPTION_KEY must be set when encryption is enabled');
+      expect(validation.errors).toContain(
+        'FIELD_ENCRYPTION_KEY must be set when encryption is enabled'
+      );
     });
   });
 

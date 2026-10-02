@@ -12,7 +12,7 @@ class ConsentManagementService {
       'privacy_policy',
       'marketing',
       'data_processing',
-      'cookies'
+      'cookies',
     ];
   }
 
@@ -29,7 +29,7 @@ class ConsentManagementService {
         grantedAt: consentData.granted ? new Date() : null,
         ipAddress: consentData.ipAddress,
         userAgent: consentData.userAgent,
-        method: consentData.method || 'web'
+        method: consentData.method || 'web',
       });
 
       await consent.save();
@@ -38,7 +38,7 @@ class ConsentManagementService {
 
       return {
         success: true,
-        consent
+        consent,
       };
     } catch (error) {
       logger.error(`Error recording consent: ${error.message}`);
@@ -55,7 +55,7 @@ class ConsentManagementService {
         user: userId,
         consentType,
         granted: true,
-        revokedAt: { $exists: false }
+        revokedAt: { $exists: false },
       };
 
       if (version) {
@@ -80,7 +80,7 @@ class ConsentManagementService {
         user: userId,
         consentType,
         granted: true,
-        revokedAt: { $exists: false }
+        revokedAt: { $exists: false },
       });
 
       for (const consent of consents) {
@@ -92,7 +92,7 @@ class ConsentManagementService {
 
       return {
         success: true,
-        revokedCount: consents.length
+        revokedCount: consents.length,
       };
     } catch (error) {
       logger.error(`Error revoking consent: ${error.message}`);
@@ -105,18 +105,17 @@ class ConsentManagementService {
    */
   async getUserConsents(userId) {
     try {
-      const consents = await UserConsent.find({ user: userId })
-        .sort({ createdAt: -1 });
+      const consents = await UserConsent.find({ user: userId }).sort({ createdAt: -1 });
 
       const consentStatus = {};
-      
+
       for (const type of this.consentTypes) {
         const latestConsent = consents.find(c => c.consentType === type);
         consentStatus[type] = {
           granted: latestConsent ? latestConsent.granted && !latestConsent.revokedAt : false,
           version: latestConsent?.version,
           grantedAt: latestConsent?.grantedAt,
-          revokedAt: latestConsent?.revokedAt
+          revokedAt: latestConsent?.revokedAt,
         };
       }
 
@@ -137,13 +136,13 @@ class ConsentManagementService {
         user: userId,
         consentType,
         version: newVersion,
-        granted: true
+        granted: true,
       });
 
       if (existingConsent) {
         return {
           success: true,
-          message: 'User already consented to this version'
+          message: 'User already consented to this version',
         };
       }
 
@@ -153,7 +152,7 @@ class ConsentManagementService {
         consentType,
         version: newVersion,
         granted: false, // User needs to explicitly consent
-        method: 'web'
+        method: 'web',
       });
 
       await consent.save();
@@ -161,7 +160,7 @@ class ConsentManagementService {
       return {
         success: true,
         requiresConsent: true,
-        consent
+        consent,
       };
     } catch (error) {
       logger.error(`Error updating consent version: ${error.message}`);
@@ -179,9 +178,7 @@ class ConsentManagementService {
         query.consentType = consentType;
       }
 
-      const history = await UserConsent.find(query)
-        .sort({ createdAt: -1 })
-        .limit(50);
+      const history = await UserConsent.find(query).sort({ createdAt: -1 }).limit(50);
 
       return history;
     } catch (error) {
@@ -207,7 +204,7 @@ class ConsentManagementService {
 
       return {
         hasAllRequired: missing.length === 0,
-        missing
+        missing,
       };
     } catch (error) {
       logger.error(`Error checking required consents: ${error.message}`);

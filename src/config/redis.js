@@ -22,19 +22,19 @@ const initRedisClient = async () => {
       url: redisUrl,
       password: redisPassword || undefined,
       socket: {
-        reconnectStrategy: (retries) => {
+        reconnectStrategy: retries => {
           if (retries > 10) {
             logger.error('Redis: Max reconnection attempts reached');
             return new Error('Redis: Max reconnection attempts reached');
           }
           // Exponential backoff: 2^retries * 100ms
           return Math.min(retries * 100, 3000);
-        }
-      }
+        },
+      },
     });
 
     // Error handler
-    redisClient.on('error', (err) => {
+    redisClient.on('error', err => {
       logger.error('Redis Client Error:', err);
       isConnected = false;
     });
@@ -107,5 +107,5 @@ module.exports = {
   closeRedisConnection,
   get redisClient() {
     return redisClient;
-  }
+  },
 };

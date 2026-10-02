@@ -23,7 +23,7 @@ class RecommendationService {
       // Get user's purchase history
       const userOrders = await Order.find({
         user: userId,
-        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
+        status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
       }).select('items');
 
       if (!userOrders || userOrders.length === 0) {
@@ -43,7 +43,7 @@ class RecommendationService {
 
       // Get category information for purchased products
       const purchasedProducts = await Product.find({
-        _id: { $in: Array.from(purchasedProductIds) }
+        _id: { $in: Array.from(purchasedProductIds) },
       }).select('category');
 
       purchasedProducts.forEach(product => {
@@ -56,20 +56,22 @@ class RecommendationService {
       const similarUserOrders = await Order.aggregate([
         {
           $match: {
-            user: { $ne: userId, $exists: true },
+            user: { $ne: new mongoose.Types.ObjectId(String(userId)), $exists: true },
             status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
-            'items.product': { $in: Array.from(purchasedProductIds).map(id => mongoose.Types.ObjectId(id)) }
-          }
+            'items.product': {
+              $in: Array.from(purchasedProductIds).map(id => new mongoose.Types.ObjectId(id)),
+            },
+          },
         },
         { $unwind: '$items' },
         {
           $group: {
             _id: '$items.product',
-            purchaseCount: { $sum: '$items.quantity' }
-          }
+            purchaseCount: { $sum: '$items.quantity' },
+          },
         },
         { $sort: { purchaseCount: -1 } },
-        { $limit: limit * 2 } // Get more to filter out already purchased
+        { $limit: limit * 2 }, // Get more to filter out already purchased
       ]);
 
       const recommendedProductIds = similarUserOrders
@@ -81,7 +83,7 @@ class RecommendationService {
         category: { $in: Array.from(purchasedCategories) },
         _id: { $nin: Array.from(purchasedProductIds) },
         isActive: true,
-        stock: { $gt: 0 }
+        stock: { $gt: 0 },
       })
         .sort('-averageRating -numReviews')
         .limit(limit)
@@ -90,7 +92,7 @@ class RecommendationService {
       // Combine recommendations
       const allRecommendedIds = [
         ...recommendedProductIds,
-        ...categoryBasedProducts.map(p => p._id.toString())
+        ...categoryBasedProducts.map(p => p._id.toString()),
       ];
 
       // Remove duplicates and limit
@@ -98,16 +100,16 @@ class RecommendationService {
 
       // Fetch full product details
       const recommendations = await Product.find({
-        _id: { $in: uniqueIds },
-        isActive: true
+        _id: { $in: uniqueIds, $nin: Array.from(purchasedProductIds) },
+        isActive: true,
       })
         .populate('category', 'name slug')
         .select('name description price priceUSD image averageRating numReviews stock category');
 
       // Sort by rating and reviews
       recommendations.sort((a, b) => {
-        const scoreA = (a.averageRating * a.numReviews) || 0;
-        const scoreB = (b.averageRating * b.numReviews) || 0;
+        const scoreA = a.averageRating * a.numReviews || 0;
+        const scoreB = b.averageRating * b.numReviews || 0;
         return scoreB - scoreA;
       });
 
@@ -130,25 +132,25 @@ class RecommendationService {
       const popularProducts = await Order.aggregate([
         {
           $match: {
-            status: { $in: ['paid', 'processing', 'shipped', 'delivered'] }
-          }
+            status: { $in: ['paid', 'processing', 'shipped', 'delivered'] },
+          },
         },
         { $unwind: '$items' },
         {
           $group: {
             _id: '$items.product',
-            totalSold: { $sum: '$items.quantity' }
-          }
+            totalSold: { $sum: '$items.quantity' },
+          },
         },
         { $sort: { totalSold: -1 } },
-        { $limit: limit }
+        { $limit: limit },
       ]);
 
       const productIds = popularProducts.map(p => p._id);
 
       const products = await Product.find({
         _id: { $in: productIds },
-        isActive: true
+        isActive: true,
       })
         .populate('category', 'name slug')
         .select('name description price priceUSD image averageRating numReviews stock category');
@@ -190,7 +192,7 @@ class RecommendationService {
         _id: { $ne: productId },
         category: product.category,
         isActive: true,
-        stock: { $gt: 0 }
+        stock: { $gt: 0 },
       })
         .populate('category', 'name slug')
         .sort('-averageRating -numReviews')

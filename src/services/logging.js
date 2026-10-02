@@ -37,9 +37,9 @@ class LoggingService {
         clientOpts: {
           node: this.elasticsearchUrl,
           maxRetries: 5,
-          requestTimeout: 10000
+          requestTimeout: 10000,
         },
-        index: 'cryptons-logs'
+        index: 'cryptons-logs',
       };
 
       // Add transport to existing logger
@@ -96,7 +96,7 @@ class LoggingService {
       message,
       ...context,
       environment: process.env.NODE_ENV,
-      service: 'cryptons-api'
+      service: 'cryptons-api',
     };
 
     logger[level](logEntry);
@@ -114,7 +114,7 @@ class LoggingService {
       duration,
       ip: req.ip,
       userAgent: req.get('user-agent'),
-      userId: req.user?.id
+      userId: req.user?.id,
     };
 
     if (res.statusCode >= 400) {
@@ -131,7 +131,7 @@ class LoggingService {
     this.logWithContext('warn', 'Security event', {
       event,
       ...details,
-      category: 'security'
+      category: 'security',
     });
   }
 
@@ -142,7 +142,7 @@ class LoggingService {
     this.logWithContext('info', 'Business event', {
       event,
       ...details,
-      category: 'business'
+      category: 'business',
     });
   }
 
@@ -155,7 +155,7 @@ class LoggingService {
       collection,
       duration,
       success,
-      category: 'database'
+      category: 'database',
     });
   }
 
@@ -168,7 +168,7 @@ class LoggingService {
       key,
       hit,
       duration,
-      category: 'cache'
+      category: 'cache',
     });
   }
 
@@ -181,7 +181,7 @@ class LoggingService {
       endpoint,
       duration,
       success,
-      category: 'external-api'
+      category: 'external-api',
     });
   }
 
@@ -193,7 +193,7 @@ class LoggingService {
       elkEnabled: this.elkEnabled,
       logLevel: this.logLevel,
       activeCorrelationIds: this.correlationIds.size,
-      elasticsearchUrl: this.elasticsearchUrl
+      elasticsearchUrl: this.elasticsearchUrl,
     };
   }
 }

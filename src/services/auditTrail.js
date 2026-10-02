@@ -29,7 +29,7 @@ class AuditTrailService {
         ipAddress: eventData.ipAddress,
         userAgent: eventData.userAgent,
         status: eventData.status || 'success',
-        metadata: eventData.metadata
+        metadata: eventData.metadata,
       });
 
       await auditLog.save();
@@ -51,7 +51,7 @@ class AuditTrailService {
       resource: 'authentication',
       status,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -66,7 +66,7 @@ class AuditTrailService {
       resource: 'conversion_transaction',
       resourceId: transactionId,
       changes,
-      status
+      status,
     });
   }
 
@@ -81,7 +81,7 @@ class AuditTrailService {
       resource: resourceType,
       resourceId,
       changes,
-      ipAddress
+      ipAddress,
     });
   }
 
@@ -96,7 +96,7 @@ class AuditTrailService {
       resource: resourceType,
       resourceId,
       changes,
-      ipAddress
+      ipAddress,
     });
   }
 
@@ -110,7 +110,7 @@ class AuditTrailService {
       category: 'compliance',
       resource: 'compliance_action',
       metadata: details,
-      status
+      status,
     });
   }
 
@@ -123,7 +123,7 @@ class AuditTrailService {
       category: 'system',
       resource: 'system',
       metadata: details,
-      status
+      status,
     });
   }
 
@@ -179,7 +179,7 @@ class AuditTrailService {
     try {
       const logs = await AuditLog.find({
         resource: resourceType,
-        resourceId
+        resourceId,
       })
         .populate('user', 'name email')
         .sort({ createdAt: -1 });
@@ -196,9 +196,7 @@ class AuditTrailService {
    */
   async getUserActivity(userId, limit = 50) {
     try {
-      const logs = await AuditLog.find({ user: userId })
-        .sort({ createdAt: -1 })
-        .limit(limit);
+      const logs = await AuditLog.find({ user: userId }).sort({ createdAt: -1 }).limit(limit);
 
       return logs;
     } catch (error) {
@@ -217,37 +215,37 @@ class AuditTrailService {
           $match: {
             createdAt: {
               $gte: startDate,
-              $lte: endDate
-            }
-          }
+              $lte: endDate,
+            },
+          },
         },
         {
           $group: {
             _id: {
               category: '$category',
-              action: '$action'
+              action: '$action',
             },
             count: { $sum: 1 },
             successCount: {
-              $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] }
+              $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] },
             },
             failureCount: {
-              $sum: { $cond: [{ $eq: ['$status', 'failure'] }, 1, 0] }
-            }
-          }
+              $sum: { $cond: [{ $eq: ['$status', 'failure'] }, 1, 0] },
+            },
+          },
         },
         {
-          $sort: { count: -1 }
-        }
+          $sort: { count: -1 },
+        },
       ]);
 
       return {
         period: {
           start: startDate,
-          end: endDate
+          end: endDate,
         },
         statistics: stats,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error generating audit report: ${error.message}`);
@@ -263,8 +261,8 @@ class AuditTrailService {
       const query = {
         $or: [
           { action: { $regex: searchTerm, $options: 'i' } },
-          { resource: { $regex: searchTerm, $options: 'i' } }
-        ]
+          { resource: { $regex: searchTerm, $options: 'i' } },
+        ],
       };
 
       if (filters.category) {

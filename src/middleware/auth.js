@@ -29,7 +29,7 @@ const protect = async (req, res, next) => {
 
     // Verify token
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
       return next(new AppError('Invalid or expired token', 401));
     }
@@ -43,7 +43,7 @@ const protect = async (req, res, next) => {
 
     // Get user from token
     const user = await User.findById(decoded.id).select('-password');
-    
+
     if (!user || !user.isActive) {
       return next(new AppError('User no longer exists or is inactive', 401));
     }
@@ -60,7 +60,9 @@ const protect = async (req, res, next) => {
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return next(new AppError(`User role '${req.user.role}' is not authorized to access this route`, 403));
+      return next(
+        new AppError(`User role '${req.user.role}' is not authorized to access this route`, 403)
+      );
     }
     next();
   };

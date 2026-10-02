@@ -6,7 +6,7 @@ const {
   logoutAll,
   getMe,
   updateProfile,
-  updatePassword
+  updatePassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');

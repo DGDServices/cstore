@@ -10,7 +10,7 @@ class PerformanceService {
     this.metrics = {
       endpoints: new Map(),
       slowQueries: [],
-      memorySnapshots: []
+      memorySnapshots: [],
     };
     this.slowQueryThreshold = parseInt(process.env.SLOW_QUERY_THRESHOLD || '1000', 10);
     this.slowRequestThreshold = parseInt(process.env.SLOW_REQUEST_THRESHOLD || '2000', 10);
@@ -23,7 +23,7 @@ class PerformanceService {
     if (!this.enabled) return;
 
     const key = `${method} ${path}`;
-    
+
     if (!this.metrics.endpoints.has(key)) {
       this.metrics.endpoints.set(key, {
         count: 0,
@@ -32,7 +32,7 @@ class PerformanceService {
         minDuration: Infinity,
         maxDuration: 0,
         errors: 0,
-        durations: []
+        durations: [],
       });
     }
 
@@ -42,7 +42,7 @@ class PerformanceService {
     metric.avgDuration = metric.totalDuration / metric.count;
     metric.minDuration = Math.min(metric.minDuration, duration);
     metric.maxDuration = Math.max(metric.maxDuration, duration);
-    
+
     if (statusCode >= 400) {
       metric.errors++;
     }
@@ -59,7 +59,7 @@ class PerformanceService {
         method,
         path,
         duration,
-        threshold: this.slowRequestThreshold
+        threshold: this.slowRequestThreshold,
       });
     }
   }
@@ -75,11 +75,11 @@ class PerformanceService {
         timestamp: new Date(),
         query,
         duration,
-        collection
+        collection,
       };
 
       this.metrics.slowQueries.push(slowQuery);
-      
+
       // Keep only last 50 slow queries
       if (this.metrics.slowQueries.length > 50) {
         this.metrics.slowQueries.shift();
@@ -98,7 +98,7 @@ class PerformanceService {
     const snapshot = {
       timestamp: new Date(),
       memory: process.memoryUsage(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
 
     this.metrics.memorySnapshots.push(snapshot);
@@ -123,7 +123,7 @@ class PerformanceService {
 
     const recent = snapshots.slice(-10);
     const heapUsed = recent.map(s => s.memory.heapUsed);
-    
+
     // Check if memory is consistently increasing
     let increasing = true;
     for (let i = 1; i < heapUsed.length; i++) {
@@ -141,7 +141,7 @@ class PerformanceService {
         logger.warn('Potential memory leak detected', {
           growth: Math.round(growth / 1024 / 1024) + ' MB',
           growthPercent: growthPercent.toFixed(2) + '%',
-          snapshots: heapUsed.length
+          snapshots: heapUsed.length,
         });
       }
     }
@@ -155,7 +155,7 @@ class PerformanceService {
       timestamp: new Date().toISOString(),
       endpoints: [],
       slowQueries: this.metrics.slowQueries,
-      memory: this.getMemoryReport()
+      memory: this.getMemoryReport(),
     };
 
     // Process endpoint metrics
@@ -174,7 +174,7 @@ class PerformanceService {
         p50: Math.round(p50),
         p95: Math.round(p95),
         p99: Math.round(p99),
-        errorRate: metric.count > 0 ? ((metric.errors / metric.count) * 100).toFixed(2) : 0
+        errorRate: metric.count > 0 ? ((metric.errors / metric.count) * 100).toFixed(2) : 0,
       });
     });
 
@@ -203,14 +203,14 @@ class PerformanceService {
         heapUsed: Math.round(latest.memory.heapUsed / 1024 / 1024) + ' MB',
         heapTotal: Math.round(latest.memory.heapTotal / 1024 / 1024) + ' MB',
         external: Math.round(latest.memory.external / 1024 / 1024) + ' MB',
-        rss: Math.round(latest.memory.rss / 1024 / 1024) + ' MB'
+        rss: Math.round(latest.memory.rss / 1024 / 1024) + ' MB',
       },
       growth: {
         absolute: Math.round(growth / 1024 / 1024) + ' MB',
         percent: growthPercent.toFixed(2) + '%',
-        snapshots: this.metrics.memorySnapshots.length
+        snapshots: this.metrics.memorySnapshots.length,
       },
-      uptime: Math.floor(latest.uptime) + ' seconds'
+      uptime: Math.floor(latest.uptime) + ' seconds',
     };
   }
 
@@ -237,7 +237,7 @@ class PerformanceService {
         type: 'slow_endpoints',
         severity: 'high',
         message: `${slowEndpoints.length} endpoint(s) have slow response times (p95 > ${this.slowRequestThreshold}ms)`,
-        details: slowEndpoints.map(e => e.endpoint)
+        details: slowEndpoints.map(e => e.endpoint),
       });
     }
 
@@ -248,7 +248,7 @@ class PerformanceService {
         type: 'high_error_rate',
         severity: 'high',
         message: `${highErrorEndpoints.length} endpoint(s) have high error rates (> 5%)`,
-        details: highErrorEndpoints.map(e => ({ endpoint: e.endpoint, errorRate: e.errorRate }))
+        details: highErrorEndpoints.map(e => ({ endpoint: e.endpoint, errorRate: e.errorRate })),
       });
     }
 
@@ -258,7 +258,7 @@ class PerformanceService {
         type: 'slow_queries',
         severity: 'medium',
         message: `${report.slowQueries.length} slow queries detected`,
-        details: 'Consider adding indexes or optimizing queries'
+        details: 'Consider adding indexes or optimizing queries',
       });
     }
 
@@ -268,7 +268,7 @@ class PerformanceService {
         type: 'memory_growth',
         severity: 'medium',
         message: `Memory usage increased by ${report.memory.growth.percent}`,
-        details: 'Monitor for potential memory leaks'
+        details: 'Monitor for potential memory leaks',
       });
     }
 
@@ -282,7 +282,7 @@ class PerformanceService {
     this.metrics = {
       endpoints: new Map(),
       slowQueries: [],
-      memorySnapshots: []
+      memorySnapshots: [],
     };
   }
 

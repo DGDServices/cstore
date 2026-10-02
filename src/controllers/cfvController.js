@@ -8,7 +8,7 @@ const getAllCFVCoins = asyncHandler(async (req, res) => {
   const coins = await cfvService.getAllCFVCoins();
   res.json({
     success: true,
-    data: { coins }
+    data: { coins },
   });
 });
 
@@ -20,7 +20,7 @@ const getCFVCoinBySymbol = asyncHandler(async (req, res) => {
   const valuation = await cfvService.getCoinValuationStatus(req.params.symbol);
   res.json({
     success: true,
-    data: { coin, valuation }
+    data: { coin, valuation },
   });
 });
 
@@ -35,7 +35,7 @@ const getCFVSummary = asyncHandler(async (req, res) => {
     currentPrice: coin.currentPrice ?? null,
     fairValue: coin.fairValue ?? null,
     valuationStatus: coin.valuationStatus || 'unknown',
-    percentageDifference: coin.percentageDifference ?? null
+    percentageDifference: coin.percentageDifference ?? null,
   }));
 
   res.json({
@@ -45,15 +45,15 @@ const getCFVSummary = asyncHandler(async (req, res) => {
         totalCoins: summary.length,
         undervalued: summary.filter(item => item.valuationStatus === 'undervalued').length,
         overvalued: summary.filter(item => item.valuationStatus === 'overvalued').length,
-        fairlyValued: summary.filter(item => item.valuationStatus === 'fairly valued').length
+        fairlyValued: summary.filter(item => item.valuationStatus === 'fairly valued').length,
       },
-      coins: summary
-    }
+      coins: summary,
+    },
   });
 });
 
 module.exports = {
   getAllCFVCoins,
   getCFVCoinBySymbol,
-  getCFVSummary
+  getCFVSummary,
 };

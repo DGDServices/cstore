@@ -30,7 +30,7 @@ exports.getAuctions = asyncHandler(async (req, res, next) => {
     total: result.total,
     page: result.page,
     limit: result.limit,
-    data: result.auctions
+    data: result.auctions,
   });
 });
 
@@ -154,8 +154,7 @@ exports.getMyBids = asyncHandler(async (req, res, next) => {
 });
 
 exports.getMyWatchlist = asyncHandler(async (req, res, next) => {
-  const watchlist = await AuctionWatch.find({ user: req.user.id })
-    .populate('auction');
+  const watchlist = await AuctionWatch.find({ user: req.user.id }).populate('auction');
   res.json({ success: true, count: watchlist.length, data: watchlist });
 });
 

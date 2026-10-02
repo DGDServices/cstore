@@ -21,7 +21,7 @@ class TransactionMonitoringService {
       return {
         approved: true,
         riskScore: 0,
-        checks: []
+        checks: [],
       };
     }
 
@@ -34,13 +34,13 @@ class TransactionMonitoringService {
       // 1. Sanctions screening
       const sanctionsResult = await sanctionsService.screenUser(user._id, {
         name: user.name,
-        country: user.country
+        country: user.country,
       });
 
       checks.push({
         type: 'sanctions',
         passed: sanctionsResult.action !== 'block',
-        result: sanctionsResult
+        result: sanctionsResult,
       });
 
       if (sanctionsResult.action === 'block') {
@@ -51,11 +51,11 @@ class TransactionMonitoringService {
 
       // 2. AML monitoring
       const amlResult = await amlService.monitorTransaction(transaction);
-      
+
       checks.push({
         type: 'aml',
         passed: amlResult.allowed,
-        result: amlResult
+        result: amlResult,
       });
 
       if (!amlResult.allowed) {
@@ -66,27 +66,30 @@ class TransactionMonitoringService {
 
       // 3. Risk-based scoring
       const riskScore = this.calculateTransactionRisk(transaction, user);
-      
+
       checks.push({
         type: 'risk_assessment',
         passed: riskScore < this.manualReviewThreshold,
-        result: { score: riskScore }
+        result: { score: riskScore },
       });
 
       totalRiskScore += riskScore;
 
       // Determine approval status
       const approved = totalRiskScore < this.autoBlockThreshold;
-      const requiresManualReview = totalRiskScore >= this.manualReviewThreshold && totalRiskScore < this.autoBlockThreshold;
+      const requiresManualReview =
+        totalRiskScore >= this.manualReviewThreshold && totalRiskScore < this.autoBlockThreshold;
 
-      logger.info(`Transaction monitoring complete: Risk Score ${totalRiskScore}, Approved: ${approved}`);
+      logger.info(
+        `Transaction monitoring complete: Risk Score ${totalRiskScore}, Approved: ${approved}`
+      );
 
       return {
         approved,
         requiresManualReview,
         riskScore: totalRiskScore,
         checks,
-        alerts: amlResult.alerts || []
+        alerts: amlResult.alerts || [],
       };
     } catch (error) {
       logger.error(`Error monitoring transaction: ${error.message}`);
@@ -95,7 +98,7 @@ class TransactionMonitoringService {
         approved: true,
         riskScore: 0,
         checks: [],
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -124,7 +127,7 @@ class TransactionMonitoringService {
     // New user risk
     const accountAge = Date.now() - new Date(user.createdAt).getTime();
     const daysSinceCreation = accountAge / (24 * 60 * 60 * 1000);
-    
+
     if (daysSinceCreation < 7) {
       riskScore += 25;
     } else if (daysSinceCreation < 30) {
@@ -144,15 +147,15 @@ class TransactionMonitoringService {
 
       // Check for patterns that might indicate issues
       // This could trigger alerts for compliance review
-      
+
       return {
-        success: true
+        success: true,
       };
     } catch (error) {
       logger.error(`Error in post-transaction monitoring: ${error.message}`);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -168,11 +171,11 @@ class TransactionMonitoringService {
       return {
         period: {
           start: startDate,
-          end: endDate
+          end: endDate,
         },
         aml: amlStats,
         sanctions: sanctionsStats,
-        generatedAt: new Date()
+        generatedAt: new Date(),
       };
     } catch (error) {
       logger.error(`Error generating monitoring report: ${error.message}`);

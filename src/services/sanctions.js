@@ -9,13 +9,13 @@ class SanctionsService {
   constructor() {
     this.enabled = process.env.AML_ENABLED === 'true';
     this.apiKey = process.env.SANCTIONS_API_KEY;
-    
+
     // Simplified sanctions lists for demonstration
     this.sanctionedEntities = {
       OFAC: ['Iran', 'North Korea', 'Syria', 'Cuba', 'Venezuela', 'Russia'],
       UN: ['North Korea', 'Iran', 'Somalia', 'Libya'],
       EU: ['Russia', 'Belarus', 'Myanmar'],
-      countries: ['IR', 'KP', 'SY', 'CU']
+      countries: ['IR', 'KP', 'SY', 'CU'],
     };
   }
 
@@ -26,13 +26,13 @@ class SanctionsService {
     if (!this.enabled) {
       return {
         result: 'clear',
-        action: 'allow'
+        action: 'allow',
       };
     }
 
     try {
       const matches = [];
-      
+
       // Screen against country sanctions
       if (userData.country) {
         const countryMatch = await this.checkCountrySanctions(userData.country);
@@ -56,7 +56,7 @@ class SanctionsService {
       if (matches.length > 0) {
         // Check match scores
         const highConfidenceMatch = matches.some(m => m.matchScore >= 90);
-        
+
         if (highConfidenceMatch) {
           result = 'confirmed_match';
           action = 'block';
@@ -71,7 +71,7 @@ class SanctionsService {
         user: userId,
         result,
         lists: matches,
-        action
+        action,
       });
 
       await screening.save();
@@ -82,7 +82,7 @@ class SanctionsService {
         screeningId: screening._id,
         result,
         action,
-        matches
+        matches,
       };
     } catch (error) {
       logger.error(`Error screening user: ${error.message}`);
@@ -105,8 +105,8 @@ class SanctionsService {
           matchScore: 100,
           matchDetails: {
             countryCode,
-            reason: 'Country is under comprehensive sanctions'
-          }
+            reason: 'Country is under comprehensive sanctions',
+          },
         };
       }
 
@@ -124,10 +124,10 @@ class SanctionsService {
     try {
       // In production, this would call actual sanctions screening API
       // For now, simplified logic
-      
+
       const suspiciousNames = ['test sanctioned', 'blocked entity'];
       const normalizedName = name.toLowerCase();
-      
+
       for (const sanctionedName of suspiciousNames) {
         if (normalizedName.includes(sanctionedName)) {
           return {
@@ -136,8 +136,8 @@ class SanctionsService {
             matchScore: 85,
             matchDetails: {
               searchName: name,
-              matchedName: sanctionedName
-            }
+              matchedName: sanctionedName,
+            },
           };
         }
       }
@@ -156,14 +156,14 @@ class SanctionsService {
     try {
       const User = require('../models/User');
       const user = await User.findById(userId);
-      
+
       if (!user) {
         throw new Error('User not found');
       }
 
       const userData = {
         name: user.name,
-        country: user.country
+        country: user.country,
       };
 
       const result = await this.screenUser(userId, userData);
@@ -202,7 +202,7 @@ class SanctionsService {
   async reviewMatch(screeningId, reviewData) {
     try {
       const screening = await SanctionsScreening.findById(screeningId);
-      
+
       if (!screening) {
         throw new Error('Screening not found');
       }
@@ -237,8 +237,8 @@ class SanctionsService {
       const screenings = await SanctionsScreening.find({
         $or: [
           { nextScreeningDate: { $lte: new Date() } },
-          { screeningDate: { $lte: thirtyDaysAgo } }
-        ]
+          { screeningDate: { $lte: thirtyDaysAgo } },
+        ],
       }).populate('user', 'name email');
 
       return screenings;
@@ -256,7 +256,7 @@ class SanctionsService {
       const screenings = await SanctionsScreening.find({
         result: 'potential_match',
         action: 'manual_review',
-        reviewedAt: { $exists: false }
+        reviewedAt: { $exists: false },
       })
         .populate('user', 'name email')
         .sort({ screeningDate: -1 });
@@ -278,19 +278,19 @@ class SanctionsService {
           $match: {
             screeningDate: {
               $gte: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-              $lte: endDate || new Date()
-            }
-          }
+              $lte: endDate || new Date(),
+            },
+          },
         },
         {
           $group: {
             _id: {
               result: '$result',
-              action: '$action'
+              action: '$action',
             },
-            count: { $sum: 1 }
-          }
-        }
+            count: { $sum: 1 },
+          },
+        },
       ]);
 
       return stats;

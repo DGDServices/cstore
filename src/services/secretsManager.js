@@ -56,13 +56,13 @@ class SecretsManager {
   async initializeVault() {
     try {
       const vaultAddr = process.env.VAULT_ADDR || process.env.VAULT_URL || 'http://localhost:8200';
-      
+
       this.vaultClient = vault({
         apiVersion: 'v1',
         endpoint: vaultAddr,
         requestOptions: {
-          rejectUnauthorized: process.env.NODE_ENV === 'production'
-        }
+          rejectUnauthorized: process.env.NODE_ENV === 'production',
+        },
       });
 
       // Authenticate with AppRole
@@ -91,7 +91,7 @@ class SecretsManager {
     try {
       const result = await this.vaultClient.approleLogin({
         role_id: process.env.VAULT_ROLE_ID,
-        secret_id: process.env.VAULT_SECRET_ID
+        secret_id: process.env.VAULT_SECRET_ID,
       });
 
       this.vaultClient.token = result.auth.client_token;
@@ -129,7 +129,7 @@ class SecretsManager {
   async initializeAWS() {
     try {
       this.awsClient = new SecretsManagerClient({
-        region: process.env.AWS_SECRETS_REGION || 'us-east-1'
+        region: process.env.AWS_SECRETS_REGION || 'us-east-1',
       });
 
       logger.info('AWS Secrets Manager client initialized successfully');
@@ -202,7 +202,7 @@ class SecretsManager {
   async getAWSSecret(path, key) {
     try {
       const command = new GetSecretValueCommand({
-        SecretId: path
+        SecretId: path,
       });
 
       const response = await this.awsClient.send(command);
@@ -230,22 +230,22 @@ class SecretsManager {
       'cryptons/database': {
         host: 'MONGODB_URI',
         username: 'MONGODB_USER',
-        password: 'MONGODB_PASSWORD'
+        password: 'MONGODB_PASSWORD',
       },
       'cryptons/jwt': {
         secret: 'JWT_SECRET',
-        refresh_secret: 'JWT_REFRESH_SECRET'
+        refresh_secret: 'JWT_REFRESH_SECRET',
       },
       'cryptons/email': {
         smtp_host: 'SMTP_HOST',
         smtp_port: 'SMTP_PORT',
         smtp_user: 'SMTP_USER',
-        smtp_password: 'SMTP_PASSWORD'
+        smtp_password: 'SMTP_PASSWORD',
       },
       'cryptons/encryption': {
         field_key: 'FIELD_ENCRYPTION_KEY',
-        webhook_secret: 'WEBHOOK_SECRET'
-      }
+        webhook_secret: 'WEBHOOK_SECRET',
+      },
     };
 
     if (key && envVarMap[path] && envVarMap[path][key]) {
@@ -276,7 +276,7 @@ class SecretsManager {
         jwt: await this.getSecret('cryptons/jwt'),
         email: await this.getSecret('cryptons/email'),
         blockchain: await this.getSecret('cryptons/blockchain'),
-        encryption: await this.getSecret('cryptons/encryption')
+        encryption: await this.getSecret('cryptons/encryption'),
       };
 
       return secrets;
@@ -292,7 +292,7 @@ class SecretsManager {
   cacheSecret(key, value) {
     this.secretsCache.set(key, {
       value,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 

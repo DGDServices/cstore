@@ -12,21 +12,20 @@ const auditLogger = winston.createLogger({
   defaultMeta: { service: 'cryptons-audit' },
   transports: [
     // Audit logs file
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: path.join(__dirname, '../../logs/audit.log'),
       maxsize: 10485760, // 10MB
       maxFiles: 20, // Keep 20 files (200MB total)
     }),
     // Console output in development
-    ...(process.env.NODE_ENV === 'development' ? [
-      new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        )
-      })
-    ] : [])
-  ]
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          new winston.transports.Console({
+            format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+          }),
+        ]
+      : []),
+  ],
 });
 
 /**
@@ -39,17 +38,17 @@ const AUDIT_EVENTS = {
   USER_REGISTER: 'user.register',
   PASSWORD_CHANGE: 'user.password_change',
   TOKEN_REVOKED: 'auth.token_revoked',
-  
+
   // Authorization
   ACCESS_DENIED: 'auth.access_denied',
   UNAUTHORIZED_ATTEMPT: 'auth.unauthorized_attempt',
-  
+
   // User Management
   USER_CREATED: 'user.created',
   USER_UPDATED: 'user.updated',
   USER_DELETED: 'user.deleted',
   USER_ROLE_CHANGED: 'user.role_changed',
-  
+
   // Orders & Payments
   ORDER_CREATED: 'order.created',
   ORDER_UPDATED: 'order.updated',
@@ -57,23 +56,23 @@ const AUDIT_EVENTS = {
   PAYMENT_INITIATED: 'payment.initiated',
   PAYMENT_CONFIRMED: 'payment.confirmed',
   PAYMENT_FAILED: 'payment.failed',
-  
+
   // Admin Actions
   ADMIN_ACTION: 'admin.action',
   CONFIG_CHANGED: 'admin.config_changed',
   PRODUCT_UPDATED: 'admin.product_updated',
-  
+
   // Security
   SUSPICIOUS_ACTIVITY: 'security.suspicious_activity',
   RATE_LIMIT_EXCEEDED: 'security.rate_limit_exceeded',
   WEBHOOK_FAILED: 'security.webhook_failed',
   ENCRYPTION_ERROR: 'security.encryption_error',
-  
+
   // Multi-sig Wallet
   MULTISIG_CREATED: 'multisig.created',
   MULTISIG_TRANSACTION: 'multisig.transaction',
   MULTISIG_APPROVAL: 'multisig.approval',
-  MULTISIG_EXECUTION: 'multisig.execution'
+  MULTISIG_EXECUTION: 'multisig.execution',
 };
 
 /**
@@ -85,9 +84,9 @@ const logAuditEvent = (event, data) => {
   const auditEntry = {
     event,
     timestamp: new Date().toISOString(),
-    ...data
+    ...data,
   };
-  
+
   auditLogger.info(auditEntry);
 };
 
@@ -105,7 +104,7 @@ const logAuthEvent = (userId, email, action, metadata = {}) => {
     action,
     ip: metadata.ip,
     userAgent: metadata.userAgent,
-    success: metadata.success !== false
+    success: metadata.success !== false,
   });
 };
 
@@ -123,7 +122,7 @@ const logAdminAction = (adminId, action, target = {}, metadata = {}) => {
     target,
     ip: metadata.ip,
     timestamp: new Date().toISOString(),
-    ...metadata
+    ...metadata,
   });
 };
 
@@ -135,7 +134,7 @@ const logAdminAction = (adminId, action, target = {}, metadata = {}) => {
 const logSecurityEvent = (event, data) => {
   logAuditEvent(event, {
     severity: data.severity || 'medium',
-    ...data
+    ...data,
   });
 };
 
@@ -154,7 +153,7 @@ const logPaymentEvent = (orderId, paymentId, action, metadata = {}) => {
     amount: metadata.amount,
     currency: metadata.currency,
     status: metadata.status,
-    ...metadata
+    ...metadata,
   });
 };
 
@@ -170,7 +169,7 @@ const logMultiSigEvent = (walletId, action, data = {}) => {
     action,
     userId: data.userId,
     transactionId: data.transactionId,
-    ...data
+    ...data,
   });
 };
 
@@ -187,7 +186,7 @@ const logUnauthorizedAttempt = (req, reason) => {
     ip: req.ip,
     userAgent: req.headers['user-agent'],
     reason,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -195,14 +194,14 @@ const logUnauthorizedAttempt = (req, reason) => {
  * Log rate limit exceeded
  * @param {Object} req - Express request object
  */
-const logRateLimitExceeded = (req) => {
+const logRateLimitExceeded = req => {
   logSecurityEvent(AUDIT_EVENTS.RATE_LIMIT_EXCEEDED, {
     severity: 'medium',
     path: req.path,
     method: req.method,
     ip: req.ip,
     userAgent: req.headers['user-agent'],
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -216,5 +215,5 @@ module.exports = {
   logMultiSigEvent,
   logUnauthorizedAttempt,
   logRateLimitExceeded,
-  auditLogger
+  auditLogger,
 };

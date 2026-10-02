@@ -11,7 +11,7 @@
 
 jest.mock('../src/config/redis', () => ({
   isRedisAvailable: jest.fn(() => false), // simulate Redis outage
-  getRedisClient: jest.fn(() => ({}))
+  getRedisClient: jest.fn(() => ({})),
 }));
 
 const tokenBlacklist = require('../src/utils/tokenBlacklist');
@@ -24,26 +24,34 @@ describe('Token revocation fail-mode (Redis unavailable)', () => {
   });
 
   describe('default (fail-open)', () => {
-    beforeEach(() => { delete process.env.TOKEN_REVOCATION_FAIL_MODE; });
+    beforeEach(() => {
+      delete process.env.TOKEN_REVOCATION_FAIL_MODE;
+    });
 
     it('isBlacklisted allows the token (returns not-blacklisted)', async () => {
       await expect(tokenBlacklist.isBlacklisted('any.jwt.token')).resolves.toBe(false);
     });
 
     it('areUserTokensRevoked allows the token (returns not-revoked)', async () => {
-      await expect(tokenBlacklist.areUserTokensRevoked('user123', 1_700_000_000)).resolves.toBe(false);
+      await expect(tokenBlacklist.areUserTokensRevoked('user123', 1_700_000_000)).resolves.toBe(
+        false
+      );
     });
   });
 
   describe('TOKEN_REVOCATION_FAIL_MODE=closed (fail secure)', () => {
-    beforeEach(() => { process.env.TOKEN_REVOCATION_FAIL_MODE = 'closed'; });
+    beforeEach(() => {
+      process.env.TOKEN_REVOCATION_FAIL_MODE = 'closed';
+    });
 
     it('isBlacklisted denies the token (treats as blacklisted)', async () => {
       await expect(tokenBlacklist.isBlacklisted('any.jwt.token')).resolves.toBe(true);
     });
 
     it('areUserTokensRevoked denies the token (treats as revoked)', async () => {
-      await expect(tokenBlacklist.areUserTokensRevoked('user123', 1_700_000_000)).resolves.toBe(true);
+      await expect(tokenBlacklist.areUserTokensRevoked('user123', 1_700_000_000)).resolves.toBe(
+        true
+      );
     });
   });
 });

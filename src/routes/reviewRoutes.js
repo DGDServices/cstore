@@ -11,7 +11,7 @@ const {
   deleteReview,
   markHelpful,
   approveReview,
-  getReviewStats
+  getReviewStats,
 } = require('../controllers/reviewController');
 
 // Public routes

@@ -22,7 +22,7 @@ class SellerService {
     const seller = await Seller.create({
       ...sellerData,
       user: userId,
-      slug
+      slug,
     });
 
     logger.info(`Seller account created for user ${userId}`);
@@ -47,7 +47,7 @@ class SellerService {
       'returnPolicy',
       'shipsFrom',
       'shippingCarriers',
-      'processingTime'
+      'processingTime',
     ];
 
     for (const key of allowed) {
@@ -71,7 +71,7 @@ class SellerService {
       seller.taxInfo = {
         ...seller.taxInfo,
         ...verificationData.taxInfo,
-        submittedAt: new Date()
+        submittedAt: new Date(),
       };
     }
 
@@ -103,7 +103,7 @@ class SellerService {
       description: violation.description,
       severity: violation.severity,
       issuedAt: new Date(),
-      issuedBy: adminUserId
+      issuedBy: adminUserId,
     });
     seller.strikeCount += 1;
 
@@ -135,7 +135,9 @@ class SellerService {
     const seller = await Seller.findOne({ slug, isActive: true, isSuspended: false });
     if (!seller) throw new Error('Storefront not found');
 
-    const products = await SellerProduct.find({ seller: seller._id, isActive: true }).populate('product');
+    const products = await SellerProduct.find({ seller: seller._id, isActive: true }).populate(
+      'product'
+    );
 
     return { seller, products };
   }

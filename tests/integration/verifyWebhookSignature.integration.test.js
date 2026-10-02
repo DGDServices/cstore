@@ -19,7 +19,7 @@ describe('verifyWebhookSignature Integration Test', () => {
       res.status(200).json({
         success: true,
         message: 'Webhook received',
-        data: req.body
+        data: req.body,
       });
     });
 
@@ -27,7 +27,7 @@ describe('verifyWebhookSignature Integration Test', () => {
     app.post('/test', (req, res) => {
       res.status(200).json({
         success: true,
-        message: 'Test endpoint'
+        message: 'Test endpoint',
       });
     });
   });
@@ -41,7 +41,7 @@ describe('verifyWebhookSignature Integration Test', () => {
       const payload = {
         event: 'payment.completed',
         transaction_id: 'txn_123',
-        amount: 100
+        amount: 100,
       };
 
       // Calculate signature
@@ -64,12 +64,15 @@ describe('verifyWebhookSignature Integration Test', () => {
       const payload = {
         event: 'payment.completed',
         transaction_id: 'txn_123',
-        amount: 100
+        amount: 100,
       };
 
       const response = await request(app)
         .post('/webhook')
-        .set('X-Webhook-Signature', 'invalid_signature_1234567890123456789012345678901234567890123456789012345678901234')
+        .set(
+          'X-Webhook-Signature',
+          'invalid_signature_1234567890123456789012345678901234567890123456789012345678901234'
+        )
         .send(payload);
 
       expect(response.status).toBe(401);
@@ -81,12 +84,10 @@ describe('verifyWebhookSignature Integration Test', () => {
       const payload = {
         event: 'payment.completed',
         transaction_id: 'txn_123',
-        amount: 100
+        amount: 100,
       };
 
-      const response = await request(app)
-        .post('/webhook')
-        .send(payload);
+      const response = await request(app).post('/webhook').send(payload);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -97,7 +98,7 @@ describe('verifyWebhookSignature Integration Test', () => {
       const payload = {
         event: 'payment.completed',
         transaction_id: 'txn_123',
-        amount: 100
+        amount: 100,
       };
 
       // Calculate signature
@@ -122,7 +123,7 @@ describe('verifyWebhookSignature Integration Test', () => {
           id: 'order_123',
           items: [
             { product_id: 'prod_1', quantity: 2, price: 50 },
-            { product_id: 'prod_2', quantity: 1, price: 100 }
+            { product_id: 'prod_2', quantity: 1, price: 100 },
           ],
           customer: {
             id: 'cust_456',
@@ -130,14 +131,14 @@ describe('verifyWebhookSignature Integration Test', () => {
             shipping: {
               address: '123 Main St',
               city: 'New York',
-              country: 'US'
-            }
-          }
+              country: 'US',
+            },
+          },
         },
         metadata: {
           timestamp: Date.now(),
-          source: 'api'
-        }
+          source: 'api',
+        },
       };
 
       // Calculate signature
@@ -161,9 +162,7 @@ describe('verifyWebhookSignature Integration Test', () => {
     it('should accept requests without signature', async () => {
       const payload = { test: 'data' };
 
-      const response = await request(app)
-        .post('/test')
-        .send(payload);
+      const response = await request(app).post('/test').send(payload);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

@@ -24,12 +24,12 @@ class CacheService {
       const redisClient = getRedisClient();
       const fullKey = this.prefix + key;
       const value = await redisClient.get(fullKey);
-      
+
       if (value) {
         logger.debug(`Cache hit: ${key}`);
         return JSON.parse(value);
       }
-      
+
       logger.debug(`Cache miss: ${key}`);
       return null;
     } catch (error) {
@@ -93,13 +93,13 @@ class CacheService {
       const redisClient = getRedisClient();
       const fullPattern = this.prefix + pattern;
       const keys = await redisClient.keys(fullPattern);
-      
+
       if (keys.length > 0) {
         await redisClient.del(keys);
         logger.debug(`Cache deleted ${keys.length} keys matching: ${pattern}`);
         return keys.length;
       }
-      
+
       return 0;
     } catch (error) {
       logger.error(`Cache delete pattern error for ${pattern}:`, error);
@@ -139,12 +139,12 @@ class CacheService {
     // Fetch fresh data
     try {
       const data = await fetchFunction();
-      
+
       // Store in cache
       if (data !== null && data !== undefined) {
         await this.set(key, data, ttl);
       }
-      
+
       return data;
     } catch (error) {
       logger.error(`Cache getOrSet error for key ${key}:`, error);
@@ -231,14 +231,14 @@ class CacheService {
     if (!this.enabled || !isRedisAvailable()) {
       return {
         enabled: false,
-        available: false
+        available: false,
       };
     }
 
     try {
       const redisClient = getRedisClient();
       const info = await redisClient.info('stats');
-      
+
       // Parse Redis INFO output
       const stats = {};
       info.split('\r\n').forEach(line => {
@@ -253,14 +253,14 @@ class CacheService {
         available: true,
         stats,
         prefix: this.prefix,
-        defaultTTL: this.defaultTTL
+        defaultTTL: this.defaultTTL,
       };
     } catch (error) {
       logger.error('Cache stats error:', error);
       return {
         enabled: true,
         available: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -284,10 +284,10 @@ class CacheService {
       }
 
       const cacheKey = `route:${req.originalUrl}`;
-      
+
       try {
         const cached = await this.get(cacheKey);
-        
+
         if (cached) {
           res.set('X-Cache', 'HIT');
           return res.json(cached);
@@ -297,7 +297,7 @@ class CacheService {
         const originalJson = res.json.bind(res);
 
         // Override json method to cache response
-        res.json = (data) => {
+        res.json = data => {
           this.set(cacheKey, data, ttl).catch(err => {
             logger.error('Cache middleware set error:', err);
           });

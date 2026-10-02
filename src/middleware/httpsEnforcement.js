@@ -16,9 +16,10 @@ const forceHttps = (req, res, next) => {
   }
 
   // Check if request is already secure
-  const isSecure = req.secure || 
-                   req.headers['x-forwarded-proto'] === 'https' ||
-                   req.headers['x-forwarded-ssl'] === 'on';
+  const isSecure =
+    req.secure ||
+    req.headers['x-forwarded-proto'] === 'https' ||
+    req.headers['x-forwarded-ssl'] === 'on';
 
   if (!isSecure) {
     const httpsUrl = `https://${req.hostname}${req.url}`;
@@ -59,7 +60,7 @@ const addHstsHeader = (req, res, next) => {
  * Applies both HTTPS redirect and HSTS header
  */
 const enforceHttps = (req, res, next) => {
-  forceHttps(req, res, (err) => {
+  forceHttps(req, res, err => {
     if (err) return next(err);
     addHstsHeader(req, res, next);
   });
@@ -75,7 +76,7 @@ const getHttpsStatus = () => {
     environment: process.env.NODE_ENV,
     hstsMaxAge: parseInt(process.env.HSTS_MAX_AGE || 31536000),
     hstsIncludeSubDomains: process.env.HSTS_INCLUDE_SUBDOMAINS !== 'false',
-    hstsPreload: process.env.HSTS_PRELOAD === 'true'
+    hstsPreload: process.env.HSTS_PRELOAD === 'true',
   };
 };
 
@@ -89,16 +90,17 @@ const requireHttps = (req, res, next) => {
     return next();
   }
 
-  const isSecure = req.secure || 
-                   req.headers['x-forwarded-proto'] === 'https' ||
-                   req.headers['x-forwarded-ssl'] === 'on';
+  const isSecure =
+    req.secure ||
+    req.headers['x-forwarded-proto'] === 'https' ||
+    req.headers['x-forwarded-ssl'] === 'on';
 
   if (!isSecure) {
     logger.warn(`Blocked non-HTTPS request to protected endpoint: ${req.url}`);
     return res.status(403).json({
       success: false,
       error: 'HTTPS Required',
-      message: 'This endpoint requires a secure HTTPS connection'
+      message: 'This endpoint requires a secure HTTPS connection',
     });
   }
 
@@ -113,7 +115,7 @@ const secureSessionCookies = (req, res, next) => {
   if (process.env.NODE_ENV === 'production' && process.env.FORCE_HTTPS === 'true') {
     // Override res.cookie to automatically set secure flag
     const originalCookie = res.cookie.bind(res);
-    res.cookie = function(name, value, options = {}) {
+    res.cookie = function (name, value, options = {}) {
       options.secure = true;
       options.httpOnly = true;
       options.sameSite = options.sameSite || 'strict';
@@ -130,5 +132,5 @@ module.exports = {
   enforceHttps,
   requireHttps,
   secureSessionCookies,
-  getHttpsStatus
+  getHttpsStatus,
 };

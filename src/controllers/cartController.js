@@ -9,16 +9,18 @@ const logger = require('../utils/logger');
  */
 exports.getCart = async (req, res, next) => {
   try {
-    let cart = await Cart.findOne({ user: req.user.id })
-      .populate('items.product', 'name price priceUSD image stock isActive');
+    let cart = await Cart.findOne({ user: req.user.id }).populate(
+      'items.product',
+      'name price priceUSD image stock isActive'
+    );
 
     if (!cart) {
       cart = await Cart.create({ user: req.user.id, items: [] });
     }
 
     // Filter out inactive products or products with 0 stock
-    cart.items = cart.items.filter(item => 
-      item.product && item.product.isActive && item.product.stock > 0
+    cart.items = cart.items.filter(
+      item => item.product && item.product.isActive && item.product.stock > 0
     );
 
     await cart.save();
@@ -29,7 +31,7 @@ exports.getCart = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: cartData
+      data: cartData,
     });
   } catch (error) {
     logger.error('Get cart error:', error);
@@ -52,21 +54,21 @@ exports.addToCart = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
       });
     }
 
     if (!product.isActive) {
       return res.status(400).json({
         success: false,
-        message: 'Product is not available'
+        message: 'Product is not available',
       });
     }
 
     if (product.stock < quantity) {
       return res.status(400).json({
         success: false,
-        message: `Only ${product.stock} items available in stock`
+        message: `Only ${product.stock} items available in stock`,
       });
     }
 
@@ -77,18 +79,16 @@ exports.addToCart = async (req, res, next) => {
     }
 
     // Check if product already in cart
-    const existingItemIndex = cart.items.findIndex(
-      item => item.product.toString() === productId
-    );
+    const existingItemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
     if (existingItemIndex > -1) {
       // Update quantity
       const newQuantity = cart.items[existingItemIndex].quantity + quantity;
-      
+
       if (newQuantity > product.stock) {
         return res.status(400).json({
           success: false,
-          message: `Cannot add more than ${product.stock} items`
+          message: `Cannot add more than ${product.stock} items`,
         });
       }
 
@@ -101,7 +101,7 @@ exports.addToCart = async (req, res, next) => {
         product: productId,
         quantity,
         price: product.price,
-        priceUSD: product.priceUSD
+        priceUSD: product.priceUSD,
       });
     }
 
@@ -112,7 +112,7 @@ exports.addToCart = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: cart
+      data: cart,
     });
   } catch (error) {
     logger.error('Add to cart error:', error);
@@ -135,18 +135,16 @@ exports.updateCartItem = async (req, res, next) => {
     if (!cart) {
       return res.status(404).json({
         success: false,
-        message: 'Cart not found'
+        message: 'Cart not found',
       });
     }
 
-    const itemIndex = cart.items.findIndex(
-      item => item.product.toString() === productId
-    );
+    const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
     if (itemIndex === -1) {
       return res.status(404).json({
         success: false,
-        message: 'Item not found in cart'
+        message: 'Item not found in cart',
       });
     }
 
@@ -159,14 +157,14 @@ exports.updateCartItem = async (req, res, next) => {
       if (!product) {
         return res.status(404).json({
           success: false,
-          message: 'Product not found'
+          message: 'Product not found',
         });
       }
 
       if (quantity > product.stock) {
         return res.status(400).json({
           success: false,
-          message: `Only ${product.stock} items available in stock`
+          message: `Only ${product.stock} items available in stock`,
         });
       }
 
@@ -184,7 +182,7 @@ exports.updateCartItem = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: cart
+      data: cart,
     });
   } catch (error) {
     logger.error('Update cart item error:', error);
@@ -206,13 +204,11 @@ exports.removeFromCart = async (req, res, next) => {
     if (!cart) {
       return res.status(404).json({
         success: false,
-        message: 'Cart not found'
+        message: 'Cart not found',
       });
     }
 
-    cart.items = cart.items.filter(
-      item => item.product.toString() !== productId
-    );
+    cart.items = cart.items.filter(item => item.product.toString() !== productId);
 
     await cart.save();
     await cart.populate('items.product', 'name price priceUSD currency image stock isActive');
@@ -221,7 +217,7 @@ exports.removeFromCart = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: cart
+      data: cart,
     });
   } catch (error) {
     logger.error('Remove from cart error:', error);
@@ -242,7 +238,7 @@ exports.clearCart = async (req, res, next) => {
     if (!cart) {
       return res.status(404).json({
         success: false,
-        message: 'Cart not found'
+        message: 'Cart not found',
       });
     }
 
@@ -254,7 +250,7 @@ exports.clearCart = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Cart cleared successfully',
-      data: cart
+      data: cart,
     });
   } catch (error) {
     logger.error('Clear cart error:', error);
@@ -271,13 +267,12 @@ exports.validateCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const cart = await Cart.findOne({ user: userId })
-      .populate('items.product');
+    const cart = await Cart.findOne({ user: userId }).populate('items.product');
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Cart is empty'
+        message: 'Cart is empty',
       });
     }
 
@@ -288,7 +283,7 @@ exports.validateCart = async (req, res, next) => {
       if (!item.product) {
         issues.push({
           issue: 'Product no longer exists',
-          itemId: item._id
+          itemId: item._id,
         });
         continue;
       }
@@ -297,7 +292,7 @@ exports.validateCart = async (req, res, next) => {
         issues.push({
           issue: 'Product is no longer available',
           productId: item.product._id,
-          productName: item.product.name
+          productName: item.product.name,
         });
         continue;
       }
@@ -308,7 +303,7 @@ exports.validateCart = async (req, res, next) => {
           productId: item.product._id,
           productName: item.product.name,
           requested: item.quantity,
-          available: item.product.stock
+          available: item.product.stock,
         });
         continue;
       }
@@ -319,7 +314,7 @@ exports.validateCart = async (req, res, next) => {
           productId: item.product._id,
           productName: item.product.name,
           oldPrice: item.priceUSD,
-          newPrice: item.product.priceUSD
+          newPrice: item.product.priceUSD,
         });
         // Update price but don't mark as invalid
         item.price = item.product.price;
@@ -336,14 +331,14 @@ exports.validateCart = async (req, res, next) => {
         success: false,
         message: 'Cart validation failed',
         issues,
-        validItems: validItems.length
+        validItems: validItems.length,
       });
     }
 
     res.json({
       success: true,
       message: 'Cart is valid',
-      data: cart
+      data: cart,
     });
   } catch (error) {
     logger.error('Validate cart error:', error);

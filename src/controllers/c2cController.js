@@ -7,7 +7,19 @@ exports.createListing = asyncHandler(async (req, res, next) => {
 });
 
 exports.getListings = asyncHandler(async (req, res, next) => {
-  const { category, condition, minPrice, maxPrice, search, radiusKm, status, lng, lat, page, limit } = req.query;
+  const {
+    category,
+    condition,
+    minPrice,
+    maxPrice,
+    search,
+    radiusKm,
+    status,
+    lng,
+    lat,
+    page,
+    limit,
+  } = req.query;
 
   let userCoords;
   if (lng !== undefined && lat !== undefined) {
@@ -27,7 +39,7 @@ exports.getListings = asyncHandler(async (req, res, next) => {
     total: result.total,
     page: result.page,
     limit: result.limit,
-    data: result.listings
+    data: result.listings,
   });
 });
 
@@ -86,7 +98,7 @@ exports.getMyListings = asyncHandler(async (req, res, next) => {
     total: result.total,
     page: result.page,
     limit: result.limit,
-    data: result.listings
+    data: result.listings,
   });
 });
 

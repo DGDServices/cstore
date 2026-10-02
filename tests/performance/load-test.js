@@ -27,8 +27,8 @@ export default function () {
   // Test health endpoint
   let healthRes = http.get(`${BASE_URL}/api/health`);
   check(healthRes, {
-    'health check status is 200': (r) => r.status === 200,
-    'health check response time < 200ms': (r) => r.timings.duration < 200,
+    'health check status is 200': r => r.status === 200,
+    'health check response time < 200ms': r => r.timings.duration < 200,
   }) || errorRate.add(1);
 
   sleep(1);
@@ -36,9 +36,9 @@ export default function () {
   // Test products listing
   let productsRes = http.get(`${BASE_URL}/api/products`);
   check(productsRes, {
-    'products list status is 200': (r) => r.status === 200,
-    'products list has data': (r) => r.json('data') !== undefined,
-    'products list response time < 500ms': (r) => r.timings.duration < 500,
+    'products list status is 200': r => r.status === 200,
+    'products list has data': r => r.json('data') !== undefined,
+    'products list response time < 500ms': r => r.timings.duration < 500,
   }) || errorRate.add(1);
 
   sleep(2);
@@ -47,11 +47,11 @@ export default function () {
   if (productsRes.status === 200 && productsRes.json('data.products.length') > 0) {
     const products = productsRes.json('data.products');
     const randomProduct = products[Math.floor(Math.random() * products.length)];
-    
+
     let productRes = http.get(`${BASE_URL}/api/products/${randomProduct._id}`);
     check(productRes, {
-      'single product status is 200': (r) => r.status === 200,
-      'single product response time < 300ms': (r) => r.timings.duration < 300,
+      'single product status is 200': r => r.status === 200,
+      'single product response time < 300ms': r => r.timings.duration < 300,
     }) || errorRate.add(1);
   }
 
@@ -68,7 +68,7 @@ export function handleSummary(data) {
 function textSummary(data, options) {
   const indent = options.indent || '';
   const enableColors = options.enableColors || false;
-  
+
   let summary = `
 ${indent}Performance Test Summary
 ${indent}========================
@@ -83,6 +83,6 @@ ${indent}  - HTTP Request Failed: ${(data.metrics.http_req_failed.values.rate * 
 ${indent}  - Iterations: ${data.metrics.iterations.values.count}
 ${indent}  - VUs (max): ${data.metrics.vus.values.max}
   `;
-  
+
   return summary;
 }

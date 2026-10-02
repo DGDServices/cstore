@@ -19,7 +19,7 @@ const seedData = async () => {
     const categories = await Category.create([
       { name: 'Computers', description: 'Laptops, desktops and computer accessories' },
       { name: 'Electronics', description: 'Consumer electronics and gadgets' },
-      { name: 'Accessories', description: 'Tech accessories and peripherals' }
+      { name: 'Accessories', description: 'Tech accessories and peripherals' },
     ]);
 
     logger.info(`Created ${categories.length} categories`);
@@ -34,7 +34,7 @@ const seedData = async () => {
         priceUSD: 1200,
         image: '/images/laptop.jpg',
         stock: 10,
-        category: categories[0]._id
+        category: categories[0]._id,
       },
       {
         name: 'Wireless Headphones',
@@ -44,7 +44,7 @@ const seedData = async () => {
         priceUSD: 299,
         image: '/images/headphones.jpg',
         stock: 25,
-        category: categories[1]._id
+        category: categories[1]._id,
       },
       {
         name: 'Smart Watch',
@@ -54,7 +54,7 @@ const seedData = async () => {
         priceUSD: 199,
         image: '/images/watch.jpg',
         stock: 15,
-        category: categories[1]._id
+        category: categories[1]._id,
       },
       {
         name: 'Mechanical Keyboard',
@@ -64,7 +64,7 @@ const seedData = async () => {
         priceUSD: 149,
         image: '/images/keyboard.jpg',
         stock: 30,
-        category: categories[2]._id
+        category: categories[2]._id,
       },
       {
         name: '4K Monitor',
@@ -74,8 +74,8 @@ const seedData = async () => {
         priceUSD: 499,
         image: '/images/monitor.jpg',
         stock: 12,
-        category: categories[0]._id
-      }
+        category: categories[0]._id,
+      },
     ]);
 
     logger.info(`Created ${products.length} products`);
@@ -87,7 +87,7 @@ const seedData = async () => {
         name: 'Admin User',
         email: 'admin@cryptons.com',
         password: 'admin123',
-        role: 'admin'
+        role: 'admin',
       });
       logger.info('Created admin user (email: admin@cryptons.com, password: admin123)');
     }

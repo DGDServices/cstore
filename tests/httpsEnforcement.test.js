@@ -4,7 +4,7 @@ const {
   enforceHttps,
   requireHttps,
   secureSessionCookies,
-  getHttpsStatus
+  getHttpsStatus,
 } = require('../src/middleware/httpsEnforcement');
 
 describe('HTTPS Enforcement Middleware', () => {
@@ -15,14 +15,14 @@ describe('HTTPS Enforcement Middleware', () => {
       secure: false,
       hostname: 'example.com',
       url: '/test',
-      headers: {}
+      headers: {},
     };
     res = {
       redirect: jest.fn(),
       setHeader: jest.fn(),
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-      cookie: jest.fn()
+      cookie: jest.fn(),
     };
     next = jest.fn();
   });
@@ -219,7 +219,7 @@ describe('HTTPS Enforcement Middleware', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
-          error: 'HTTPS Required'
+          error: 'HTTPS Required',
         })
       );
       expect(next).not.toHaveBeenCalled();
@@ -248,7 +248,7 @@ describe('HTTPS Enforcement Middleware', () => {
     it('should make cookies secure in production', () => {
       process.env.NODE_ENV = 'production';
       process.env.FORCE_HTTPS = 'true';
-      
+
       const originalCookie = res.cookie;
 
       secureSessionCookies(req, res, next);

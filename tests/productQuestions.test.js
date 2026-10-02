@@ -14,25 +14,21 @@ describe('Product Questions API', () => {
 
   beforeEach(async () => {
     // Create regular user
-    const userRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Regular User',
-        email: 'user@example.com',
-        password: 'user123'
-      });
+    const userRes = await request(app).post('/api/auth/register').send({
+      name: 'Regular User',
+      email: 'user@example.com',
+      password: 'user123',
+    });
 
     userToken = userRes.body.data.token;
     userId = userRes.body.data.user.id;
 
     // Create admin user
-    const adminRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Admin User',
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
+    const adminRes = await request(app).post('/api/auth/register').send({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: 'admin123',
+    });
 
     adminId = adminRes.body.data.user.id;
 
@@ -40,12 +36,10 @@ describe('Product Questions API', () => {
     await User.findByIdAndUpdate(adminId, { role: 'admin' });
 
     // Login as admin to get fresh token with admin role
-    const adminLoginRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
+    const adminLoginRes = await request(app).post('/api/auth/login').send({
+      email: 'admin@example.com',
+      password: 'admin123',
+    });
 
     adminToken = adminLoginRes.body.data.token;
 
@@ -56,7 +50,7 @@ describe('Product Questions API', () => {
       price: 0.001,
       priceUSD: 50,
       currency: 'BTC',
-      stock: 10
+      stock: 10,
     });
 
     productId = product._id.toString();
@@ -69,7 +63,7 @@ describe('Product Questions API', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId,
-          question: 'What is the warranty period for this product?'
+          question: 'What is the warranty period for this product?',
         });
 
       expect(res.status).toBe(201);
@@ -82,12 +76,10 @@ describe('Product Questions API', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      const res = await request(app)
-        .post('/api/questions')
-        .send({
-          productId,
-          question: 'Is this product available?'
-        });
+      const res = await request(app).post('/api/questions').send({
+        productId,
+        question: 'Is this product available?',
+      });
 
       expect(res.status).toBe(401);
     });
@@ -98,7 +90,7 @@ describe('Product Questions API', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: '507f1f77bcf86cd799439011',
-          question: 'Is this available?'
+          question: 'Is this available?',
         });
 
       expect(res.status).toBe(404);
@@ -111,7 +103,7 @@ describe('Product Questions API', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId,
-          question: 'Short'
+          question: 'Short',
         });
 
       expect(res.status).toBe(400);
@@ -126,26 +118,25 @@ describe('Product Questions API', () => {
           product: productId,
           user: userId,
           question: 'Question 1?',
-          isApproved: true
+          isApproved: true,
         },
         {
           product: productId,
           user: userId,
           question: 'Question 2?',
-          isApproved: true
+          isApproved: true,
         },
         {
           product: productId,
           user: userId,
           question: 'Pending Question?',
-          isApproved: false
-        }
+          isApproved: false,
+        },
       ]);
     });
 
     it('should return approved questions for a product', async () => {
-      const res = await request(app)
-        .get(`/api/questions/product/${productId}`);
+      const res = await request(app).get(`/api/questions/product/${productId}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -163,8 +154,7 @@ describe('Product Questions API', () => {
     });
 
     it('should support pagination', async () => {
-      const res = await request(app)
-        .get(`/api/questions/product/${productId}?page=1&limit=1`);
+      const res = await request(app).get(`/api/questions/product/${productId}?page=1&limit=1`);
 
       expect(res.status).toBe(200);
       expect(res.body.data.length).toBe(1);
@@ -178,7 +168,7 @@ describe('Product Questions API', () => {
       const question = await ProductQuestion.create({
         product: productId,
         user: userId,
-        question: 'What is the shipping time?'
+        question: 'What is the shipping time?',
       });
       questionId = question._id.toString();
     });
@@ -188,7 +178,7 @@ describe('Product Questions API', () => {
         .post(`/api/questions/${questionId}/answers`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          text: 'Shipping typically takes 3-5 business days.'
+          text: 'Shipping typically takes 3-5 business days.',
         });
 
       expect(res.status).toBe(200);
@@ -202,7 +192,7 @@ describe('Product Questions API', () => {
         .post(`/api/questions/${questionId}/answers`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          text: 'This is an official answer.'
+          text: 'This is an official answer.',
         });
 
       expect(res.status).toBe(200);
@@ -210,11 +200,9 @@ describe('Product Questions API', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      const res = await request(app)
-        .post(`/api/questions/${questionId}/answers`)
-        .send({
-          text: 'Trying to answer without auth'
-        });
+      const res = await request(app).post(`/api/questions/${questionId}/answers`).send({
+        text: 'Trying to answer without auth',
+      });
 
       expect(res.status).toBe(401);
     });
@@ -224,7 +212,7 @@ describe('Product Questions API', () => {
         .post('/api/questions/507f1f77bcf86cd799439011/answers')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
-          text: 'Answer to non-existent question'
+          text: 'Answer to non-existent question',
         });
 
       expect(res.status).toBe(404);
@@ -237,13 +225,13 @@ describe('Product Questions API', () => {
         {
           product: productId,
           user: userId,
-          question: 'My question 1?'
+          question: 'My question 1?',
         },
         {
           product: productId,
           user: userId,
-          question: 'My question 2?'
-        }
+          question: 'My question 2?',
+        },
       ]);
     });
 
@@ -258,8 +246,7 @@ describe('Product Questions API', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      const res = await request(app)
-        .get('/api/questions/user/my-questions');
+      const res = await request(app).get('/api/questions/user/my-questions');
 
       expect(res.status).toBe(401);
     });
@@ -270,7 +257,7 @@ describe('Product Questions API', () => {
       const question = await ProductQuestion.create({
         product: productId,
         user: userId,
-        question: 'Original question?'
+        question: 'Original question?',
       });
       questionId = question._id.toString();
     });
@@ -280,7 +267,7 @@ describe('Product Questions API', () => {
         .put(`/api/questions/${questionId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({
-          question: 'Updated question text?'
+          question: 'Updated question text?',
         });
 
       expect(res.status).toBe(200);
@@ -289,19 +276,17 @@ describe('Product Questions API', () => {
 
     it('should not allow other users to update question', async () => {
       // Create another user
-      const otherUserRes = await request(app)
-        .post('/api/auth/register')
-        .send({
-          name: 'Other User',
-          email: 'other@example.com',
-          password: 'other123'
-        });
+      const otherUserRes = await request(app).post('/api/auth/register').send({
+        name: 'Other User',
+        email: 'other@example.com',
+        password: 'other123',
+      });
 
       const res = await request(app)
         .put(`/api/questions/${questionId}`)
         .set('Authorization', `Bearer ${otherUserRes.body.data.token}`)
         .send({
-          question: 'Trying to update someone elses question'
+          question: 'Trying to update someone elses question',
         });
 
       expect(res.status).toBe(403);
@@ -312,7 +297,7 @@ describe('Product Questions API', () => {
         .put(`/api/questions/${questionId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          question: 'Admin updated question'
+          question: 'Admin updated question',
         });
 
       expect(res.status).toBe(200);
@@ -324,7 +309,7 @@ describe('Product Questions API', () => {
       const question = await ProductQuestion.create({
         product: productId,
         user: userId,
-        question: 'Question to delete?'
+        question: 'Question to delete?',
       });
       questionId = question._id.toString();
     });
@@ -355,7 +340,7 @@ describe('Product Questions API', () => {
       const question = await ProductQuestion.create({
         product: productId,
         user: userId,
-        question: 'Helpful question?'
+        question: 'Helpful question?',
       });
       questionId = question._id.toString();
     });
@@ -378,20 +363,20 @@ describe('Product Questions API', () => {
             product: productId,
             user: userId,
             question: 'Pending question 1?',
-            isApproved: false
+            isApproved: false,
           },
           {
             product: productId,
             user: userId,
             question: 'Pending question 2?',
-            isApproved: false
+            isApproved: false,
           },
           {
             product: productId,
             user: userId,
             question: 'Approved question?',
-            isApproved: true
-          }
+            isApproved: true,
+          },
         ]);
       });
 
@@ -420,7 +405,7 @@ describe('Product Questions API', () => {
           user: userId,
           question: 'Question to approve?',
           isApproved: false,
-          status: 'pending'
+          status: 'pending',
         });
         questionId = question._id.toString();
       });
@@ -450,7 +435,7 @@ describe('Product Questions API', () => {
           product: productId,
           user: userId,
           question: 'Question to reject?',
-          isApproved: true
+          isApproved: true,
         });
         questionId = question._id.toString();
       });
@@ -474,23 +459,25 @@ describe('Product Questions API', () => {
             user: userId,
             question: 'Question 1?',
             isApproved: true,
-            answers: [{
-              user: adminId,
-              text: 'Answer to question 1'
-            }]
+            answers: [
+              {
+                user: adminId,
+                text: 'Answer to question 1',
+              },
+            ],
           },
           {
             product: productId,
             user: userId,
             question: 'Question 2?',
-            isApproved: false
+            isApproved: false,
           },
           {
             product: productId,
             user: userId,
             question: 'Question 3?',
-            isApproved: true
-          }
+            isApproved: true,
+          },
         ]);
       });
 

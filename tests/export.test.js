@@ -16,7 +16,7 @@ beforeEach(async () => {
     name: 'Admin User',
     email: 'admin@test.com',
     password: 'password123',
-    role: 'admin'
+    role: 'admin',
   });
   adminToken = generateToken(adminUser._id);
 });
@@ -25,7 +25,7 @@ describe('Product Reorder', () => {
   it('should reorder products successfully', async () => {
     const category = await Category.create({
       name: 'Test Category',
-      slug: 'test-category'
+      slug: 'test-category',
     });
 
     const product1 = await Product.create({
@@ -36,7 +36,7 @@ describe('Product Reorder', () => {
       currency: 'BTC',
       stock: 10,
       category: category._id,
-      sortOrder: 0
+      sortOrder: 0,
     });
 
     const product2 = await Product.create({
@@ -47,7 +47,7 @@ describe('Product Reorder', () => {
       currency: 'BTC',
       stock: 20,
       category: category._id,
-      sortOrder: 1
+      sortOrder: 1,
     });
 
     const response = await request(app)
@@ -56,8 +56,8 @@ describe('Product Reorder', () => {
       .send({
         productOrders: [
           { productId: product1._id.toString(), sortOrder: 1 },
-          { productId: product2._id.toString(), sortOrder: 0 }
-        ]
+          { productId: product2._id.toString(), sortOrder: 0 },
+        ],
       });
 
     expect(response.status).toBe(200);
@@ -75,7 +75,7 @@ describe('Product Reorder', () => {
       .put('/api/admin/products/reorder')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        productOrders: 'invalid'
+        productOrders: 'invalid',
       });
 
     expect(response.status).toBe(400);
@@ -86,7 +86,7 @@ describe('Export Endpoints', () => {
   it('should export products to CSV', async () => {
     const category = await Category.create({
       name: 'Test Category',
-      slug: 'test-category'
+      slug: 'test-category',
     });
 
     await Product.create({
@@ -96,7 +96,7 @@ describe('Export Endpoints', () => {
       priceUSD: 100,
       currency: 'BTC',
       stock: 10,
-      category: category._id
+      category: category._id,
     });
 
     const response = await request(app)
@@ -110,7 +110,7 @@ describe('Export Endpoints', () => {
   it('should export products to PDF', async () => {
     const category = await Category.create({
       name: 'Test Category',
-      slug: 'test-category'
+      slug: 'test-category',
     });
 
     await Product.create({
@@ -120,7 +120,7 @@ describe('Export Endpoints', () => {
       priceUSD: 100,
       currency: 'BTC',
       stock: 10,
-      category: category._id
+      category: category._id,
     });
 
     const response = await request(app)
@@ -132,8 +132,7 @@ describe('Export Endpoints', () => {
   });
 
   it('should require admin authentication for exports', async () => {
-    const response = await request(app)
-      .get('/api/admin/products/export/csv');
+    const response = await request(app).get('/api/admin/products/export/csv');
 
     expect(response.status).toBe(401);
   });

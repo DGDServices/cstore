@@ -10,7 +10,7 @@ class KYCService {
     this.providers = {
       jumio: this.initJumio(),
       onfido: this.initOnfido(),
-      sumsub: this.initSumsub()
+      sumsub: this.initSumsub(),
     };
   }
 
@@ -20,7 +20,7 @@ class KYCService {
   initJumio() {
     const apiToken = process.env.JUMIO_API_TOKEN;
     const apiSecret = process.env.JUMIO_API_SECRET;
-    
+
     if (!apiToken || !apiSecret) {
       logger.warn('Jumio credentials not configured');
       return null;
@@ -34,14 +34,14 @@ class KYCService {
         return {
           provider: 'jumio',
           reference: `JUMIO-${Date.now()}`,
-          redirectUrl: `${process.env.APP_URL}/kyc/jumio/callback`
+          redirectUrl: `${process.env.APP_URL}/kyc/jumio/callback`,
         };
       },
-      checkStatus: async (reference) => {
+      checkStatus: async reference => {
         // Check verification status from Jumio
         logger.info(`Checking Jumio verification status: ${reference}`);
         return { status: 'pending' };
-      }
+      },
     };
   }
 
@@ -50,7 +50,7 @@ class KYCService {
    */
   initOnfido() {
     const apiToken = process.env.ONFIDO_API_TOKEN;
-    
+
     if (!apiToken) {
       logger.warn('Onfido credentials not configured');
       return null;
@@ -63,13 +63,13 @@ class KYCService {
         return {
           provider: 'onfido',
           reference: `ONFIDO-${Date.now()}`,
-          redirectUrl: `${process.env.APP_URL}/kyc/onfido/callback`
+          redirectUrl: `${process.env.APP_URL}/kyc/onfido/callback`,
         };
       },
-      checkStatus: async (reference) => {
+      checkStatus: async reference => {
         logger.info(`Checking Onfido verification status: ${reference}`);
         return { status: 'pending' };
-      }
+      },
     };
   }
 
@@ -78,7 +78,7 @@ class KYCService {
    */
   initSumsub() {
     const appToken = process.env.SUMSUB_APP_TOKEN;
-    
+
     if (!appToken) {
       logger.warn('Sumsub credentials not configured');
       return null;
@@ -91,13 +91,13 @@ class KYCService {
         return {
           provider: 'sumsub',
           reference: `SUMSUB-${Date.now()}`,
-          redirectUrl: `${process.env.APP_URL}/kyc/sumsub/callback`
+          redirectUrl: `${process.env.APP_URL}/kyc/sumsub/callback`,
         };
       },
-      checkStatus: async (reference) => {
+      checkStatus: async reference => {
         logger.info(`Checking Sumsub verification status: ${reference}`);
         return { status: 'pending' };
-      }
+      },
     };
   }
 
@@ -108,11 +108,11 @@ class KYCService {
     try {
       // Check if verification already exists
       let verification = await KYCVerification.findOne({ user: userId });
-      
+
       if (verification && verification.status === 'approved') {
         return {
           success: false,
-          message: 'User already verified'
+          message: 'User already verified',
         };
       }
 
@@ -121,7 +121,7 @@ class KYCService {
         verification = new KYCVerification({
           user: userId,
           status: 'pending',
-          provider: providerName
+          provider: providerName,
         });
       }
 
@@ -132,7 +132,7 @@ class KYCService {
           lastName: userData.lastName,
           dateOfBirth: userData.dateOfBirth,
           nationality: userData.nationality,
-          address: userData.address
+          address: userData.address,
         };
       }
 
@@ -141,7 +141,10 @@ class KYCService {
 
       // Start verification with provider
       if (providerName !== 'manual' && this.providers[providerName]) {
-        const providerResult = await this.providers[providerName].startVerification(userId, userData);
+        const providerResult = await this.providers[providerName].startVerification(
+          userId,
+          userData
+        );
         verification.providerReference = providerResult.reference;
         verification.verificationMethod = 'automated';
       } else {
@@ -156,7 +159,7 @@ class KYCService {
         success: true,
         verificationId: verification._id,
         status: verification.status,
-        provider: providerName
+        provider: providerName,
       };
     } catch (error) {
       logger.error(`Error starting KYC verification: ${error.message}`);
@@ -179,7 +182,9 @@ class KYCService {
 
     // Age-based risk
     if (userData?.dateOfBirth) {
-      const age = Math.floor((Date.now() - new Date(userData.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000));
+      const age = Math.floor(
+        (Date.now() - new Date(userData.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)
+      );
       if (age < 21 || age > 70) {
         riskScore += 20;
       }
@@ -196,14 +201,14 @@ class KYCService {
   async updateVerificationStatus(verificationId, status, notes, verifiedBy) {
     try {
       const verification = await KYCVerification.findById(verificationId);
-      
+
       if (!verification) {
         throw new Error('Verification not found');
       }
 
       verification.status = status;
       verification.notes = notes;
-      
+
       if (status === 'approved') {
         verification.verifiedAt = new Date();
         verification.verifiedBy = verifiedBy;
@@ -221,7 +226,7 @@ class KYCService {
 
       return {
         success: true,
-        verification
+        verification,
       };
     } catch (error) {
       logger.error(`Error updating KYC verification: ${error.message}`);
@@ -235,11 +240,11 @@ class KYCService {
   async checkVerificationStatus(userId) {
     try {
       const verification = await KYCVerification.findOne({ user: userId });
-      
+
       if (!verification) {
         return {
           verified: false,
-          status: 'not_started'
+          status: 'not_started',
         };
       }
 
@@ -253,7 +258,7 @@ class KYCService {
         verified: verification.status === 'approved',
         status: verification.status,
         riskLevel: verification.riskLevel,
-        expiryDate: verification.expiryDate
+        expiryDate: verification.expiryDate,
       };
     } catch (error) {
       logger.error(`Error checking KYC status: ${error.message}`);
@@ -269,7 +274,7 @@ class KYCService {
       const verification = await KYCVerification.findOne({ user: userId })
         .populate('user', 'name email')
         .populate('verifiedBy', 'name email');
-      
+
       return verification;
     } catch (error) {
       logger.error(`Error getting KYC verification: ${error.message}`);
@@ -283,7 +288,7 @@ class KYCService {
   async submitDocuments(userId, documents) {
     try {
       const verification = await KYCVerification.findOne({ user: userId });
-      
+
       if (!verification) {
         throw new Error('Verification not found');
       }
@@ -293,7 +298,7 @@ class KYCService {
         documentNumber: doc.documentNumber,
         expiryDate: doc.expiryDate,
         uploadedFile: doc.filePath,
-        verificationStatus: 'pending'
+        verificationStatus: 'pending',
       }));
 
       verification.status = 'in_review';
@@ -303,7 +308,7 @@ class KYCService {
 
       return {
         success: true,
-        verification
+        verification,
       };
     } catch (error) {
       logger.error(`Error submitting documents: ${error.message}`);
@@ -317,7 +322,7 @@ class KYCService {
   async performEnhancedDueDiligence(userId) {
     try {
       const verification = await KYCVerification.findOne({ user: userId });
-      
+
       if (!verification) {
         throw new Error('Verification not found');
       }
@@ -325,14 +330,14 @@ class KYCService {
       // Mark as requiring enhanced due diligence
       verification.riskLevel = 'high';
       verification.notes = (verification.notes || '') + '\nEnhanced Due Diligence Required';
-      
+
       await verification.save();
 
       logger.info(`Enhanced due diligence initiated for user ${userId}`);
 
       return {
         success: true,
-        message: 'Enhanced due diligence process started'
+        message: 'Enhanced due diligence process started',
       };
     } catch (error) {
       logger.error(`Error performing enhanced due diligence: ${error.message}`);

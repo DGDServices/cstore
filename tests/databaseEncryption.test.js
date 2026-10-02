@@ -3,7 +3,7 @@ const {
   generateMongodConfig,
   getFieldEncryptionConfig,
   validateEncryptionConfig,
-  getSecureConnectionString
+  getSecureConnectionString,
 } = require('../config/database-encryption');
 
 describe('Database Encryption Configuration', () => {
@@ -159,7 +159,9 @@ describe('Database Encryption Configuration', () => {
       const validation = validateEncryptionConfig();
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain('MONGODB_ENCRYPTION_KEY_FILE must be set when encryption is enabled');
+      expect(validation.errors).toContain(
+        'MONGODB_ENCRYPTION_KEY_FILE must be set when encryption is enabled'
+      );
     });
 
     it('should error on missing field encryption key when enabled', () => {
@@ -169,7 +171,9 @@ describe('Database Encryption Configuration', () => {
       const validation = validateEncryptionConfig();
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain('FIELD_ENCRYPTION_KEY must be set when field encryption is enabled');
+      expect(validation.errors).toContain(
+        'FIELD_ENCRYPTION_KEY must be set when field encryption is enabled'
+      );
     });
 
     it('should error on invalid field encryption key length', () => {
@@ -179,7 +183,9 @@ describe('Database Encryption Configuration', () => {
       const validation = validateEncryptionConfig();
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain('FIELD_ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+      expect(validation.errors).toContain(
+        'FIELD_ENCRYPTION_KEY must be 64 hex characters (32 bytes)'
+      );
     });
 
     it('should warn about missing encryption in production', () => {
@@ -189,7 +195,9 @@ describe('Database Encryption Configuration', () => {
 
       const validation = validateEncryptionConfig();
 
-      expect(validation.warnings).toContain('MongoDB encryption at rest is not enabled in production');
+      expect(validation.warnings).toContain(
+        'MongoDB encryption at rest is not enabled in production'
+      );
       expect(validation.warnings).toContain('Field-level encryption is not enabled in production');
     });
 
@@ -204,7 +212,8 @@ describe('Database Encryption Configuration', () => {
 
     it('should accept valid field encryption key', () => {
       process.env.ENABLE_FIELD_ENCRYPTION = 'true';
-      process.env.FIELD_ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'; // 64 chars
+      process.env.FIELD_ENCRYPTION_KEY =
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'; // 64 chars
 
       const validation = validateEncryptionConfig();
 

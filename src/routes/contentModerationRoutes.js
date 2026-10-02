@@ -9,7 +9,7 @@ const leLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
 // Rate limiter for moderation review actions (30 req/15 min per IP)
@@ -17,7 +17,7 @@ const reviewLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 
 // Law enforcement endpoint - uses x-le-api-key header, not JWT

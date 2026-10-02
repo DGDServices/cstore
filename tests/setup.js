@@ -4,6 +4,21 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 // Don't try to connect via the app in test mode
 process.env.SKIP_DB_CONNECTION = 'true';
 
+// Tests exercise auth routes many times per file; the default of 5 attempts
+// per 15 minutes trips the limiter mid-suite when jest runs in-band.
+process.env.AUTH_RATE_LIMIT_MAX = process.env.AUTH_RATE_LIMIT_MAX || '1000';
+
+// Every test file gets the same process.env it started with. Several suites
+// set NODE_ENV / feature flags and not all of them restore, which under
+// --runInBand leaks into later files (services read flags at require time).
+const envSnapshot = { ...process.env };
+afterAll(() => {
+  for (const key of Object.keys(process.env)) {
+    if (!(key in envSnapshot)) delete process.env[key];
+  }
+  Object.assign(process.env, envSnapshot);
+});
+
 let isConnected = false;
 let mongoServer;
 
@@ -12,11 +27,11 @@ beforeAll(async () => {
   try {
     // First, try to connect to external MongoDB service (CI environment)
     const mongoUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/cstore-test';
-    
+
     try {
       await mongoose.connect(mongoUri, {
         serverSelectionTimeoutMS: 3000,
-        connectTimeoutMS: 3000
+        connectTimeoutMS: 3000,
       });
       isConnected = true;
       console.log('Connected to test database');
@@ -36,9 +51,9 @@ beforeAll(async () => {
       // server pick its default (wiredTiger).
       mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
-      
+
       await mongoose.connect(mongoUri, {
-        serverSelectionTimeoutMS: 3000
+        serverSelectionTimeoutMS: 3000,
       });
       isConnected = true;
       console.log('Connected to in-memory test database');

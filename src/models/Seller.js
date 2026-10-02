@@ -6,27 +6,27 @@ const sellerSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true
+      unique: true,
     },
     displayName: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 100
+      maxlength: 100,
     },
     businessName: {
       type: String,
       trim: true,
-      maxlength: 200
+      maxlength: 200,
     },
     businessType: {
       type: String,
       enum: ['individual', 'sole_proprietor', 'llc', 'corporation', 'partnership'],
-      default: 'individual'
+      default: 'individual',
     },
     description: {
       type: String,
-      maxlength: 2000
+      maxlength: 2000,
     },
     logo: { type: String },
     banner: { type: String },
@@ -34,42 +34,42 @@ const sellerSchema = new mongoose.Schema(
       type: String,
       unique: true,
       lowercase: true,
-      trim: true
+      trim: true,
     },
     website: { type: String },
     verificationStatus: {
       type: String,
       enum: ['unverified', 'pending', 'verified', 'suspended', 'banned'],
-      default: 'unverified'
+      default: 'unverified',
     },
     verificationSubmittedAt: { type: Date },
     verificationApprovedAt: { type: Date },
     verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
     },
     kycLevel: {
       type: Number,
-      default: 0
+      default: 0,
     },
     taxInfo: {
       taxId: { type: String },
       taxFormType: {
         type: String,
-        enum: ['W-9', 'W-8BEN', 'W-8BEN-E', null]
+        enum: ['W-9', 'W-8BEN', 'W-8BEN-E', null],
       },
       taxFormUrl: { type: String },
-      submittedAt: { type: Date }
+      submittedAt: { type: Date },
     },
     payoutMethods: [
       {
         type: {
           type: String,
-          enum: ['stripe', 'bank_transfer', 'crypto']
+          enum: ['stripe', 'bank_transfer', 'crypto'],
         },
         details: { type: mongoose.Schema.Types.Mixed },
-        isPrimary: { type: Boolean, default: false }
-      }
+        isPrimary: { type: Boolean, default: false },
+      },
     ],
     stripeConnectAccountId: { type: String },
     performanceMetrics: {
@@ -82,7 +82,7 @@ const sellerSchema = new mongoose.Schema(
       cancellationRate: { type: Number, default: 0 },
       averageRating: { type: Number, default: 0 },
       totalReviews: { type: Number, default: 0 },
-      lastCalculatedAt: { type: Date }
+      lastCalculatedAt: { type: Date },
     },
     violations: [
       {
@@ -91,13 +91,13 @@ const sellerSchema = new mongoose.Schema(
         issuedAt: { type: Date },
         issuedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'User'
+          ref: 'User',
         },
         severity: {
           type: String,
-          enum: ['warning', 'suspension', 'ban']
-        }
-      }
+          enum: ['warning', 'suspension', 'ban'],
+        },
+      },
     ],
     strikeCount: { type: Number, default: 0 },
     isSuspended: { type: Boolean, default: false },
@@ -105,26 +105,26 @@ const sellerSchema = new mongoose.Schema(
     suspensionReason: { type: String },
     returnPolicy: {
       type: String,
-      maxlength: 1000
+      maxlength: 1000,
     },
     shipsFrom: {
       country: { type: String },
       state: { type: String },
-      city: { type: String }
+      city: { type: String },
     },
     shippingCarriers: [{ type: String }],
     processingTime: {
       min: { type: Number, default: 1 },
       max: { type: Number, default: 3 },
-      unit: { type: String, default: 'business_days' }
+      unit: { type: String, default: 'business_days' },
     },
     categories: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category'
-      }
+        ref: 'Category',
+      },
     ],
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -1,3 +1,6 @@
+// Without Redis, revocation needs the opt-in in-process store (dev/test only).
+process.env.TOKEN_REVOCATION_LOCAL_STORE = 'true';
+
 const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/models/User');
@@ -18,7 +21,7 @@ describe('JWT Token Revocation', () => {
     user = await User.create({
       name: 'Test User',
       email: 'test@example.com',
-      password: 'password123'
+      password: 'password123',
     });
 
     // Generate token
@@ -43,10 +46,7 @@ describe('JWT Token Revocation', () => {
       if (!global.isConnected()) return;
 
       // Logout (revoke token)
-      await request(app)
-        .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${token}`)
-        .send();
+      await request(app).post('/api/auth/logout').set('Authorization', `Bearer ${token}`).send();
 
       // Try to use revoked token
       const res = await request(app)
@@ -61,9 +61,7 @@ describe('JWT Token Revocation', () => {
     it('should require authentication', async () => {
       if (!global.isConnected()) return;
 
-      const res = await request(app)
-        .post('/api/auth/logout')
-        .send();
+      const res = await request(app).post('/api/auth/logout').send();
 
       expect(res.statusCode).toBe(401);
     });
@@ -123,7 +121,7 @@ describe('JWT Token Revocation', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           currentPassword: 'password123',
-          newPassword: 'newPassword123'
+          newPassword: 'newPassword123',
         });
 
       expect(res.statusCode).toBe(200);

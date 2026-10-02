@@ -12,7 +12,7 @@ class LegalDocumentsService {
       'privacy_policy',
       'risk_disclosure',
       'aml_policy',
-      'cookie_policy'
+      'cookie_policy',
     ];
   }
 
@@ -31,7 +31,7 @@ class LegalDocumentsService {
         status: documentData.status || 'draft',
         jurisdiction: documentData.jurisdiction || process.env.LEGAL_JURISDICTION || 'US',
         language: documentData.language || 'en',
-        createdBy: documentData.createdBy
+        createdBy: documentData.createdBy,
       });
 
       await document.save();
@@ -40,7 +40,7 @@ class LegalDocumentsService {
 
       return {
         success: true,
-        document
+        document,
       };
     } catch (error) {
       logger.error(`Error creating legal document: ${error.message}`);
@@ -58,10 +58,7 @@ class LegalDocumentsService {
         language,
         status: 'active',
         effectiveDate: { $lte: new Date() },
-        $or: [
-          { expiryDate: { $exists: false } },
-          { expiryDate: { $gt: new Date() } }
-        ]
+        $or: [{ expiryDate: { $exists: false } }, { expiryDate: { $gt: new Date() } }],
       }).sort({ effectiveDate: -1 });
 
       return document;
@@ -78,7 +75,7 @@ class LegalDocumentsService {
     try {
       const document = await LegalDocument.findOne({
         type,
-        version
+        version,
       });
 
       return document;
@@ -94,7 +91,7 @@ class LegalDocumentsService {
   async activateDocument(documentId, approvedBy) {
     try {
       const document = await LegalDocument.findById(documentId);
-      
+
       if (!document) {
         throw new Error('Document not found');
       }
@@ -105,11 +102,11 @@ class LegalDocumentsService {
           type: document.type,
           language: document.language,
           status: 'active',
-          _id: { $ne: documentId }
+          _id: { $ne: documentId },
         },
         {
           status: 'archived',
-          expiryDate: new Date()
+          expiryDate: new Date(),
         }
       );
 
@@ -124,7 +121,7 @@ class LegalDocumentsService {
 
       return {
         success: true,
-        document
+        document,
       };
     } catch (error) {
       logger.error(`Error activating document: ${error.message}`);
@@ -139,7 +136,7 @@ class LegalDocumentsService {
     try {
       const documents = await LegalDocument.find({
         type,
-        language
+        language,
       })
         .sort({ effectiveDate: -1 })
         .populate('createdBy', 'name email')
@@ -158,7 +155,7 @@ class LegalDocumentsService {
   async needsAcceptance(userId, documentType) {
     try {
       const UserConsent = require('../models/UserConsent');
-      
+
       const activeDoc = await this.getActiveDocument(documentType);
       if (!activeDoc) {
         return false;
@@ -169,7 +166,7 @@ class LegalDocumentsService {
         consentType: documentType,
         version: activeDoc.version,
         granted: true,
-        revokedAt: { $exists: false }
+        revokedAt: { $exists: false },
       });
 
       return !hasConsent;

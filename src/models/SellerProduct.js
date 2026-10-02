@@ -5,50 +5,50 @@ const sellerProductSchema = new mongoose.Schema(
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Seller',
-      required: true
+      required: true,
     },
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
-      required: true
+      required: true,
     },
     sellerSku: {
       type: String,
-      trim: true
+      trim: true,
     },
     price: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
     },
     priceUSD: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
     },
     currency: {
       type: String,
-      default: 'USD'
+      default: 'USD',
     },
     stock: {
       type: Number,
       required: true,
       min: 0,
-      default: 0
+      default: 0,
     },
     condition: {
       type: String,
       enum: ['new', 'like_new', 'good', 'fair', 'parts_only'],
-      default: 'new'
+      default: 'new',
     },
     conditionNotes: {
       type: String,
-      maxlength: 500
+      maxlength: 500,
     },
     fulfillmentType: {
       type: String,
       enum: ['fbm', 'fbp', 'pod'],
-      default: 'fbm'
+      default: 'fbm',
     },
     isActive: { type: Boolean, default: true },
     isBuyBoxWinner: { type: Boolean, default: false },
@@ -59,17 +59,17 @@ const sellerProductSchema = new mongoose.Schema(
         carrier: { type: String },
         method: { type: String },
         price: { type: Number },
-        estimatedDays: { type: Number }
-      }
+        estimatedDays: { type: Number },
+      },
     ],
     handlingTime: { type: Number, default: 1 },
     images: [
       {
         url: { type: String },
-        alt: { type: String }
-      }
+        alt: { type: String },
+      },
     ],
-    notes: { type: String }
+    notes: { type: String },
   },
   { timestamps: true }
 );

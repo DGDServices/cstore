@@ -25,9 +25,12 @@ const { SETTLEMENT_CURRENCIES } = require('../config/cryptocurrencies');
  */
 
 // Same stateless client the escrow controller uses.
-const dgd = new DgdCoreClient({ baseUrl: dgdConfig.DGD_CORE_URL, authToken: dgdConfig.DGD_CORE_AUTH_TOKEN });
+const dgd = new DgdCoreClient({
+  baseUrl: dgdConfig.DGD_CORE_URL,
+  authToken: dgdConfig.DGD_CORE_AUTH_TOKEN,
+});
 
-const escrowId = (order) => order.dgdEscrowId || order._id.toString();
+const escrowId = order => order.dgdEscrowId || order._id.toString();
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -56,13 +59,15 @@ const createOrder = asyncHandler(async (req, res, next) => {
   const order = await Order.create({
     user: req.user.id,
     customerEmail,
-    items: [{
-      product: product._id,
-      productName: product.name,
-      quantity,
-      price: product.price,
-      priceUSD: product.priceUSD
-    }],
+    items: [
+      {
+        product: product._id,
+        productName: product.name,
+        quantity,
+        price: product.price,
+        priceUSD: product.priceUSD,
+      },
+    ],
     totalPrice,
     totalPriceUSD,
     settlementAsset: dgdConfig.SETTLEMENT_ASSET,
@@ -70,7 +75,7 @@ const createOrder = asyncHandler(async (req, res, next) => {
     // with the exact amount later without float drift.
     dgdExpectedSats: dgdConfig.toSats(totalPrice),
     shippingAddress,
-    status: 'pending'
+    status: 'pending',
   });
 
   logger.info(`Order created: ${order._id} for ${customerEmail} (${totalPrice} DGD)`);
@@ -81,9 +86,9 @@ const createOrder = asyncHandler(async (req, res, next) => {
       order,
       next: {
         action: 'open-escrow',
-        route: `/api/dgd-escrow/${order._id}/open`
-      }
-    }
+        route: `/api/dgd-escrow/${order._id}/open`,
+      },
+    },
   });
 });
 
@@ -105,7 +110,7 @@ const getOrder = asyncHandler(async (req, res, next) => {
 
   res.json({
     success: true,
-    data: { order }
+    data: { order },
   });
 });
 
@@ -119,7 +124,7 @@ const getMyOrders = asyncHandler(async (req, res, next) => {
 
   res.json({
     success: true,
-    data: { orders }
+    data: { orders },
   });
 });
 
@@ -151,9 +156,9 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
         page: Number(page),
         limit: Number(limit),
         total,
-        pages: Math.ceil(total / limit)
-      }
-    }
+        pages: Math.ceil(total / limit),
+      },
+    },
   });
 });
 
@@ -179,7 +184,12 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
   }
 
   if (status === 'cancelled' && ['funded', 'released', 'disputed'].includes(order.dgdEscrowState)) {
-    return next(new AppError('Order has a live escrow; use the escrow refund/dispute flow instead of cancelling', 409));
+    return next(
+      new AppError(
+        'Order has a live escrow; use the escrow refund/dispute flow instead of cancelling',
+        409
+      )
+    );
   }
 
   order.status = status;
@@ -190,7 +200,7 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
 
   res.json({
     success: true,
-    data: { order }
+    data: { order },
   });
 });
 
@@ -223,7 +233,9 @@ const confirmDelivery = asyncHandler(async (req, res, next) => {
   if (escrow?.state) order.dgdEscrowState = escrow.state;
   await order.save();
 
-  logger.info(`Delivery confirmed for order ${order._id} by buyer ${req.user.id}; release proposed`);
+  logger.info(
+    `Delivery confirmed for order ${order._id} by buyer ${req.user.id}; release proposed`
+  );
 
   res.json({
     success: true,
@@ -232,9 +244,9 @@ const confirmDelivery = asyncHandler(async (req, res, next) => {
       escrow,
       next: {
         action: 'sign-payout',
-        route: `/api/dgd-escrow/${order._id}/payout-psbt`
-      }
-    }
+        route: `/api/dgd-escrow/${order._id}/payout-psbt`,
+      },
+    },
   });
 });
 
@@ -244,7 +256,7 @@ const confirmDelivery = asyncHandler(async (req, res, next) => {
 const getCryptocurrencies = asyncHandler(async (req, res, next) => {
   res.json({
     success: true,
-    data: { cryptocurrencies: SETTLEMENT_CURRENCIES }
+    data: { cryptocurrencies: SETTLEMENT_CURRENCIES },
   });
 });
 
@@ -255,5 +267,5 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   confirmDelivery,
-  getCryptocurrencies
+  getCryptocurrencies,
 };

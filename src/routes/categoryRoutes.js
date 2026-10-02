@@ -9,7 +9,7 @@ const {
   createCategory,
   updateCategory,
   deleteCategory,
-  getCategoryProducts
+  getCategoryProducts,
 } = require('../controllers/categoryController');
 
 // Public routes

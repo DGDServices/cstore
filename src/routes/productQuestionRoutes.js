@@ -15,7 +15,7 @@ const {
   getPendingQuestions,
   approveQuestion,
   rejectQuestion,
-  getQuestionStats
+  getQuestionStats,
 } = require('../controllers/productQuestionController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const { validateQuestion, validateAnswer } = require('../middleware/validation');

@@ -17,8 +17,10 @@ const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 const { DgdCoreClient } = require('../services/dgdCoreClient');
 const {
-  DGD_CORE_URL, DGD_CORE_AUTH_TOKEN,
-  DGD_ARBITRATOR_PUBKEY, DGD_ARBITRATOR_PAYOUT_ADDRESS,
+  DGD_CORE_URL,
+  DGD_CORE_AUTH_TOKEN,
+  DGD_ARBITRATOR_PUBKEY,
+  DGD_ARBITRATOR_PAYOUT_ADDRESS,
 } = require('../config/dgd');
 
 // Single shared client (connection-agnostic, stateless)
@@ -27,7 +29,7 @@ const dgd = new DgdCoreClient({ baseUrl: DGD_CORE_URL, authToken: DGD_CORE_AUTH_
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 /** Resolve the dgd-core escrow id for an order (= order._id by convention). */
-const escrowId = (order) => order.dgdEscrowId || order._id.toString();
+const escrowId = order => order.dgdEscrowId || order._id.toString();
 
 /** Find an order by id and verify the requesting user is the buyer or seller. */
 const findOrderForUser = async (orderId, userId) => {
@@ -42,7 +44,7 @@ const findOrderForUser = async (orderId, userId) => {
 };
 
 /** Resolve the seller User id for an order from its first item's product. */
-const resolveSellerId = async (order) => {
+const resolveSellerId = async order => {
   const productId = order.items?.[0]?.product;
   if (productId) {
     const product = await Product.findById(productId).select('seller');
@@ -71,20 +73,31 @@ const resolveSellerId = async (order) => {
 exports.openEscrow = asyncHandler(async (req, res, next) => {
   const order = await findOrderForUser(req.params.orderId, req.user.id);
   const {
-    buyerPubkey: bPk, buyerPayoutAddress: bAddr,
-    sellerPubkey: sPk, sellerPayoutAddress: sAddr,
-    arbitratorPubkey: aPk, arbitratorPayoutAddress: aAddr,
-    buyerDepositSats, sellerDepositSats,
-    platformFeeSats, feeAddress, networkFeeReserveSats,
-    amountSats
+    buyerPubkey: bPk,
+    buyerPayoutAddress: bAddr,
+    sellerPubkey: sPk,
+    sellerPayoutAddress: sAddr,
+    arbitratorPubkey: aPk,
+    arbitratorPayoutAddress: aAddr,
+    buyerDepositSats,
+    sellerDepositSats,
+    platformFeeSats,
+    feeAddress,
+    networkFeeReserveSats,
+    amountSats,
   } = req.body;
 
   // Buyer keys: request body → buyer's saved profile.
   const buyerUser = await User.findById(order.user).select('dgdPubkey dgdPayoutAddress');
-  const buyerPubkey        = bPk   || buyerUser?.dgdPubkey;
+  const buyerPubkey = bPk || buyerUser?.dgdPubkey;
   const buyerPayoutAddress = bAddr || buyerUser?.dgdPayoutAddress;
   if (!buyerPubkey || !buyerPayoutAddress) {
-    return next(new AppError('Buyer DGD pubkey + payout address required (provide them or set them in your profile)', 400));
+    return next(
+      new AppError(
+        'Buyer DGD pubkey + payout address required (provide them or set them in your profile)',
+        400
+      )
+    );
   }
 
   // Seller keys: request body → product seller's saved profile.
@@ -92,8 +105,10 @@ exports.openEscrow = asyncHandler(async (req, res, next) => {
   let sellerPayoutAddress = sAddr;
   if (!sellerPubkey || !sellerPayoutAddress) {
     const sellerId = await resolveSellerId(order);
-    const sellerUser = sellerId ? await User.findById(sellerId).select('dgdPubkey dgdPayoutAddress') : null;
-    sellerPubkey        = sellerPubkey        || sellerUser?.dgdPubkey;
+    const sellerUser = sellerId
+      ? await User.findById(sellerId).select('dgdPubkey dgdPayoutAddress')
+      : null;
+    sellerPubkey = sellerPubkey || sellerUser?.dgdPubkey;
     sellerPayoutAddress = sellerPayoutAddress || sellerUser?.dgdPayoutAddress;
   }
   if (!sellerPubkey || !sellerPayoutAddress) {
@@ -101,28 +116,30 @@ exports.openEscrow = asyncHandler(async (req, res, next) => {
   }
 
   // Arbitrator: request body → platform config. Present → 2-of-3 (mediatable).
-  const arbitratorPubkey        = aPk   || DGD_ARBITRATOR_PUBKEY;
+  const arbitratorPubkey = aPk || DGD_ARBITRATOR_PUBKEY;
   const arbitratorPayoutAddress = aAddr || DGD_ARBITRATOR_PAYOUT_ADDRESS;
   const hasArbitrator = Boolean(arbitratorPubkey && arbitratorPayoutAddress);
 
   const orderId = escrowId(order);
   const escrow = await dgd.openEscrow({
     orderId,
-    buyer:  { pubkey: buyerPubkey,  payoutAddress: buyerPayoutAddress },
+    buyer: { pubkey: buyerPubkey, payoutAddress: buyerPayoutAddress },
     seller: { pubkey: sellerPubkey, payoutAddress: sellerPayoutAddress },
-    ...(hasArbitrator ? { arbitrator: { pubkey: arbitratorPubkey, payoutAddress: arbitratorPayoutAddress } } : {}),
-    amountSats:             String(amountSats || order.dgdExpectedSats || '0'),
-    buyerDepositSats:       buyerDepositSats  ? String(buyerDepositSats)  : undefined,
-    sellerDepositSats:      sellerDepositSats ? String(sellerDepositSats) : undefined,
-    platformFeeSats:        platformFeeSats   ? String(platformFeeSats)   : undefined,
+    ...(hasArbitrator
+      ? { arbitrator: { pubkey: arbitratorPubkey, payoutAddress: arbitratorPayoutAddress } }
+      : {}),
+    amountSats: String(amountSats || order.dgdExpectedSats || '0'),
+    buyerDepositSats: buyerDepositSats ? String(buyerDepositSats) : undefined,
+    sellerDepositSats: sellerDepositSats ? String(sellerDepositSats) : undefined,
+    platformFeeSats: platformFeeSats ? String(platformFeeSats) : undefined,
     feeAddress,
-    networkFeeReserveSats:  networkFeeReserveSats ? String(networkFeeReserveSats) : undefined,
+    networkFeeReserveSats: networkFeeReserveSats ? String(networkFeeReserveSats) : undefined,
   });
 
   // Persist the escrow address + state on the order
-  order.dgdEscrowId      = orderId;
+  order.dgdEscrowId = orderId;
   order.dgdEscrowAddress = escrow?.multisig?.address;
-  order.dgdEscrowState   = escrow?.state || 'created';
+  order.dgdEscrowState = escrow?.state || 'created';
   await order.save();
 
   logger.info(`DGD escrow opened for order ${orderId}: ${order.dgdEscrowAddress}`);
@@ -160,9 +177,11 @@ exports.checkFunding = asyncHandler(async (req, res, next) => {
     await order.save();
     if (newlyFunded) {
       // Funds are locked in the party-owned escrow; reserve the stock now.
-      await Promise.all(order.items.map(item =>
-        Product.updateOne({ _id: item.product }, { $inc: { stock: -item.quantity } })
-      ));
+      await Promise.all(
+        order.items.map(item =>
+          Product.updateOne({ _id: item.product }, { $inc: { stock: -item.quantity } })
+        )
+      );
     }
   }
   res.json({ ok: true, escrow });

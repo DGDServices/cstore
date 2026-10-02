@@ -18,13 +18,15 @@ const CFV_ENDPOINTS_BY_SYMBOL = {
   NEAR: ['/api/metrics/NEAR', '/api/collect/NEAR'],
   ICP: ['/api/metrics/ICP', '/api/collect/ICP'],
   XCH: ['/api/metrics/XCH', '/api/collect/XCH'],
-  DGD: ['/api/metrics/DGD', '/api/collect/DGD']
+  DGD: ['/api/metrics/DGD', '/api/collect/DGD'],
 };
 
 const getNestedValue = (obj, path) =>
-  path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
+  path
+    .split('.')
+    .reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
 
-const toNumber = (value) => {
+const toNumber = value => {
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -32,8 +34,7 @@ const toNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const isValidCirculatingSupply = (supply) =>
-  Number.isFinite(supply) && supply > 0;
+const isValidCirculatingSupply = supply => Number.isFinite(supply) && supply > 0;
 
 const pickNumericValue = (obj, paths) => {
   for (const path of paths) {
@@ -49,7 +50,8 @@ class CFVService {
   constructor() {
     this.apiUrl = process.env.CFV_METRICS_API_URL || DEFAULT_CFV_METRICS_API_URL;
     this.enabled = (process.env.CFV_ENABLED || 'true').toLowerCase() === 'true';
-    this.priceCacheTTL = (Number(process.env.CFV_CACHE_TTL) || DEFAULT_PRICE_CACHE_TTL_MS / 1000) * 1000;
+    this.priceCacheTTL =
+      (Number(process.env.CFV_CACHE_TTL) || DEFAULT_PRICE_CACHE_TTL_MS / 1000) * 1000;
     this.calculationCacheTTL = DEFAULT_CALCULATION_CACHE_TTL_MS;
     this.priceCache = new Map();
     this.calculationCache = new Map();
@@ -105,7 +107,7 @@ class CFVService {
     const coins = this.getSupportedCFVCoins();
 
     return Promise.all(
-      coins.map(async (coin) => {
+      coins.map(async coin => {
         try {
           return await this.getCFVForCoin(coin.symbol);
         } catch (error) {
@@ -113,7 +115,7 @@ class CFVService {
           return {
             symbol: coin.symbol,
             name: coin.name,
-            error: 'CFV data unavailable'
+            error: 'CFV data unavailable',
           };
         }
       })
@@ -133,7 +135,7 @@ class CFVService {
       status: data.valuationStatus,
       percentageDifference: data.percentageDifference,
       currentPrice: data.currentPrice,
-      fairValue: data.fairValue
+      fairValue: data.fairValue,
     };
   }
 
@@ -144,7 +146,9 @@ class CFVService {
   }
 
   normalizeSymbol(symbol) {
-    const normalizedSymbol = String(symbol || '').trim().toUpperCase();
+    const normalizedSymbol = String(symbol || '')
+      .trim()
+      .toUpperCase();
     const isSupported = this.getSupportedCFVCoins().some(coin => coin.symbol === normalizedSymbol);
     if (!isSupported) {
       throw new AppError(`Unsupported CFV coin symbol: ${normalizedSymbol}`, 400);
@@ -185,7 +189,7 @@ class CFVService {
       'marketPrice',
       'current_price',
       'pricing.currentPrice',
-      'prices.current'
+      'prices.current',
     ]);
     const fairValue = pickNumericValue(payload, [
       'fairValue',
@@ -193,31 +197,31 @@ class CFVService {
       'fairValuePerCoin',
       'cfvPerCoin',
       'pricing.fairValue',
-      'calculation.fairValuePerCoin'
+      'calculation.fairValuePerCoin',
     ]);
     const cfv = pickNumericValue(payload, [
       'cfv',
       'totalCFV',
       'fairValueMarketCap',
       'calculation.cfv',
-      'calculation.totalCFV'
+      'calculation.totalCFV',
     ]);
     const adoption = pickNumericValue(payload, ['adoption', 'metrics.adoption', 'metrics.holders']);
     const annualTransactions = pickNumericValue(payload, [
       'annualTransactions',
       'metrics.annualTransactions',
-      'metrics.transactionCountAnnual'
+      'metrics.transactionCountAnnual',
     ]);
     const annualTransactionValue = pickNumericValue(payload, [
       'annualTransactionValue',
       'metrics.annualTransactionValue',
-      'metrics.transactionValueAnnual'
+      'metrics.transactionValueAnnual',
     ]);
     const developers = pickNumericValue(payload, ['developers', 'metrics.developers']);
     const circulatingSupply = pickNumericValue(payload, [
       'circulatingSupply',
       'supply.circulating',
-      'metrics.circulatingSupply'
+      'metrics.circulatingSupply',
     ]);
 
     const resolvedFairValue =
@@ -249,11 +253,11 @@ class CFVService {
         annualTransactions,
         annualTransactionValue,
         developers,
-        circulatingSupply
+        circulatingSupply,
       },
       valuationStatus,
       percentageDifference,
-      sourceTimestamp: payload.updatedAt || payload.timestamp || new Date().toISOString()
+      sourceTimestamp: payload.updatedAt || payload.timestamp || new Date().toISOString(),
     };
   }
 
@@ -282,7 +286,7 @@ class CFVService {
       this.priceCache.set(symbol, {
         currentPrice: data.currentPrice,
         sourceTimestamp: data.sourceTimestamp,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
@@ -293,7 +297,7 @@ class CFVService {
       valuationStatus: data.valuationStatus,
       percentageDifference: data.percentageDifference,
       sourceTimestamp: data.sourceTimestamp,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -310,7 +314,7 @@ class CFVService {
       metrics: cachedCalculation.metrics || null,
       valuationStatus: cachedCalculation.valuationStatus || 'unknown',
       percentageDifference: cachedCalculation.percentageDifference ?? null,
-      updatedAt: cachedCalculation.sourceTimestamp || cachedPrice.sourceTimestamp || null
+      updatedAt: cachedCalculation.sourceTimestamp || cachedPrice.sourceTimestamp || null,
     };
   }
 }

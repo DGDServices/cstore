@@ -28,7 +28,7 @@ describe('Secrets Manager', () => {
     it('should get secret from environment variables', async () => {
       process.env.JWT_SECRET = 'test-jwt-secret-123';
       process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-456';
-      
+
       const secret = await secretsManager.getSecret('cryptons/jwt', 'secret');
       expect(secret).toBe('test-jwt-secret-123');
     });
@@ -36,7 +36,7 @@ describe('Secrets Manager', () => {
     it('should get all JWT secrets', async () => {
       process.env.JWT_SECRET = 'test-jwt-secret-123';
       process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-456';
-      
+
       const secrets = await secretsManager.getSecret('cryptons/jwt');
       expect(secrets).toHaveProperty('secret');
       expect(secrets).toHaveProperty('refresh_secret');
@@ -46,7 +46,7 @@ describe('Secrets Manager', () => {
 
     it('should get database secrets from environment', async () => {
       process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
-      
+
       const secrets = await secretsManager.getSecret('cryptons/database');
       expect(secrets).toHaveProperty('host');
       expect(secrets.host).toBe('mongodb://localhost:27017/test');
@@ -55,7 +55,7 @@ describe('Secrets Manager', () => {
     it('should get email secrets from environment', async () => {
       process.env.SMTP_HOST = 'smtp.test.com';
       process.env.SMTP_USER = 'test@test.com';
-      
+
       const secrets = await secretsManager.getSecret('cryptons/email');
       expect(secrets).toHaveProperty('smtp_host');
       expect(secrets.smtp_host).toBe('smtp.test.com');
@@ -64,7 +64,7 @@ describe('Secrets Manager', () => {
     it('should get encryption secrets from environment', async () => {
       process.env.FIELD_ENCRYPTION_KEY = 'abcd1234';
       process.env.WEBHOOK_SECRET = 'webhook-secret';
-      
+
       const secrets = await secretsManager.getSecret('cryptons/encryption');
       expect(secrets).toHaveProperty('field_key');
       expect(secrets).toHaveProperty('webhook_secret');
@@ -78,10 +78,10 @@ describe('Secrets Manager', () => {
 
     it('should cache secrets', async () => {
       process.env.TEST_SECRET = 'cached-value';
-      
+
       const secret1 = await secretsManager.getSecret('cryptons/jwt', 'secret');
       const secret2 = await secretsManager.getSecret('cryptons/jwt', 'secret');
-      
+
       // Both should return the same value
       expect(secret1).toBe(secret2);
     });
@@ -105,7 +105,7 @@ describe('Secrets Manager', () => {
 
     it('should get all application secrets', async () => {
       const secrets = await secretsManager.getAllSecrets();
-      
+
       expect(secrets).toHaveProperty('database');
       expect(secrets).toHaveProperty('jwt');
       expect(secrets).toHaveProperty('email');
@@ -117,7 +117,7 @@ describe('Secrets Manager', () => {
   describe('Error Handling', () => {
     it('should handle missing secrets gracefully', async () => {
       delete process.env.NONEXISTENT_SECRET;
-      
+
       const secret = await secretsManager.getSecret('nonexistent/path', 'key');
       expect(secret).toBeUndefined();
     });

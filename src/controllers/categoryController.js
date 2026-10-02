@@ -10,22 +10,20 @@ const logger = require('../utils/logger');
 exports.getCategories = async (req, res, next) => {
   try {
     const { isActive, sort = 'displayOrder name' } = req.query;
-    
+
     const query = {};
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
     }
 
-    const categories = await Category.find(query)
-      .sort(sort)
-      .lean();
+    const categories = await Category.find(query).sort(sort).lean();
 
     // Get product count for each category
     const categoriesWithCount = await Promise.all(
-      categories.map(async (category) => {
-        const productCount = await Product.countDocuments({ 
+      categories.map(async category => {
+        const productCount = await Product.countDocuments({
           category: category._id,
-          isActive: true 
+          isActive: true,
         });
         return { ...category, productCount };
       })
@@ -34,7 +32,7 @@ exports.getCategories = async (req, res, next) => {
     res.json({
       success: true,
       count: categoriesWithCount.length,
-      data: categoriesWithCount
+      data: categoriesWithCount,
     });
   } catch (error) {
     logger.error('Get categories error:', error);
@@ -54,22 +52,22 @@ exports.getCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Category not found',
       });
     }
 
     // Get product count
-    const productCount = await Product.countDocuments({ 
+    const productCount = await Product.countDocuments({
       category: category._id,
-      isActive: true 
+      isActive: true,
     });
 
     res.json({
       success: true,
       data: {
         ...category.toObject(),
-        productCount
-      }
+        productCount,
+      },
     });
   } catch (error) {
     logger.error('Get category error:', error);
@@ -89,22 +87,22 @@ exports.getCategoryBySlug = async (req, res, next) => {
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Category not found',
       });
     }
 
     // Get product count
-    const productCount = await Product.countDocuments({ 
+    const productCount = await Product.countDocuments({
       category: category._id,
-      isActive: true 
+      isActive: true,
     });
 
     res.json({
       success: true,
       data: {
         ...category.toObject(),
-        productCount
-      }
+        productCount,
+      },
     });
   } catch (error) {
     logger.error('Get category by slug error:', error);
@@ -126,7 +124,7 @@ exports.createCategory = async (req, res, next) => {
     if (existingCategory) {
       return res.status(400).json({
         success: false,
-        message: 'Category with this name already exists'
+        message: 'Category with this name already exists',
       });
     }
 
@@ -134,14 +132,14 @@ exports.createCategory = async (req, res, next) => {
       name,
       description,
       image,
-      displayOrder
+      displayOrder,
     });
 
     logger.info(`Category created: ${category._id}`);
 
     res.status(201).json({
       success: true,
-      data: category
+      data: category,
     });
   } catch (error) {
     logger.error('Create category error:', error);
@@ -163,7 +161,7 @@ exports.updateCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Category not found',
       });
     }
 
@@ -173,7 +171,7 @@ exports.updateCategory = async (req, res, next) => {
       if (existingCategory) {
         return res.status(400).json({
           success: false,
-          message: 'Category with this name already exists'
+          message: 'Category with this name already exists',
         });
       }
     }
@@ -191,7 +189,7 @@ exports.updateCategory = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: category
+      data: category,
     });
   } catch (error) {
     logger.error('Update category error:', error);
@@ -211,7 +209,7 @@ exports.deleteCategory = async (req, res, next) => {
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Category not found',
       });
     }
 
@@ -220,7 +218,7 @@ exports.deleteCategory = async (req, res, next) => {
     if (productCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category with ${productCount} product(s). Remove products first or reassign them to another category.`
+        message: `Cannot delete category with ${productCount} product(s). Remove products first or reassign them to another category.`,
       });
     }
 
@@ -230,7 +228,7 @@ exports.deleteCategory = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Category deleted successfully'
+      message: 'Category deleted successfully',
     });
   } catch (error) {
     logger.error('Delete category error:', error);
@@ -246,27 +244,21 @@ exports.deleteCategory = async (req, res, next) => {
 exports.getCategoryProducts = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { 
-      page = 1, 
-      limit = 12, 
-      sort = '-createdAt',
-      minPrice,
-      maxPrice 
-    } = req.query;
+    const { page = 1, limit = 12, sort = '-createdAt', minPrice, maxPrice } = req.query;
 
     // Check if category exists
     const category = await Category.findById(id);
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Category not found',
       });
     }
 
     // Build query
-    const query = { 
+    const query = {
       category: id,
-      isActive: true 
+      isActive: true,
     };
 
     // Price filter
@@ -292,13 +284,13 @@ exports.getCategoryProducts = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total: count,
-        pages: Math.ceil(count / limit)
+        pages: Math.ceil(count / limit),
       },
       category: {
         id: category._id,
         name: category.name,
-        slug: category.slug
-      }
+        slug: category.slug,
+      },
     });
   } catch (error) {
     logger.error('Get category products error:', error);

@@ -13,7 +13,7 @@ beforeAll(async () => {
 describe('Internationalization (i18n)', () => {
   // Load app after setting environment
   let app;
-  
+
   beforeAll(() => {
     app = require('../src/app');
   });
@@ -62,9 +62,7 @@ describe('Internationalization (i18n)', () => {
 
   describe('API Language Detection', () => {
     it('should detect language from Accept-Language header', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Accept-Language', 'es');
+      const response = await request(app).get('/api/health').set('Accept-Language', 'es');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -72,8 +70,7 @@ describe('Internationalization (i18n)', () => {
     });
 
     it('should detect language from query parameter', async () => {
-      const response = await request(app)
-        .get('/api/health?lng=fr');
+      const response = await request(app).get('/api/health?lng=fr');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -81,8 +78,7 @@ describe('Internationalization (i18n)', () => {
     });
 
     it('should use English as default language', async () => {
-      const response = await request(app)
-        .get('/api/health');
+      const response = await request(app).get('/api/health');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -90,30 +86,24 @@ describe('Internationalization (i18n)', () => {
     });
 
     it('should translate health check message in English', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Accept-Language', 'en');
+      const response = await request(app).get('/api/health').set('Accept-Language', 'en');
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Server is running');
     });
 
     it('should translate health check message in Spanish', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Accept-Language', 'es');
+      const response = await request(app).get('/api/health').set('Accept-Language', 'es');
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('El servidor está funcionando');
     });
 
     it('should translate health check message in French', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Accept-Language', 'fr');
+      const response = await request(app).get('/api/health').set('Accept-Language', 'fr');
 
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Le serveur est en cours d\'exécution');
+      expect(response.body.message).toBe("Le serveur est en cours d'exécution");
     });
   });
 
@@ -175,27 +165,21 @@ describe('Internationalization (i18n)', () => {
 
   describe('Language Persistence', () => {
     it('should detect language from cookie', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .set('Cookie', 'i18next=de');
+      const response = await request(app).get('/api/health').set('Cookie', 'i18next=de');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('de');
     });
 
     it('should prioritize query parameter over cookie', async () => {
-      const response = await request(app)
-        .get('/api/health?lng=es')
-        .set('Cookie', 'i18next=de');
+      const response = await request(app).get('/api/health?lng=es').set('Cookie', 'i18next=de');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('es');
     });
 
     it('should prioritize query parameter over Accept-Language header', async () => {
-      const response = await request(app)
-        .get('/api/health?lng=fr')
-        .set('Accept-Language', 'de');
+      const response = await request(app).get('/api/health?lng=fr').set('Accept-Language', 'de');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('fr');
@@ -222,7 +206,7 @@ describe('Internationalization (i18n)', () => {
         'common.error',
         'common.loading',
         'app.name',
-        'app.tagline'
+        'app.tagline',
       ];
 
       languages.forEach(lang => {
@@ -237,11 +221,7 @@ describe('Internationalization (i18n)', () => {
 
     it('should have product translations in all languages', () => {
       const languages = ['en', 'es', 'fr', 'de', 'zh'];
-      const productKeys = [
-        'product.products',
-        'product.price',
-        'product.addToCart'
-      ];
+      const productKeys = ['product.products', 'product.price', 'product.addToCart'];
 
       languages.forEach(lang => {
         const t = i18next.getFixedT(lang);

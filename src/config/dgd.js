@@ -30,7 +30,7 @@ module.exports = {
   assertSettlementIsDgd(asset) {
     if (asset !== 'DGD') {
       throw new Error(
-        'DGD Marketplace settles in DGD only (auto crypto->fiat conversion is disabled).',
+        'DGD Marketplace settles in DGD only (auto crypto->fiat conversion is disabled).'
       );
     }
   },
